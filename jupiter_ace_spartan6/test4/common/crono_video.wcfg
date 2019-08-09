@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C:/Users/rodriguj/Documents/zxuno/cores/jupiter_ace_spartan6/test3_vga/tb_logica_y_scandoubler_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="tb_logica_y_scandoubler" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="26" />
+   <wvobject fp_name="/tb_logica_y_scandoubler/clkvideo" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clkvideo</obj_property>
+      <obj_property name="ObjectShortName">clkvideo</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/clkvga" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clkvga</obj_property>
+      <obj_property name="ObjectShortName">clkvga</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider19" type="divider">
+      <obj_property name="label">Direccionamiento</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/screen_addr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">screen_addr[9:0]</obj_property>
+      <obj_property name="ObjectShortName">screen_addr[9:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/char_addr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">char_addr[9:0]</obj_property>
+      <obj_property name="ObjectShortName">char_addr[9:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/patron" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">patron[7:0]</obj_property>
+      <obj_property name="ObjectShortName">patron[7:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider21" type="divider">
+      <obj_property name="label">Video de entrada</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/video" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">video</obj_property>
+      <obj_property name="ObjectShortName">video</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/hsync_pal" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">hsync_pal</obj_property>
+      <obj_property name="ObjectShortName">hsync_pal</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/vsync_pal" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vsync_pal</obj_property>
+      <obj_property name="ObjectShortName">vsync_pal</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/ri" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">ri[2:0]</obj_property>
+      <obj_property name="ObjectShortName">ri[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/gi" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">gi[2:0]</obj_property>
+      <obj_property name="ObjectShortName">gi[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/bi" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">bi[2:0]</obj_property>
+      <obj_property name="ObjectShortName">bi[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider22" type="divider">
+      <obj_property name="label">Video de salida</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/r" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">r[2:0]</obj_property>
+      <obj_property name="ObjectShortName">r[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/g" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">g[2:0]</obj_property>
+      <obj_property name="ObjectShortName">g[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/b" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">b[2:0]</obj_property>
+      <obj_property name="ObjectShortName">b[2:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/hsync" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">hsync</obj_property>
+      <obj_property name="ObjectShortName">hsync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/vsync" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vsync</obj_property>
+      <obj_property name="ObjectShortName">vsync</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider23" type="divider">
+      <obj_property name="label">Control miscelaneo</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/int_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">int_n</obj_property>
+      <obj_property name="ObjectShortName">int_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider21" type="divider">
+      <obj_property name="label">Scandoubler</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/salida_vga/addrvideo" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addrvideo[10:0]</obj_property>
+      <obj_property name="ObjectShortName">addrvideo[10:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/salida_vga/addrvga" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addrvga[10:0]</obj_property>
+      <obj_property name="ObjectShortName">addrvga[10:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/salida_vga/totalhor" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">totalhor[9:0]</obj_property>
+      <obj_property name="ObjectShortName">totalhor[9:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_logica_y_scandoubler/salida_vga/cntvsync" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">cntvsync[15:0]</obj_property>
+      <obj_property name="ObjectShortName">cntvsync[15:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+</wave_config>
