@@ -1,0 +1,107 @@
+Release 14.7 - xst P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+--> 
+Parameter TMPDIR set to /home/avlixa/FPGA/ZXDOS/zx80yuno/xst/projnav.tmp
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.10 secs
+ 
+--> 
+Parameter xsthdpdir set to /home/avlixa/FPGA/ZXDOS/zx80yuno/xst
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.10 secs
+ 
+--> 
+Reading design: zx01.prj
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Analyzing Verilog file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zxuno/joydecoder.v" into library work
+Parsing module <joydecoder>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80_Pack.vhd" into library work
+Parsing package <T80_Pack>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80_Reg.vhd" into library work
+Parsing entity <T80_Reg>.
+Parsing architecture <rtl> of entity <t80_reg>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80_MCode.vhd" into library work
+Parsing entity <T80_MCode>.
+Parsing architecture <rtl> of entity <t80_mcode>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80_ALU.vhd" into library work
+Parsing entity <T80_ALU>.
+Parsing architecture <rtl> of entity <t80_alu>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/video81.vhd" into library work
+Parsing entity <video81>.
+Parsing architecture <beh> of entity <video81>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/res_clk.vhd" into library work
+Parsing entity <res_clk>.
+Parsing architecture <beh> of entity <res_clk>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/modes97.vhd" into library work
+Parsing entity <modes97>.
+Parsing architecture <beh> of entity <modes97>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/io81.vhd" into library work
+Parsing entity <io81>.
+Parsing architecture <beh> of entity <io81>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/busses.vhd" into library work
+Parsing entity <busses>.
+Parsing architecture <beh> of entity <busses>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80.vhd" into library work
+Parsing entity <T80>.
+Parsing architecture <rtl> of entity <t80>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zxuno/ps2me.vhd" into library work
+Parsing entity <PS2_MatrixEncoder>.
+Parsing architecture <rtl> of entity <ps2_matrixencoder>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx97/top.vhd" into library work
+Parsing entity <top>.
+Parsing architecture <beh> of entity <top>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx01/SSRAM.vhd" into library work
+Parsing entity <SSRAM>.
+Parsing architecture <behaviour> of entity <ssram>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/t80/T80s.vhd" into library work
+Parsing entity <T80s>.
+Parsing architecture <rtl> of entity <t80s>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/rom/zx81.vhd" into library work
+Parsing entity <ROM81>.
+Parsing architecture <rtl> of entity <rom81>.
+Parsing VHDL file "/home/avlixa/FPGA/ZXDOS/zx80yuno/zx/zx01/zx01.vhd" into library work
+Parsing entity <zx01>.
+Parsing architecture <rtl> of entity <zx01>.
+
+
+Total REAL time to Xst completion: 19.00 secs
+Total CPU time to Xst completion: 19.01 secs
+ 
+--> 
+
+
+Total memory usage is 316256 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :    0 (   0 filtered)
+Number of infos    :    0 (   0 filtered)
+

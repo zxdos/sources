@@ -1,0 +1,2 @@
+verilog work "zx/zxuno/joydecoder.v"
+vhdl work "zx/zxuno/ps2me.vhd"
