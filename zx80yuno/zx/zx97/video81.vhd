@@ -40,6 +40,7 @@ entity video81 is
         video_mem:  out boolean;
         mode_v_inv: in  boolean;
         video:      out std_ulogic;
+	  hhsync:	  out std_ulogic; --avlixa
         n_sync:     out std_ulogic);
 end;
 
@@ -82,6 +83,7 @@ begin
   nmi_out <= (hsync and nmi_enable);
   n_nmi   <= '0' when nmi_out
         else '1';
+  
   n_wait  <= '0' when nmi_out and n_halt='1'
         else '1';
 
@@ -163,6 +165,8 @@ begin
       end if;
     end if;
   end process;
+
+  hhsync <= '1' when hsync else '0'; --avlixa
 
   video <=     video_pixel(7) when mode_v_inv
       else not video_pixel(7);

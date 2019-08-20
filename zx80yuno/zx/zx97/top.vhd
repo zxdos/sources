@@ -51,6 +51,8 @@ entity top is
         usa_uk:  in  std_ulogic;
         video:   out std_ulogic;
         n_sync:  out std_ulogic;
+		  o_vsync: out std_ulogic; --avlixa
+		  o_hsync: out std_ulogic; --avlixa
         tape_in: in  std_ulogic;
         d_lcd:   out std_ulogic_vector(3 downto 0);
         s:       out std_ulogic;
@@ -107,6 +109,7 @@ architecture beh of top is
         video_mem:  out boolean;
         mode_v_inv: in  boolean;
         video:      out std_ulogic;
+  hhsync:	  out std_ulogic;	--avlixa
         n_sync:     out std_ulogic);
   end component;
 
@@ -199,7 +202,10 @@ begin
               a_cpu(15 downto 13),d_mem_i,
               fake_cpu,mode_chr13,
               video_addr,video_mem,
-              mode_v_inv,i_video,i_n_sync);
+--              mode_v_inv,i_video,i_n_sync); --avlixa
+              mode_v_inv,i_video,o_hsync,i_n_sync); --avlixa
+
+  o_vsync <= '1' when vsync else '0';	--avlixa
 
 -- Jepalza: lo oculto, no se usa y ahorramos espacio
 --  c_lcd97: lcd97

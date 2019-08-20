@@ -24,9 +24,18 @@ entity zx01 is
         usa_uk:    in    std_ulogic;
         mem16k:    in    std_ulogic;
         video:     out   std_ulogic;
+  		  o_vsync: out std_ulogic; --avlixa
+		  o_hsync: out std_ulogic; --avlixa
 		  modo_video:out   std_ulogic; -- 0 para salida VGA, 1 para VIDEO COMPUESTO
         tape_in:   in    std_ulogic;
-        tape_out:  out   std_ulogic );
+        tape_out:  out   std_ulogic;
+		  -- Joystick
+		  joy_clk:   out   std_ulogic;
+		  joy_load:   out  std_ulogic;
+		  joy_data:   in   std_ulogic;
+		  resetKey:	out	std_logic;
+		  MRESET	 :  out	std_logic
+		  );
 end;
 
 -- the top level ------------------------------
@@ -41,11 +50,12 @@ architecture rtl of zx01 is
         PS2_Data: in std_logic;
         Key_Addr: in std_logic_vector(7 downto 0);
         Key_Data: out std_logic_vector(4 downto 0);
-		  teclas_f: out std_logic_vector(2 downto 0)  --jepalza, teclas F1-F2-F3
-		  );
+		  teclas_f: out std_logic_vector(3 downto 0);
+		  resetKey:	out	std_logic;
+		  MRESET	 :  out	std_logic		  );
   end component;
 
-  component T80s
+  component T80s 
   generic(
         Mode : integer := 0);
   port (RESET_n		: in std_logic;
@@ -115,6 +125,8 @@ architecture rtl of zx01 is
         usa_uk:  in  std_ulogic;
         video:   out std_ulogic;
         n_sync:  out std_ulogic;
+		  o_vsync: out std_ulogic; --avlixa
+		  o_hsync: out std_ulogic; --avlixa
         tape_in: in  std_ulogic;
         d_lcd:   out std_ulogic_vector(3 downto 0);
         s:       out std_ulogic;
@@ -154,9 +166,12 @@ architecture rtl of zx01 is
   signal i_n_sync:  std_ulogic;
   signal i_n_reset: std_ulogic;
   signal s_n_reset: std_ulogic;
-  signal teclas_f : std_logic_vector(2 downto 0); --jepalza, teclas F1-F2-F3
-  signal v_inv 	: std_ulogic;
-  signal mod_vid   :std_ulogic;
+  signal teclas_f : std_logic_vector(3 downto 0); --jepalza, teclas F1-F2-F3
+  signal v_inv, v_invnext 	: std_ulogic;
+  signal mod_vid, mod_vidnext  :std_ulogic;
+  --Joystick
+  signal joy1,joy2: std_logic_vector(7 downto 0);
+  signal kbd_col_joy:std_logic_vector(4 downto 0);
 	
 begin
 
@@ -196,16 +211,70 @@ begin
               PS2_Data => kbd_data,
               Key_Addr => a_cpu(15 downto 8),
               Key_Data => kbd_col,
-				  teclas_f => teclas_f  --jepalza, teclas F1-F2-F3
+				  teclas_f => teclas_f,  --jepalza, teclas F1-F2-F3
+				  resetKey => resetKey,
+				  MRESET	  => MRESET
 				  );
 
-  i_kbd_col <= kbd_mode when i_n_modes = '0' else kbd_col;
+
+	-- ZX81 keymap:
+	-- col(N)=0  0,      1, 2, 3, 4
+   -------------------------------	
+	-- a( 8)=0 - shift,  z, x, c, v
+	-- a( 9)=0 - a,      s, d, f, g
+	-- a(10)=0 - q,      w, e, r, t
+	-- a(11)=0 - 1,      2, 3, 4, 5
+	-- a(12)=0 - 0,      9, 8, 7, 6
+	-- a(13)=0 - p,      o, i, u, y
+	-- a(14)=0 - return, l, k, j, h
+	-- a(15)=0 - space,  ., m, n, b
+  
+  -- joystick 1: 5 - 6 - 7 - 8 -  0 - C
+  -- joystick 2: o - a - q - p - SP - M
+  kbd_col_joy(0) <= '0' when ((a_cpu(8)='0'  and teclas_f(3) = '1')						--backspace = *shift* + 0
+									or (a_cpu(12)='0' and teclas_f(3) = '1')						--backspace = shift + *0*
+									or	(a_cpu(12)='0' and joy1(4) = '0')-- else kbd_col(0);  -- j1.fire 1   - 0
+							      or (a_cpu(10)='0' and joy2(0) = '0') -- else kbd_col(0); -- j2.up       - q
+									or (a_cpu(9)='0' and joy2(1) = '0') --else kbd_col(0);   -- j2.down     - a
+									or (a_cpu(13)='0' and joy2(3) = '0') -- else kbd_col(0); -- j2.right    - p
+									or (a_cpu(15)='0' and joy2(4) = '0')) else kbd_col(0);   -- j2.fire 1   - SP
+--  kbd_col_joy(1)  <= kbd_col(1);   -- sin mapeo en columna 1
+  kbd_col_joy(1) <= '0' when (a_cpu(13)='0' and joy2(2) = '0') else kbd_col(1);     -- j2.left    - o
+  kbd_col_joy(2) <= '0' when ((a_cpu(12)='0' and joy1(3) = '0') --else kbd_col(2);  -- j1.right   - 8
+									or (a_cpu(15)='0' and joy2(5) = '0')) else kbd_col(2);   -- j2.fire 2  - M
+  kbd_col_joy(3) <= '0' when ((a_cpu(12)='0' and joy1(0) = '0') --else kbd_col(3);  -- j1.up      - 7
+								   or (a_cpu(8)='0' and joy1(5) = '0')) else kbd_col(3);    -- j1.fire 2  - C
+  kbd_col_joy(4) <= '0' when ((a_cpu(12)='0' and joy1(1) = '0') -- else kbd_col(4); -- j1.down    - 6
+									or	(a_cpu(11)='0' and joy1(2) = '0')) else kbd_col(4);   -- j1.left    - 5
+  
+--  i_kbd_col <= kbd_mode when i_n_modes = '0' else kbd_col;
+  i_kbd_col <= kbd_mode when i_n_modes = '0' else kbd_col_joy;
+ 
+-- up    = joyN[0];
+-- down  = joyN[1];
+-- left  = joyN[2];
+-- right = joyN[3];
+-- fire1 = joyN[4];
+-- fire2 = joyN[5];
+-- fire3 = joyN[6];
+-- start = joyN[7];
+
+  
   kbd_mode(3 downto 2) <= "00"; -- PAGE
   kbd_mode(4) <= v_inv;
   kbd_mode(1 downto 0) <= "00"; -- RAM
 
+-- instantiate joystick decoder
+   c_Joystick: entity work.joydecoder
+      port map(clk=>clock,
+		joy_data=>joy_data,
+		joy_clk=>joy_clk,
+		joy_load=>joy_load,
+		clock_locked=> n_reset,
+		joy1_o=>joy1,
+		joy2_o=>joy2);
 
-  c_Z80: T80s
+  c_Z80: T80s    
     generic map (Mode => 0)
     port map (M1_n => n_m1,
               MREQ_n => n_mreq,
@@ -214,7 +283,7 @@ begin
               WR_n => n_wr,
               RFSH_n => n_rfsh,
               HALT_n => n_halt,
-              WAIT_n => n_wait,
+				  WAIT_n => n_wait,
               INT_n => a_cpu(6),
               NMI_n => n_nmi,
               RESET_n => s_n_reset,
@@ -251,7 +320,8 @@ begin
               n_m1,n_mreq,n_iorq,n_wr,n_rd,n_rfsh,
               n_nmi,n_halt,n_wait,n_romcs,n_ramcs,
               std_ulogic_vector(i_kbd_col),usa_uk,
-              i_video,i_n_sync,tape_in);
+ --             i_video,i_n_sync,tape_in); -- avlixa
+              i_video,i_n_sync,o_vsync,o_hsync,tape_in); --avlixa
 
   i_phi <= clock_2;
 
@@ -273,11 +343,25 @@ begin
 --     else 'Z' when i_video='0'
 --     else '1';
 
-  v_inv 	 <= '0';-- when teclas_f="011" else '1' when teclas_f="100"; --f3 video inverso
-  mod_vid <= '0';-- when teclas_f="001" else '1' when teclas_f="010"; --f2 VGA
+--  v_inv 	 <= '0';-- when teclas_f="011" else '1' when teclas_f="100"; --f3 video inverso
+--  mod_vid <= '0';-- when teclas_f="001" else '1' when teclas_f="010"; --f2 VGA
   modo_video <= mod_vid;
-  
-  video <= i_video when mod_vid='0' -- modo VGA si modo_video=0
+
+  	process (clock, n_reset)
+	begin
+		if n_reset = '0' then
+			mod_vid <= '0';
+			v_inv	  <= '0';
+		elsif clock'event and clock = '1' then
+			mod_vid <= mod_vidnext;
+			v_inv <= v_invnext;
+
+		end if;
+	end process;
+	mod_vidnext <= not mod_vid when teclas_f(2) = '1' else mod_vid; -- cambio video con Scrl.lock
+	v_invnext   <= not v_inv when teclas_f(1) = '1' else v_inv; -- cambio video inverso con Home
+	
+  video <= i_video when mod_vid='0'   -- modo VGA si modo_video=0
      else '0' when i_n_sync='0'       -- modo VIDEO
      else 'Z' when i_video='0'
      else '1';

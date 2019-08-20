@@ -18,8 +18,10 @@ entity PS2_MatrixEncoder is
 		PS2_Data					: in std_logic;
 		Key_Addr					: in std_logic_vector(7 downto 0);
 		Key_Data					: out std_logic_vector(4 downto 0);
-		-- jepalza: F1=SD, F2=VGA, F3=INVERSO
-		teclas_f				: out std_logic_vector(2 downto 0)
+		-- jepalza: F1=SD, F2=VGA, F3=INVERSO, Back
+		teclas_f				: out std_logic_vector(3 downto 0);
+		resetKey	:	out	std_logic;
+    	MRESET	:  out	std_logic
 	);
 end PS2_MatrixEncoder;
 
@@ -42,7 +44,10 @@ architecture rtl of PS2_MatrixEncoder is
 
 	type Matrix_Image is array (natural range <>) of std_logic_vector(4 downto 0);
 	signal	Matrix			: Matrix_Image(0 to 7);
-
+	signal CTRL, CTRLnx,CTRLev	: std_logic;
+	signal ALT, ALTnx,ALTev	: std_logic;
+	signal resetKeyev,resetKeynx	: std_logic;
+	signal tfunc, tfunc_next: std_logic_vector(3 downto 0);
 begin
 
 	process (Clk, Reset_n)
@@ -139,6 +144,9 @@ begin
 			Matrix_Set <= '0';
 			Matrix_Clear <= '0';
 			Matrix_Wr_Addr <= (others => '0');
+			MRESET <= '0';
+			CTRL <= '0';
+			ALT <= '0';
 		elsif Clk'event and Clk = '1' then
 			Matrix_Set <= '0';
 			Matrix_Clear <= '0';
@@ -160,6 +168,42 @@ begin
 						Matrix_Wr_Addr <= unsigned(LookUp);
 						Matrix_Clear <= '1';
 					end if;
+					-- Teclas de función especiales - avlixa
+					if unsigned(tfunc) /= 0 then
+						if RX_Release = '0' then
+							teclas_f <= tfunc;
+							-- Hard reset - CTR + ALT + Backspace
+							if tfunc(3) = '1' and CTRL = '1' and ALT = '1' then
+								MRESET <= '1';
+							else
+								MRESET <= '0';
+							end if;
+						else
+							teclas_f <= (others=>'0');
+							MRESET <= '0';
+						end if;
+					end if;
+					if CTRLev = '1' then
+						if RX_Release = '0' then
+							CTRL <= CTRLev;
+						else
+							CTRL <= '0';
+						end if;
+					end if;
+					if ALTev = '1' then
+						if RX_Release = '0' then
+							ALT <= ALTev;
+						else
+							ALT <= '0';
+						end if;
+					end if;	
+					if resetKeyev = '1' then
+						if RX_Release = '0' then
+							resetKey <= resetKeyev;
+						else
+							resetKey <= '0';
+						end if;
+					end if;	
 				end if;
 			end if;
 		end if;
@@ -232,40 +276,68 @@ begin
 				--when x"69" => LookUp <= "11111010"; 
 		when others => LookUp <= "00000000";
 		end case;
-		
-		
-		
-		--case RX_ShiftReg is
-			--case LookUp = "00000000"  is
-			-- jepalza, teclas especiales para diversas funciones
-			--when x"05" => teclas_f <= "001"; -- F1, cargar desde SD
-			--when x"06" => teclas_f <= "010"; -- F2, modo VIDEO o modo VGA
-			--when x"04" => teclas_f <= "100"; -- F3, video inverso
-			--		
-			--when others => teclas_f <= "000";
-		--end case;
-		
-		
-		
+	
 	end process;
 
 
 	-- teclas f1, f2 y f3
 	-- 69, 72, 7a, 6b, 73, 74
-	process (RX_ShiftReg)
+--			case RX_ShiftReg is
+--	--		-- jepalza, teclas especiales para diversas funciones
+--	--		when x"6b" => teclas_f(0) <= '1' and not RX_Release; -- F1, cargar desde SD
+--	--						  teclas_f(1) <= '1' and not RX_Release; -- F1, cargar desde SD
+--	--		when x"73" => teclas_f(2) <= '1' and not RX_Release; -- F1, cargar desde SD
+--	--		when x"69" => teclas_f(0) <= '1' and not RX_Release; -- F2, modo VIDEO o modo VGA
+--	--		when x"72" => teclas_f(1) <= '1' and not RX_Release; -- F2, modo VIDEO o modo VGA
+--			--when x"04" => teclas_f <= "100"; -- F3, video inverso
+--			--		
+--			when others =>  ;
+--			end case;
+-- avlixa, redefinición teclas de función
+	process (Clk, Reset_n)
 	begin
-		case RX_ShiftReg is
-		-- jepalza, teclas especiales para diversas funciones
-		when x"6b" => teclas_f <= "011"; -- F1, cargar desde SD
-		when x"73" => teclas_f <= "100"; -- F1, cargar desde SD
-		when x"69" => teclas_f <= "001"; -- F2, modo VIDEO o modo VGA
-		when x"72" => teclas_f <= "010"; -- F2, modo VIDEO o modo VGA
-		--when x"04" => teclas_f <= "100"; -- F3, video inverso
-		--		
-		when others => teclas_f <= "000";
-		end case;
+		if Reset_n = '0' then
+			tfunc <= (others=>'0');
+		elsif Clk'event and Clk = '1' then
+			tfunc <= tfunc_next;
+		end if;
 	end process;
---teclas_f <= "010" when LookUp="11111010" else "000";
+	tfunc_next <= ("1000" or tfunc) when RX_ShiftReg = x"66" else         -- BACKSPACE - mapear shift + 0
+					  ("0100" or tfunc) when RX_ShiftReg = x"7E" else         -- srcl-lock (blq.desp) - modo video
+					  ("0010" or tfunc) when RX_ShiftReg = x"6C" else         -- Home (inicio) - video inverso
+					  ("0001" or tfunc) when RX_ShiftReg = x"05" else "0000"; -- F1 - inicialmente sin uso 
+					  
+-- avlixa
+-- Hard reset - CTRL + ALT + BACKSPACE
+	process (Clk, Reset_n)
+	begin
+		if Reset_n = '0' then
+			CTRLev <= '0';
+			ALTev <= '0';
+			resetKeyev <= '0';
+		elsif Clk'event and Clk = '1' then
+			CTRLev <= CTRLnx;
+			ALTev <= ALTnx;
+			resetKeyev <= resetKeynx;
+		end if;
+	end process;
+	CTRLnx <= '1' when RX_ShiftReg = x"14" else '0';
+	ALTnx <= '1' when RX_ShiftReg = x"11" else '0';
+	resetKeynx <= '1' when RX_ShiftReg = x"07" else '0'; -- F12 reset/menu
+
+---- soft reset - F12
+--	process (RX_ShiftReg,RX_Release,Reset_n)
+--	begin
+--		if Reset_n = '0' then
+--				resetKey <= '0';	
+--		else
+--			case RX_ShiftReg is
+--			when X"07" =>  resetKey <= RX_Release; -- F12 reset/menu
+--			when others =>
+--				resetKey <= '0';		
+--			end case;
+--		end if;
+--	end process;
 	
 	process (Clk, Reset_n)
 	begin
