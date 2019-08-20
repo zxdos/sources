@@ -27,28 +27,22 @@ module joydecoder (
   input wire joy_data,//datos serializados patilla viene de la patilla 9 integrado
   output wire joy_clk,//este reloj no se usa
   output wire joy_load,//este reloj negado se usa directamente en las patillas 12 y 13
-  input wire clock_locked,
+  input wire clock_locked, // 0 = bloqueado
 //-----------------------------------------
-  output wire joy1up,
-  output wire joy1down,
-  output wire joy1left,
-  output wire joy1right,
-  output wire joy1fire1,
-  output wire joy1fire2,
-  output wire joy1fire3,
-  output wire joy1start,
-  output wire joy2up,
-  output wire joy2down,
-  output wire joy2left,
-  output wire joy2right,
-  output wire joy2fire1,
-  output wire joy2fire2,
-  output wire joy2fire3,
-  output wire joy2start  
+// up    = joyN[0];
+// down  = joyN[1];
+// left  = joyN[2];
+// right = joyN[3];
+// fire1 = joyN[4];
+// fire2 = joyN[5];
+// fire3 = joyN[6];
+// start = joyN[7];
+// salida = '0' con boton pulsado
+  output wire [7:0] joy1_o,
+  output wire [7:0] joy2_o
   );
   
-
-     // Divisor de relojes
+  // Divisor de relojes
   reg [7:0] delay_count;
   wire ena_x;
   
@@ -64,7 +58,7 @@ module joydecoder (
 
   
   
-  //Gestion de Joystick
+//Gestion de Joystick
 // wire [11:0] j1 , j2;
    reg [11:0] joy1  = 12'hFFF, joy2  = 12'hFFF;
    reg joy_renew = 1'b1;
@@ -73,22 +67,24 @@ module joydecoder (
    assign joy_clk = ena_x;
    assign joy_load = joy_renew;
 	
-   assign joy1up    = joy1[0];
-   assign joy1down  = joy1[1];
-   assign joy1left  = joy1[2];
-   assign joy1right = joy1[3];
-   assign joy1fire1 = joy1[4];
-   assign joy1fire2 = joy1[5];
-   assign joy1fire3 = joy1[6];
-   assign joy1start = joy1[8];
-   assign joy2up    = joy2[0];
-   assign joy2down  = joy2[1];
-   assign joy2left  = joy2[2];
-   assign joy2right = joy2[3];
-   assign joy2fire1 = joy2[4];
-   assign joy2fire2 = joy2[5];
-   assign joy2fire3 = joy2[6];
-   assign joy2start = joy2[8];
+
+   assign joy1_o[0] = joy1[0];
+   assign joy1_o[1] = joy1[1];
+   assign joy1_o[2] = joy1[2];
+   assign joy1_o[3] = joy1[3];
+   assign joy1_o[4] = joy1[4];
+   assign joy1_o[5] = joy1[5];
+   assign joy1_o[6] = joy1[6];
+   assign joy1_o[7] = joy1[8];
+	
+   assign joy2_o[0] = joy2[0];
+   assign joy2_o[1] = joy2[1];
+   assign joy2_o[2] = joy2[2];
+   assign joy2_o[3] = joy2[3];
+   assign joy2_o[4] = joy2[4];
+   assign joy2_o[5] = joy2[5];
+   assign joy2_o[6] = joy2[6];
+   assign joy2_o[7] = joy2[8];
 	
 	always @(posedge ena_x) 
 	  begin 
@@ -99,7 +95,7 @@ module joydecoder (
 		else 
 		  begin
          joy_renew <= 1'b1;
-        end
+        end 
       if (joy_count == 5'd25) 
 		  begin
          joy_count <= 5'd0;
@@ -108,7 +104,7 @@ module joydecoder (
 		  begin
          joy_count <= joy_count + 1'd1;
         end      
-     end
+	  end
    always @(posedge ena_x) begin
          case (joy_count)
             5'd2  : joy1[8]  <= joy_data;   //  1p start
