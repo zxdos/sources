@@ -18,6 +18,7 @@ use ieee.numeric_std.all;
 entity zx01 is
   port (n_reset:   in    std_ulogic;
         clock:     in    std_ulogic;
+		  clockvga:  in    std_ulogic;
         kbd_clk:   in    std_ulogic;
         kbd_data:  in    std_ulogic;
 --        v_inv:     in    std_ulogic;
@@ -34,7 +35,10 @@ entity zx01 is
 		  joy_load:   out  std_ulogic;
 		  joy_data:   in   std_ulogic;
 		  resetKey:	out	std_logic;
-		  MRESET	 :  out	std_logic
+		  MRESET	 :  out	std_logic;
+		  osdrgb: out std_logic_vector(2 downto 0);
+		  pixel_x: in std_logic_vector(9 downto 0);
+		  pixel_y: in std_logic_vector(9 downto 0)
 		  );
 end;
 
@@ -52,7 +56,13 @@ architecture rtl of zx01 is
         Key_Data: out std_logic_vector(4 downto 0);
 		  teclas_f: out std_logic_vector(3 downto 0);
 		  resetKey:	out	std_logic;
-		  MRESET	 :  out	std_logic		  );
+		  MRESET	 :  out	std_logic;
+		  joy1 : in std_logic_vector(7 downto 0);
+		  joy2 : in std_logic_vector(7 downto 0);
+		  redefjoy1: out	std_logic;
+		  redefjoy2: out	std_logic;
+		  redef_curr : out unsigned(2 downto 0)
+		  );
   end component;
 
   component T80s 
@@ -134,6 +144,19 @@ architecture rtl of zx01 is
         cp2:     out std_ulogic);
   end component;
 
+  component osd_font_gen 
+   port(
+      clk: in std_logic;
+      video_on: in std_logic;
+      pixel_x: in std_logic_vector(9 downto 0);
+		pixel_y: in std_logic_vector(9 downto 0);
+      rgb_text: out std_logic_vector(2 downto 0);
+		redefjoy1: in 	std_logic;
+		redefjoy2: in 	std_logic;
+		redef_curr : in unsigned(2 downto 0)
+   );
+	end component;
+
   signal a_mem_h:   std_ulogic_vector(14 downto 13);
   signal a_mem_l:   std_ulogic_vector(8 downto 0);
   signal a_mem:     std_logic_vector(14 downto 0);
@@ -172,7 +195,11 @@ architecture rtl of zx01 is
   --Joystick
   signal joy1,joy2: std_logic_vector(7 downto 0);
   signal kbd_col_joy:std_logic_vector(4 downto 0);
-	
+  --Osd redefinicion mapeo joystic
+  signal redefjoy1: std_logic;
+  signal	redefjoy2: std_logic;
+  signal	redef_curr : unsigned(2 downto 0);
+  signal hsync:    std_ulogic; --avlixa
 begin
 
 
@@ -211,11 +238,27 @@ begin
               PS2_Data => kbd_data,
               Key_Addr => a_cpu(15 downto 8),
               Key_Data => kbd_col,
-				  teclas_f => teclas_f,  --jepalza, teclas F1-F2-F3
+				  teclas_f => teclas_f,  --jepalza, teclas F1-F2-F3 -- modif avlixa
 				  resetKey => resetKey,
-				  MRESET	  => MRESET
+				  MRESET	  => MRESET,
+				  joy1 	  => joy1,
+				  joy2 	  => joy2,
+				  redefjoy1=> redefjoy1,
+				  redefjoy2=> redefjoy2,
+				  redef_curr=>redef_curr				  
 				  );
-
+  o_hsync <= hsync;
+  
+  c_osd_font_gen: osd_font_gen 
+   port map (
+      clk => clockvga,
+      video_on=> redefjoy1 or redefjoy2,
+      pixel_x=>pixel_x, pixel_y=>pixel_y,
+      rgb_text=>osdrgb,
+		redefjoy1=>redefjoy1,
+		redefjoy2=>redefjoy2,
+		redef_curr=>redef_curr
+   );
 
 	-- ZX81 keymap:
 	-- col(N)=0  0,      1, 2, 3, 4
@@ -229,23 +272,30 @@ begin
 	-- a(14)=0 - return, l, k, j, h
 	-- a(15)=0 - space,  ., m, n, b
   
+  -- Mapeo fijo de joystick, se ha eliminado por variable pero se mantiene para backspace
   -- joystick 1: 5 - 6 - 7 - 8 -  0 - C
   -- joystick 2: o - a - q - p - SP - M
   kbd_col_joy(0) <= '0' when ((a_cpu(8)='0'  and teclas_f(3) = '1')						--backspace = *shift* + 0
-									or (a_cpu(12)='0' and teclas_f(3) = '1')						--backspace = shift + *0*
-									or	(a_cpu(12)='0' and joy1(4) = '0')-- else kbd_col(0);  -- j1.fire 1   - 0
-							      or (a_cpu(10)='0' and joy2(0) = '0') -- else kbd_col(0); -- j2.up       - q
-									or (a_cpu(9)='0' and joy2(1) = '0') --else kbd_col(0);   -- j2.down     - a
-									or (a_cpu(13)='0' and joy2(3) = '0') -- else kbd_col(0); -- j2.right    - p
-									or (a_cpu(15)='0' and joy2(4) = '0')) else kbd_col(0);   -- j2.fire 1   - SP
---  kbd_col_joy(1)  <= kbd_col(1);   -- sin mapeo en columna 1
-  kbd_col_joy(1) <= '0' when (a_cpu(13)='0' and joy2(2) = '0') else kbd_col(1);     -- j2.left    - o
-  kbd_col_joy(2) <= '0' when ((a_cpu(12)='0' and joy1(3) = '0') --else kbd_col(2);  -- j1.right   - 8
-									or (a_cpu(15)='0' and joy2(5) = '0')) else kbd_col(2);   -- j2.fire 2  - M
-  kbd_col_joy(3) <= '0' when ((a_cpu(12)='0' and joy1(0) = '0') --else kbd_col(3);  -- j1.up      - 7
-								   or (a_cpu(8)='0' and joy1(5) = '0')) else kbd_col(3);    -- j1.fire 2  - C
-  kbd_col_joy(4) <= '0' when ((a_cpu(12)='0' and joy1(1) = '0') -- else kbd_col(4); -- j1.down    - 6
-									or	(a_cpu(11)='0' and joy1(2) = '0')) else kbd_col(4);   -- j1.left    - 5
+									or (a_cpu(12)='0' and teclas_f(3) = '1'))						--backspace = shift + *0*
+									--or	(a_cpu(12)='0' and joy1(4) = '0')-- else kbd_col(0);  -- j1.fire 1   - 0
+							      -- or (a_cpu(10)='0' and joy2(0) = '0') -- else kbd_col(0); -- j2.up       - q
+									-- or (a_cpu(9)='0' and joy2(1) = '0') --else kbd_col(0);   -- j2.down     - a
+									--or (a_cpu(13)='0' and joy2(3) = '0') -- else kbd_col(0); -- j2.right    - p
+									-- or (a_cpu(15)='0' and joy2(4) = '0')) else kbd_col(0);   -- j2.fire 1   - SP
+									else kbd_col(0);
+  kbd_col_joy(1)  <= kbd_col(1);   -- sin mapeo en columna 1
+--  kbd_col_joy(1) <= '0' when (a_cpu(13)='0' and joy2(2) = '0') else kbd_col(1);     -- j2.left    - o
+  kbd_col_joy(2) <= -- '0' when --((a_cpu(12)='0' and joy1(3) = '0') or --else kbd_col(2);  -- j1.right   - 8
+									  --  ((a_cpu(15)='0' and joy2(5) = '0')) else kbd_col(2);   -- j2.fire 2  - M
+								   kbd_col(2);
+  kbd_col_joy(3) <= --'0' when --((a_cpu(12)='0' and joy1(0) = '0') --else kbd_col(3);  -- j1.up      - 7
+								   --or (a_cpu(8)='0' and joy1(5) = '0')) else kbd_col(3);    -- j1.fire 2  - C
+									 --  (a_cpu(8)='0' and joy1(5) = '0') else  						-- j1.fire 2  - C
+								  kbd_col(3);   
+  kbd_col_joy(4) <= --'0' when --((a_cpu(12)='0' and joy1(1) = '0') -- else kbd_col(4); -- j1.down    - 6
+									--or	(a_cpu(11)='0' and joy1(2) = '0')) else kbd_col(4);   -- j1.left    - 5
+									--	(a_cpu(11)='0' and joy1(2) = '0') else  -- j1.left    - 5
+								  kbd_col(4);  
   
 --  i_kbd_col <= kbd_mode when i_n_modes = '0' else kbd_col;
   i_kbd_col <= kbd_mode when i_n_modes = '0' else kbd_col_joy;
@@ -321,7 +371,7 @@ begin
               n_nmi,n_halt,n_wait,n_romcs,n_ramcs,
               std_ulogic_vector(i_kbd_col),usa_uk,
  --             i_video,i_n_sync,tape_in); -- avlixa
-              i_video,i_n_sync,o_vsync,o_hsync,tape_in); --avlixa
+              i_video,i_n_sync,o_vsync,hsync,tape_in); --avlixa
 
   i_phi <= clock_2;
 
@@ -359,7 +409,7 @@ begin
 		end if;
 	end process;
 	mod_vidnext <= not mod_vid when teclas_f(2) = '1' else mod_vid; -- cambio video con Scrl.lock
-	v_invnext   <= not v_inv when teclas_f(1) = '1' else v_inv; -- cambio video inverso con Home
+	--v_invnext   <= not v_inv when teclas_f(1) = '1' else v_inv; -- cambio video inverso con Home
 	
   video <= i_video when mod_vid='0'   -- modo VGA si modo_video=0
      else '0' when i_n_sync='0'       -- modo VIDEO
