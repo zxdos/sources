@@ -21,7 +21,13 @@ entity PS2_MatrixEncoder is
 		-- jepalza: F1=SD, F2=VGA, F3=INVERSO, Back
 		teclas_f				: out std_logic_vector(3 downto 0);
 		resetKey	:	out	std_logic;
-    	MRESET	:  out	std_logic
+    	MRESET	:  out	std_logic;
+		-- joystick
+		joy1 : in std_logic_vector(7 downto 0);
+		joy2 : in std_logic_vector(7 downto 0);
+		redefjoy1: out	std_logic;
+		redefjoy2: out	std_logic;
+		redef_curr : out unsigned(2 downto 0)
 	);
 end PS2_MatrixEncoder;
 
@@ -41,13 +47,21 @@ architecture rtl of PS2_MatrixEncoder is
 	signal	Matrix_Set		: std_logic;
 	signal	Matrix_Clear	: std_logic;
 	signal	Matrix_Wr_Addr	: unsigned(7 downto 0);
-
+	type     joy_addr_Image is array (natural range <>) of unsigned(7 downto 0);
+	signal   joy1_addr      : joy_addr_Image(7 downto 0);
+	signal   joy2_addr      : joy_addr_Image(7 downto 0);
+	
 	type Matrix_Image is array (natural range <>) of std_logic_vector(4 downto 0);
 	signal	Matrix			: Matrix_Image(0 to 7);
+	signal	Matrix_joy  	: Matrix_Image(0 to 7);
 	signal CTRL, CTRLnx,CTRLev	: std_logic;
 	signal ALT, ALTnx,ALTev	: std_logic;
 	signal resetKeyev,resetKeynx	: std_logic;
 	signal tfunc, tfunc_next: std_logic_vector(3 downto 0);
+	-- Redefinición joystick 1
+	signal Redefine1 : boolean;
+	signal Redefine2 : boolean;
+	signal Red_curr  : unsigned(2 downto 0);
 begin
 
 	process (Clk, Reset_n)
@@ -147,6 +161,27 @@ begin
 			MRESET <= '0';
 			CTRL <= '0';
 			ALT <= '0';
+			Redefine1 <= false;
+			Redefine2 <= false;
+		   -- mapeo inicial joystick 1
+			joy1_addr(0) <= "10001000"; -- up:     7
+			joy1_addr(1) <= "10010000"; -- down:   6
+			joy1_addr(2) <= "01110000"; -- left:   5  
+			joy1_addr(3) <= "10000100"; -- right:  8   
+			joy1_addr(4) <= "10000001"; -- fire 1: 0   
+			joy1_addr(5) <= "00001000"; -- fire 2: C   
+			joy1_addr(6) <= "00000000"; -- :    
+			joy1_addr(7) <= "00000000"; -- :    			
+		   -- mapeo inicial joystick 2
+			joy2_addr(0) <= "01000001"; -- up:     q
+			joy2_addr(1) <= "00100001"; -- down:   a
+			joy2_addr(2) <= "10100010"; -- left:   o  
+			joy2_addr(3) <= "10100001"; -- right:  p   
+			joy2_addr(4) <= "11100001"; -- fire 1: SP   
+			joy2_addr(5) <= "11100100"; -- fire 2: M   
+			joy2_addr(6) <= "00000000"; -- :    
+			joy2_addr(7) <= "00000000"; -- :  		
+		
 		elsif Clk'event and Clk = '1' then
 			Matrix_Set <= '0';
 			Matrix_Clear <= '0';
@@ -167,6 +202,26 @@ begin
 					if unsigned(LookUp) /= 0 and RX_Release = '1' then
 						Matrix_Wr_Addr <= unsigned(LookUp);
 						Matrix_Clear <= '1';
+						-- Durante redefinición mapeo joystick 1, al liberar una tecla se asigna a su dirección
+						if Redefine1 and LookUp /= "00000000" then
+							joy1_addr(to_integer(Red_curr)) <= unsigned(LookUp);
+							
+							if Red_curr = "101" then
+								Redefine1 <= false;
+							else
+								Red_curr <= Red_curr + 1;
+							end if;
+						end if;
+						-- Durante redefinición mapeo joystick 2, al liberar una tecla se asigna a su dirección
+						if Redefine2 and LookUp /= "00000000" then
+							joy2_addr(to_integer(Red_curr)) <= unsigned(LookUp);
+							
+							if Red_curr = "101" then
+								Redefine2 <= false;
+							else
+								Red_curr <= Red_curr + 1;
+							end if;
+						end if;						
 					end if;
 					-- Teclas de función especiales - avlixa
 					if unsigned(tfunc) /= 0 then
@@ -181,6 +236,16 @@ begin
 						else
 							teclas_f <= (others=>'0');
 							MRESET <= '0';
+							
+							if tfunc(0) = '1' and not Redefine2 then  -- Al liberar F1 se activa redefinición de teclas joy1
+								Redefine1 <= true;
+								Red_curr <= (others=>'0');
+							end if;
+							if tfunc(1) = '1' and not Redefine1 then  -- Al liberar F2 se activa redefinición de teclas joy2
+								Redefine2 <= true;
+								Red_curr <= (others=>'0');
+							end if;
+							
 						end if;
 					end if;
 					if CTRLev = '1' then
@@ -209,6 +274,11 @@ begin
 		end if;
 	end process;
 
+	-- Salida estado redefinición para OSD
+	redefjoy1 <= '1' when Redefine1 else '0';
+	redefjoy2 <= '1' when Redefine2 else '0';
+	redef_curr <= Red_curr;
+	
 	-- ZX81 keymap:
 	-- shift, z, x, c, v
 	-- a, s, d, f, g
@@ -293,6 +363,7 @@ begin
 --			--		
 --			when others =>  ;
 --			end case;
+
 -- avlixa, redefinición teclas de función
 	process (Clk, Reset_n)
 	begin
@@ -304,8 +375,9 @@ begin
 	end process;
 	tfunc_next <= ("1000" or tfunc) when RX_ShiftReg = x"66" else         -- BACKSPACE - mapear shift + 0
 					  ("0100" or tfunc) when RX_ShiftReg = x"7E" else         -- srcl-lock (blq.desp) - modo video
-					  ("0010" or tfunc) when RX_ShiftReg = x"6C" else         -- Home (inicio) - video inverso
-					  ("0001" or tfunc) when RX_ShiftReg = x"05" else "0000"; -- F1 - inicialmente sin uso 
+					  ("0010" or tfunc) when RX_ShiftReg = x"06" else         -- F2 - Redefine joystick 2 
+					  ("0001" or tfunc) when RX_ShiftReg = x"05" else  		 -- F1 - Redefine joystick 1 
+					   "0000"; -- F1 - Redefine joystick 1 
 					  
 -- avlixa
 -- Hard reset - CTRL + ALT + BACKSPACE
@@ -325,20 +397,6 @@ begin
 	ALTnx <= '1' when RX_ShiftReg = x"11" else '0';
 	resetKeynx <= '1' when RX_ShiftReg = x"07" else '0'; -- F12 reset/menu
 
----- soft reset - F12
---	process (RX_ShiftReg,RX_Release,Reset_n)
---	begin
---		if Reset_n = '0' then
---				resetKey <= '0';	
---		else
---			case RX_ShiftReg is
---			when X"07" =>  resetKey <= RX_Release; -- F12 reset/menu
---			when others =>
---				resetKey <= '0';		
---			end case;
---		end if;
---	end process;
-	
 	process (Clk, Reset_n)
 	begin
 		if Reset_n = '0' then
@@ -360,15 +418,86 @@ begin
 		end if;
 	end process;
 
+	process (Clk, Reset_n)
+	begin
+		if Reset_n = '0' then
+			Matrix_joy <= (others => (others => '0'));
+		elsif Clk'event and Clk = '1' then
+			Matrix_joy <= (others => (others => '0'));
+			--Joystick 1
+			if joy1(0) = '0' then -- up
+				Matrix_joy(to_integer(joy1_addr(0)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(0)(7 downto 5))) or
+					std_logic_vector(joy1_addr(0)(4 downto 0));
+			end if;
+			if joy1(1) = '0' then -- down
+				Matrix_joy(to_integer(joy1_addr(1)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(1)(7 downto 5))) or
+					std_logic_vector(joy1_addr(1)(4 downto 0));
+			end if;
+			if joy1(2) = '0' then -- left
+				Matrix_joy(to_integer(joy1_addr(2)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(2)(7 downto 5))) or
+					std_logic_vector(joy1_addr(2)(4 downto 0));
+			end if;
+			if joy1(3) = '0' then -- right
+				Matrix_joy(to_integer(joy1_addr(3)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(3)(7 downto 5))) or
+					std_logic_vector(joy1_addr(3)(4 downto 0));
+			end if;
+			if joy1(4) = '0' then -- fire 1
+				Matrix_joy(to_integer(joy1_addr(4)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(4)(7 downto 5))) or
+					std_logic_vector(joy1_addr(4)(4 downto 0));
+			end if;
+			if joy1(5) = '0' then -- fire 2
+				Matrix_joy(to_integer(joy1_addr(5)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy1_addr(5)(7 downto 5))) or
+					std_logic_vector(joy1_addr(5)(4 downto 0));
+			end if;
+			--Joystick 2
+			if joy2(0) = '0' then -- up
+				Matrix_joy(to_integer(joy2_addr(0)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(0)(7 downto 5))) or
+					std_logic_vector(joy2_addr(0)(4 downto 0));
+			end if;
+			if joy2(1) = '0' then -- down
+				Matrix_joy(to_integer(joy2_addr(1)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(1)(7 downto 5))) or
+					std_logic_vector(joy2_addr(1)(4 downto 0));
+			end if;
+			if joy2(2) = '0' then -- left
+				Matrix_joy(to_integer(joy2_addr(2)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(2)(7 downto 5))) or
+					std_logic_vector(joy2_addr(2)(4 downto 0));
+			end if;
+			if joy2(3) = '0' then -- right
+				Matrix_joy(to_integer(joy2_addr(3)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(3)(7 downto 5))) or
+					std_logic_vector(joy2_addr(3)(4 downto 0));
+			end if;
+			if joy2(4) = '0' then -- fire 1
+				Matrix_joy(to_integer(joy2_addr(4)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(4)(7 downto 5))) or
+					std_logic_vector(joy2_addr(4)(4 downto 0));
+			end if;
+			if joy2(5) = '0' then -- fire 2
+				Matrix_joy(to_integer(joy2_addr(5)(7 downto 5))) <=
+					Matrix_joy(to_integer(joy2_addr(5)(7 downto 5))) or
+					std_logic_vector(joy2_addr(5)(4 downto 0));
+			end if;		
+		end if;
+	end process;
+
 	g_out1 : for i in 0 to 4 generate
-		Key_Data(i) <= not ((Matrix(0)(i) and not Key_Addr(0)) or
-					(Matrix(1)(i) and not Key_Addr(1)) or
-					(Matrix(2)(i) and not Key_Addr(2)) or
-					(Matrix(3)(i) and not Key_Addr(3)) or
-					(Matrix(4)(i) and not Key_Addr(4)) or
-					(Matrix(5)(i) and not Key_Addr(5)) or
-					(Matrix(6)(i) and not Key_Addr(6)) or
-					(Matrix(7)(i) and not Key_Addr(7)));
+		Key_Data(i) <= not (((Matrix(0)(i) or Matrix_joy(0)(i)) and not Key_Addr(0)) or
+					((Matrix(1)(i) or Matrix_joy(1)(i)) and not Key_Addr(1)) or
+					((Matrix(2)(i) or Matrix_joy(2)(i)) and not Key_Addr(2)) or
+					((Matrix(3)(i) or Matrix_joy(3)(i)) and not Key_Addr(3)) or
+					((Matrix(4)(i) or Matrix_joy(4)(i)) and not Key_Addr(4)) or
+					((Matrix(5)(i) or Matrix_joy(5)(i)) and not Key_Addr(5)) or
+					((Matrix(6)(i) or Matrix_joy(6)(i)) and not Key_Addr(6)) or
+					((Matrix(7)(i) or Matrix_joy(7)(i)) and not Key_Addr(7)));
 	end generate;
 
 end;

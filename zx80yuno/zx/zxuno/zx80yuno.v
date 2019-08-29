@@ -176,12 +176,12 @@ assign stdnb = 1'b1;
 //assign VGA_HS = modo_video ? csync : ~hs;
 //assign VGA_VS = modo_video ? 1'bZ  : ~vs;
 
-assign VGA_R = modo_video ? t_rv[2:0] : { vb, vb, vb };
-assign VGA_G = modo_video ? t_gv[2:0] : { vb, vb, vb };
-assign VGA_B = modo_video ? t_bv[2:0]  : { vb, vb, vb };
-assign VGA_HS = modo_video ? t_hs : ~hs;
-assign VGA_VS = modo_video ? t_vs  : ~vs;
-
+assign VGA_R = modo_video ? { video, video, video }  : { vbosd[2], vbosd[2], vbosd[2] };
+assign VGA_G = modo_video ? { video, video, video }  : { vbosd[1], vbosd[1], vbosd[1] };
+assign VGA_B = modo_video ? { video, video, video }  : { vbosd[0], vbosd[0], vbosd[0] };
+assign VGA_HS = modo_video ? csync : ~hs;
+assign VGA_VS = modo_video ? 1'bZ  : ~vs;
+assign vbosd = (osdrgb == 3'd0) ? {vb, vb, vb} : osdrgb;
 
 // video and csync output from the zx01
 wire video;
@@ -191,6 +191,7 @@ wire hs_z81;
 
 // video and csync output from doublescan
 wire vb;
+wire [2:0] vbosd;
 wire vs;
 wire hs;
 
@@ -205,28 +206,30 @@ scandoubler scandoubler (
   // video input
   .csync(csync),
   .v_in(~video),
-
+  
   // output interface
   .hs_out(hs),
   .vs_out(vs),
-  .v_out(vb)
+  .v_out(vb),
+  .pixel_x(pixel_x),
+  .pixel_y(pixel_y)
 );
 
-wire t_hs;
-wire t_vs;
-wire [2:0] t_rv;
-wire [2:0] t_gv;
-wire [2:0] t_bv;
-
-//Test_Pattern_Gen Test_pattern
-//  (.i_Clk(clkvga),
-//   .i_Pattern(4'd6),
-//   .o_HSync(t_hs),
-//   .o_VSync(t_vs),
-//   .o_Red_Video(t_rv[2:0]),
-//   .o_Grn_Video(t_gv[2:0]),
-//   .o_Blu_Video(t_bv[2:0])
-//	);
+//wire t_hs;
+//wire t_vs;
+//wire [2:0] t_rv;
+//wire [2:0] t_gv;
+//wire [2:0] t_bv;
+//
+////Test_Pattern_Gen Test_pattern
+////  (.i_Clk(clkvga),
+////   .i_Pattern(4'd6),
+////   .o_HSync(t_hs),
+////   .o_VSync(t_vs),
+////   .o_Red_Video(t_rv[2:0]),
+////   .o_Grn_Video(t_gv[2:0]),
+////   .o_Blu_Video(t_bv[2:0])
+////	);
 
 //// ---------------------------------------------------------- //
 ////    SCANDOUBLER del MIST, es lo nico que he encontrado
@@ -398,12 +401,16 @@ assign AUDIO_R = tape_audio;
 
 wire	resetKey;
 wire	MRESET;
+wire [2:0] osdrgb;
+wire [9:0] pixel_x;
+wire [9:0] pixel_y;
 
 reg mod_vid = 1;
 // modulo principal del ZX81
 zx01 zx01 (
 	.n_reset    (~reset     	),
 	.clock		(clk65       		),
+	.clockvga	(clkvga       		),
    .kbd_clk		(ps2_clk      	),
 	.kbd_data	(ps2_data		),
 //	.v_inv    	(v_inv			), //jepalza, para VGA debe ser 0, para VIDEO 1
@@ -420,7 +427,10 @@ zx01 zx01 (
   .joy_load    (JOY_LOAD		),
   .joy_data		(JOY_DATA		),
   .resetKey		(resetKey),
-  .MRESET		(MRESET)
+  .MRESET		(MRESET),
+  .osdrgb      (osdrgb),
+  .pixel_x     (pixel_x),
+  .pixel_y     (pixel_y)
 );
 
 always @(posedge clk65)

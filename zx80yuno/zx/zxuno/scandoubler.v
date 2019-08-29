@@ -31,7 +31,10 @@ module scandoubler (
   // output interface
   output reg          hs_out,
   output reg          vs_out,
-  output wire         v_out
+  output wire         v_out,
+  output reg   [9:0]  pixel_x,
+  output wire   [9:0]  pixel_y
+  
 );
 
 //  constant HSYNC_BEGIN: natural := 192;
@@ -45,6 +48,10 @@ reg [8:0] sd_col;
 // column counter running at 13MHz, but counting through a whole zx81 line
 reg [9:0] zx_col;
 wire[9:0] zx_col_next = zx_col + 1'd1;
+
+// salida pixel actual para OSD
+//assign pixel_x = {1'b0 , sd_col};
+assign pixel_y = line_cnt;
 
 // counter to determine sync lengths in the composity sync signal
 // used to differentiate between hsync and vsync
@@ -111,9 +118,11 @@ always @(posedge clkvga) begin
 			sd_col <= 9'd0;
 			rdaddr[8:0] <= 0;
 			scanline <= !scanline;
+			pixel_x <= 10'd0;			
 		end else begin
 			sd_col <= sd_col + 9'd1;
 			rdaddr[8:0] <= rdaddr[8:0] + 1'd1;
+			pixel_x <= {1'b0 , sd_col};					
 		end
 		
 		// change toggle bit at the end of each zx line
@@ -128,20 +137,22 @@ always @(posedge clkvga) begin
 		if((csync && !csD && sync_len < 90)) begin
 			zx_col <= 10'd0;
 			wraddr[8:0] <= 0;
+
 		end else begin
 			zx_col <= zx_col_next;
 			wraddr[8:0] <= zx_col_next[9:1];
+
 		end
 
 		// fetch one line at half the scan doubler frequency
 		if(zx_col[0])
 			line_buffer[wraddr] <= v_in;
-		// zx81 column counter
-		if((csync && !csD && sync_len < 90)) begin
-			zx_col <= 10'd0;
-		end else begin
-			zx_col <= zx_col_next;
-		end
+//		// zx81 column counter
+//		if((csync && !csD && sync_len < 90)) begin
+//			zx_col <= 10'd0;
+//		end else begin
+//			zx_col <= zx_col_next;
+//		end
 		
 		// output other line at full scan doubler frequency
 		q <= line_buffer[rdaddr];

@@ -1,5 +1,8 @@
 # Clocks & debug
 NET "CLOCK_50"        LOC="A10" | IOSTANDARD = LVCMOS33;
+NET "CLOCK_50" 		 TNM_NET = "CLOCK_50";
+TIMESPEC "TS_CLOCK_50" = PERIOD "CLOCK_50" 20 ns HIGH 50 %;
+
 NET "LED"             LOC="T9"  | IOSTANDARD = LVCMOS33;
 
 # Video output
