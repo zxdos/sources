@@ -1,0 +1,15 @@
+# Output products list for <DualPortRAM_Block>
+DualPortRAM_Block/blk_mem_gen_v7_3_readme.txt
+DualPortRAM_Block/doc/blk_mem_gen_v7_3_vinfo.html
+DualPortRAM_Block/doc/pg058-blk-mem-gen.pdf
+DualPortRAM_Block.asy
+DualPortRAM_Block.gise
+DualPortRAM_Block.ngc
+DualPortRAM_Block.v
+DualPortRAM_Block.veo
+DualPortRAM_Block.xco
+DualPortRAM_Block.xise
+DualPortRAM_Block_flist.txt
+DualPortRAM_Block_xmdf.tcl
+_xmsgs/pn_parser.xmsgs
+summary.log

@@ -1,0 +1,15 @@
+# Output products list for <Ram_Tape>
+Ram_Tape/blk_mem_gen_v7_3_readme.txt
+Ram_Tape/doc/blk_mem_gen_v7_3_vinfo.html
+Ram_Tape/doc/pg058-blk-mem-gen.pdf
+Ram_Tape.asy
+Ram_Tape.gise
+Ram_Tape.ngc
+Ram_Tape.v
+Ram_Tape.veo
+Ram_Tape.xco
+Ram_Tape.xise
+Ram_Tape_flist.txt
+Ram_Tape_xmdf.tcl
+_xmsgs/pn_parser.xmsgs
+summary.log
