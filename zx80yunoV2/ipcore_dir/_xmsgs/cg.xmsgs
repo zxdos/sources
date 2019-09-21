@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="info" file="sim" num="172" delta="old" >Generating IP...
+</msg>
+
+<msg type="warning" file="sim" num="0" delta="new" ><arg fmt="%s" index="1">A core named &apos;clock&apos; already exists in the project. Output products for this core may be overwritten.</arg>
+</msg>
+
+<msg type="warning" file="coreutil" num="0" delta="new" >Failed to generate file: core_v
+    invoked from within
+&quot;deliverEJava $componentName GenerationOptions $TopLevel&quot;
+    (procedure &quot;components::clock::generate&quot; line 36)
+    invoked from within
+&quot;components::${componentName}::generate&quot;
+    (procedure &quot;::xilinx::sim::generation::generateCore3rdParty&quot; line 125)
+    invoked from within
+&quot;::xilinx::sim::generation::generateCore3rdParty $parameters(componentInstanceID)&quot;
+    (procedure &quot;main&quot; line 25)
+    invoked from within
+&quot;main $argc $argv&quot;
+    invoked from within
+&quot;return [main $argc $argv]&quot;
+    (file &quot;/opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_v3_6/generate/run_legacy_tcl_flow.tcl&quot; line 47)</msg>
+
+<msg type="error" file="sim" num="0" delta="new" >Unable to evaluate Tcl file:
+   /opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_v3_6/generate/run_legacy_tcl_flow.tcl
+</msg>
+
+<msg type="error" file="sim" num="0" delta="new" >Failed executing Tcl generator.
+</msg>
+
+<msg type="error" file="sim" num="0" delta="new" >Failed to generate &apos;clock&apos;.  Failed executing Tcl generator.
+
+</msg>
+
+</messages>
+
