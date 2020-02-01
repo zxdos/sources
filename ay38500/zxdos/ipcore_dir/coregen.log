@@ -1,0 +1,58 @@
+Welcome to Xilinx CORE Generator.
+Help system initialized.
+The IP Catalog has been reloaded.
+Opening project file
+/home/avlixa/FPGA/ZXDOS/ay38500/zxdos/pong_ay38500_zxdos.cgp.
+Customize and GenerateINFO:sim:172 - Generating IP...
+Applying current project options...
+Finished applying current project options.
+Resolving generics for 'relojes_ip'...
+Applying external generics to 'relojes_ip'...
+WARNING:coreutil - Failed to generate file: core_v
+       invoked from within
+   "deliverEJava $componentName GenerationOptions $TopLevel"
+       (procedure "components::relojes_ip::generate" line 36)
+       invoked from within
+   "components::${componentName}::generate"
+       (procedure "::xilinx::sim::generation::generateCore3rdParty" line 125)
+       invoked from within
+   "::xilinx::sim::generation::generateCore3rdParty
+   $parameters(componentInstanceID)"
+       (procedure "main" line 25)
+       invoked from within
+   "main $argc $argv"
+       invoked from within
+   "return [main $argc $argv]"
+       (file
+   "/opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_
+   v3_6/generate/run_legacy_tcl_flow.tcl" line 47)ERROR:sim - Unable to evaluate Tcl file:
+   /opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_v
+   3_6/generate/run_legacy_tcl_flow.tcl
+ERROR:sim - Failed executing Tcl generator.
+Customize and GenerateINFO:sim:172 - Generating IP...
+Applying current project options...
+Finished applying current project options.
+Resolving generics for 'reloj_ip'...
+Applying external generics to 'reloj_ip'...
+WARNING:coreutil - Failed to generate file: core_v
+       invoked from within
+   "deliverEJava $componentName GenerationOptions $TopLevel"
+       (procedure "components::reloj_ip::generate" line 36)
+       invoked from within
+   "components::${componentName}::generate"
+       (procedure "::xilinx::sim::generation::generateCore3rdParty" line 125)
+       invoked from within
+   "::xilinx::sim::generation::generateCore3rdParty
+   $parameters(componentInstanceID)"
+       (procedure "main" line 25)
+       invoked from within
+   "main $argc $argv"
+       invoked from within
+   "return [main $argc $argv]"
+       (file
+   "/opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_
+   v3_6/generate/run_legacy_tcl_flow.tcl" line 47)ERROR:sim - Unable to evaluate Tcl file:
+   /opt/Xilinx/14.7/ISE_DS/ISE/coregen/ip/xilinx/primary/com/xilinx/ip/clk_wiz_v
+   3_6/generate/run_legacy_tcl_flow.tcl
+ERROR:sim - Failed executing Tcl generator.
+Closed project file.
