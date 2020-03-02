@@ -1,0 +1,8 @@
+INTSTYLE=ise
+INFILE=/home/avlixa/FPGA/ZXDOS/ay38500_v2/zxnext/work/pong_ay38500_zxnext.ncd
+OUTFILE=/home/avlixa/FPGA/ZXDOS/ay38500_v2/zxnext/work/pong_ay38500_zxnext.bit
+FAMILY=Spartan6
+PART=xc6slx16-2ftg256
+WORKINGDIR=/home/avlixa/FPGA/ZXDOS/ay38500_v2/zxnext/work
+LICENSE=WebPack
+USER_INFO=__0_0_0

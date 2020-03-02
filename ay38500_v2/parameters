@@ -1,0 +1,61 @@
+#Basic parameter file #needed commands: pmos/nmos positioning? eliminate pullups/grounders
+#legacy_transdefs_format
+input_folder=input
+output_folder=output
+########Transistor Layer
+layer=Transistor
+debug_image
+file=trans_vias.png
+color.fill=255,255,0
+color.fill=0,255,255
+color.diagonal=0,0,255
+color.fill=255,100,0#old pullup color
+endlayer
+########Surface Metal Layer
+layer=Metal
+debug_image
+file=wiresGREEN.png
+color.fill=0,100,0
+color.diagonal=0,0,255
+color.low=255,0,0
+color.high=0,255,0
+color.loopbreak=255,0,150
+color.loopbreak=0,200,0
+connectsTo=Vias
+transConnect=Gate
+endlayer
+########Via Layer
+layer=Vias
+debug_image
+file=trans_vias.png
+color.fill=150,0,150
+color.loopbreak=255,0,150
+color.loopbreak=0,200,0
+connectsTo=N_Diffusion
+endlayer
+########Doping Layer
+layer=N_Diffusion
+debug_image
+file=doping.png
+color.fill=150,150,150
+color.diagonal=0,0,255
+color.loopbreak=255,0,150
+color.loopbreak=0,200,0
+transConnect=SourceDrain
+endlayer
+########Extra layer
+layer=Extra_Visuals
+file=extra.png
+color.fill=150,0,150
+color.diagonal=0,0,255
+color.loopbreak=255,0,150
+color.loopbreak=0,200,0
+endlayer
+########Output file header/license
+start_header
+Polygon and netlist source file of the AY-3-8500
+Based on die photos from Sean Riddle and highlighting done by Cole Johnson
+(http://seanriddledecap.blogspot.com/2017/02/blog-post.html)
+This work is licensed under the Creative Commons Attribution 3.0 United States License. 
+To view a copy of this license, visit http://creativecommons.org/licenses/by/3.0/us/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+end_header

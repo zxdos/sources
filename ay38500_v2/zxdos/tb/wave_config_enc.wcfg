@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/avlixa/FPGA/ZXDOS/ay38500/zxdos/single_paddle_enc_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="single_paddle_enc" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="45" />
+   <wave_markers>
+      <marker time="131072040000000" label="" />
+      <marker time="139264040000000" label="" />
+   </wave_markers>
+   <wvobject fp_name="/single_paddle_enc/clock" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/reset" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/resetChip" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">resetChip</obj_property>
+      <obj_property name="ObjectShortName">resetChip</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/i_padDWN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_padDWN</obj_property>
+      <obj_property name="ObjectShortName">i_padDWN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/steerjoy2quad0/clkdiv" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">clkdiv[31:0]</obj_property>
+      <obj_property name="ObjectShortName">clkdiv[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/i_joy_up" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_joy_up</obj_property>
+      <obj_property name="ObjectShortName">i_joy_up</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/i_key_up" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_key_up</obj_property>
+      <obj_property name="ObjectShortName">i_key_up</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/i_joy_down" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_joy_down</obj_property>
+      <obj_property name="ObjectShortName">i_joy_down</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/i_key_down" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">i_key_down</obj_property>
+      <obj_property name="ObjectShortName">i_key_down</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/o_padCTRL" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">o_padCTRL</obj_property>
+      <obj_property name="ObjectShortName">o_padCTRL</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/steer0" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">steer0[1:0]</obj_property>
+      <obj_property name="ObjectShortName">steer0[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/EncoderA" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">EncoderA</obj_property>
+      <obj_property name="ObjectShortName">EncoderA</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/EncoderB" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">EncoderB</obj_property>
+      <obj_property name="ObjectShortName">EncoderB</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/padCtrl" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">padCtrl</obj_property>
+      <obj_property name="ObjectShortName">padCtrl</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/Mask2_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">Mask2_n</obj_property>
+      <obj_property name="ObjectShortName">Mask2_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/enc_a" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">enc_a</obj_property>
+      <obj_property name="ObjectShortName">enc_a</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/enc_b" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">enc_b</obj_property>
+      <obj_property name="ObjectShortName">enc_b</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/mask1_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mask1_n</obj_property>
+      <obj_property name="ObjectShortName">mask1_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/mask2_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">mask2_n</obj_property>
+      <obj_property name="ObjectShortName">mask2_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/vblank" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vblank</obj_property>
+      <obj_property name="ObjectShortName">vblank</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/sense1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sense1</obj_property>
+      <obj_property name="ObjectShortName">sense1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/sense2" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sense2</obj_property>
+      <obj_property name="ObjectShortName">sense2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/nmi_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">nmi_n</obj_property>
+      <obj_property name="ObjectShortName">nmi_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/sense1_int" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sense1_int</obj_property>
+      <obj_property name="ObjectShortName">sense1_int</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/sense2_int" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sense2_int</obj_property>
+      <obj_property name="ObjectShortName">sense2_int</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/comp1_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">comp1_n</obj_property>
+      <obj_property name="ObjectShortName">comp1_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/ramp" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">ramp</obj_property>
+      <obj_property name="ObjectShortName">ramp</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/position" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">position</obj_property>
+      <obj_property name="ObjectShortName">position</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/pad_pos" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">pad_pos</obj_property>
+      <obj_property name="ObjectShortName">pad_pos</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/a" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">a</obj_property>
+      <obj_property name="ObjectShortName">a</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/b" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">b</obj_property>
+      <obj_property name="ObjectShortName">b</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/set_origin_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">set_origin_n</obj_property>
+      <obj_property name="ObjectShortName">set_origin_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/direction" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">direction</obj_property>
+      <obj_property name="ObjectShortName">direction</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/position" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">position</obj_property>
+      <obj_property name="ObjectShortName">position</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/a_new" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">a_new[1:0]</obj_property>
+      <obj_property name="ObjectShortName">a_new[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/b_new" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">b_new[1:0]</obj_property>
+      <obj_property name="ObjectShortName">b_new[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/a_prev" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">a_prev</obj_property>
+      <obj_property name="ObjectShortName">a_prev</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/b_prev" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">b_prev</obj_property>
+      <obj_property name="ObjectShortName">b_prev</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/debounce_cnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">debounce_cnt</obj_property>
+      <obj_property name="ObjectShortName">debounce_cnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/set_origin_n_new" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">set_origin_n_new[1:0]</obj_property>
+      <obj_property name="ObjectShortName">set_origin_n_new[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/set_origin_n_int" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">set_origin_n_int</obj_property>
+      <obj_property name="ObjectShortName">set_origin_n_int</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/set_origin_cnt" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">set_origin_cnt</obj_property>
+      <obj_property name="ObjectShortName">set_origin_cnt</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/positions" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">positions</obj_property>
+      <obj_property name="ObjectShortName">positions</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/debounce_time" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">debounce_time</obj_property>
+      <obj_property name="ObjectShortName">debounce_time</obj_property>
+   </wvobject>
+   <wvobject fp_name="/single_paddle_enc/paddle_ctrl/encoder/set_origin_debounce_time" type="other" db_ref_id="1">
+      <obj_property name="ElementShortName">set_origin_debounce_time</obj_property>
+      <obj_property name="ObjectShortName">set_origin_debounce_time</obj_property>
+   </wvobject>
+</wave_config>
