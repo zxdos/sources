@@ -65,6 +65,12 @@ architecture rtl of hdmi_frame is
    signal output_addr_s: std_logic_vector(10 downto 0) := (others=>'0');
    
    signal rgb_s      : std_logic_vector(8 downto 0);
+   signal rgb_r_25      : std_logic_vector(3 downto 0);
+   signal rgb_g_25      : std_logic_vector(3 downto 0);
+   signal rgb_b_25      : std_logic_vector(3 downto 0);
+   signal rgb_r_12      : std_logic_vector(3 downto 0);
+   signal rgb_g_12      : std_logic_vector(3 downto 0);
+   signal rgb_b_12      : std_logic_vector(3 downto 0);
    signal pixel_out     : std_logic_vector(8 downto 0);
    signal max_scanline     : std_logic_vector(9 downto 0):= (others=>'0');
    
@@ -286,15 +292,18 @@ begin
       
    end process;
    
-
-   pixel_out <=   "00" & rgb_s(8) & "00" & rgb_s(5) & "00" & rgb_s(2) when odd_line_s = '1' and scanlines_i = "01" else -- 75% 
-                  '0' & rgb_s(8 downto 7) & '0' & rgb_s(5 downto 4) & '0' & rgb_s(2 downto 1) when odd_line_s = '1' and scanlines_i = "10" else -- 50%
-                  
-                  std_logic_vector(unsigned('0' & rgb_s(8 downto 7)) + unsigned("00" & rgb_s(8 downto 8))) &
-                  std_logic_vector(unsigned('0' & rgb_s(5 downto 4)) + unsigned("00" & rgb_s(5 downto 5))) &
-                  std_logic_vector(unsigned('0' & rgb_s(2 downto 1)) + unsigned("00" & rgb_s(2 downto 2))) when odd_line_s = '1' and scanlines_i = "11"  -- 25%
-                  
-                  else rgb_s;
+   rgb_r_25 <= std_logic_vector(unsigned('0' & rgb_s(8 downto 6)) + unsigned("00" & rgb_s(8 downto 7)));
+   rgb_g_25 <= std_logic_vector(unsigned('0' & rgb_s(5 downto 3)) + unsigned("00" & rgb_s(5 downto 4)));
+   rgb_b_25 <= std_logic_vector(unsigned('0' & rgb_s(2 downto 0)) + unsigned("00" & rgb_s(2 downto 1)));
+   
+   rgb_r_12 <= std_logic_vector(unsigned(rgb_r_25) + unsigned("000" & rgb_s(8 downto 8)));
+   rgb_g_12 <= std_logic_vector(unsigned(rgb_g_25) + unsigned("000" & rgb_s(5 downto 5)));
+   rgb_b_12 <= std_logic_vector(unsigned(rgb_b_25) + unsigned("000" & rgb_s(2 downto 2)));
+   
+   pixel_out <=   ('0' & rgb_s(8 downto 7) & '0' & rgb_s(5 downto 4) & '0' & rgb_s(2 downto 1)) when odd_line_s = '1' and scanlines_i = "01" else -- 50%
+                  (rgb_r_25(3 downto 1) & rgb_g_25(3 downto 1) & rgb_b_25(3 downto 1)) when odd_line_s = '1' and scanlines_i = "10" else -- 25%
+                  (rgb_r_12(3 downto 1) & rgb_g_12(3 downto 1) & rgb_b_12(3 downto 1)) when odd_line_s = '1' and scanlines_i = "11" else -- 12.5%
+                  rgb_s;
 
    process (clock2X_i)
    begin

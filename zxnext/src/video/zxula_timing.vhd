@@ -22,13 +22,8 @@
 -- <https://www.gnu.org/licenses/>.
 --
 
--- NOTICE:
---
--- This file is based on pal_sync_generator.v from the ZX UNO project.
+-- Original pal_sync_generator.v from the ZX UNO project:
 -- <https://github.com/yomboprime/zxuno-addons/blob/master/test24_uart/common/pal_sync_generator.v>
---
--- The file is available under CC BY-SA 4.0 license which is one-way
--- convertible to GPL 3.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -43,11 +38,13 @@ entity zxula_timing is
       mode_i         : in  std_logic_vector(2 downto 0);
       video_timing_i : in  std_logic_vector(2 downto 0);
       vf50_60_i      : in  std_logic;
+      cu_offset_i    : in  std_logic_vector(7 downto 0);
       hcount_o       : out unsigned(8 downto 0);
       vcount_o       : out unsigned(8 downto 0);
       phcount_o      : out unsigned(8 downto 0);
       whcount_o      : out unsigned(8 downto 0);
       wvcount_o      : out unsigned(8 downto 0);
+      cvcount_o      : out unsigned(8 downto 0);
       sc_o           : out std_logic_vector(1 downto 0);
       hsync_n_o      : out std_logic;
       vsync_n_o      : out std_logic;
@@ -66,10 +63,13 @@ architecture Behavior of zxula_timing is
    signal phc_s                  : unsigned(8 downto 0);
    signal whc_s                  : unsigned(8 downto 0);
    signal wvc_s                  : unsigned(8 downto 0);
+   signal cvc_s                  : unsigned(8 downto 0);
    signal whc_lsb_d              : std_logic;
    signal sc_s                   : std_logic_vector(1 downto 0);
    
    signal max_hc_s               : std_logic;
+   signal max_vc_s               : std_logic;
+   signal max_cvc_s              : std_logic;
    signal max_whc_s              : std_logic;
    
    signal int_ula_n_s            : std_logic;
@@ -287,7 +287,7 @@ begin
 
    -- INT pulse generation, lasts one 7MHz period
    
-   process (hc_s, vc_s, c_int_v_s, c_int_h_s, c_max_vc_s, lint_line_i, lint_ctrl_i)
+   process (hc_s, vc_s, cvc_s, c_int_v_s, c_int_h_s, max_cvc_s, lint_line_i, lint_ctrl_i)
 
       variable lint_minus_one_v  : unsigned(8 downto 0);
    begin
@@ -304,10 +304,10 @@ begin
       
       if lint_ctrl_i(0) = '1' and hc_s = 256 then
          if lint_line_i = 0 then
-            if vc_s = c_max_vc_s then
+            if max_cvc_s = '1' then
                int_lint_n_s <= '0';
             end if;
-         elsif vc_s = lint_minus_one_v then
+         elsif cvc_s = lint_minus_one_v then
             int_lint_n_s <= '0';
          end if;
       end if;
@@ -342,16 +342,39 @@ begin
       end if;
    end process;
 
+   max_vc_s <= '1' when vc_s = c_max_vc_s else '0';
+   
    process (clock_i)
    begin
       if rising_edge(clock_i) then
          if reset_conter_i = '1' then
             vc_s <= c_vsync_min_s;
          elsif max_hc_s = '1' then
-            if vc_s = c_max_vc_s then
+            if max_vc_s = '1' then
                vc_s <= (others => '0');
             else
                vc_s <= vc_s + 1;
+            end if;
+         end if;
+      end if;
+   end process;
+   
+   -- Copper offset vertical counter
+   
+   max_cvc_s <= '1' when cvc_s = c_max_vc_s else '0';
+   
+   process (clock_i)
+   begin
+      if rising_edge(clock_i) then
+         if reset_conter_i = '1' then
+            cvc_s <= c_vsync_min_s;
+         elsif max_hc_s = '1' then
+            if max_vc_s = '1' then
+               cvc_s <= unsigned('0' & cu_offset_i);
+            elsif max_cvc_s = '1' then
+               cvc_s <= (others => '0');
+            else
+               cvc_s <= cvc_s + 1;
             end if;
          end if;
       end if;
@@ -439,6 +462,7 @@ begin
    
    whcount_o <= whc_s;
    wvcount_o <= wvc_s;
+   cvcount_o <= cvc_s;
    
    sc_o <= sc_s;
 

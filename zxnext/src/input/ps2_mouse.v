@@ -22,6 +22,9 @@
 // Original:
 //   https://github.com/rkrajnc/minimig-mist/blob/master/rtl/minimig/userio_ps2mouse.v
 
+// Modifed for the zx next project by Alvin Albrecht
+// * Add controls to adjust dpi and mouse button swap (operate on returned result)
+
 //PS2 mouse controller.
 //This module decodes the standard 3 byte packet of an PS/2 compatible 2 or 3 button mouse.
 //The module also automatically handles power-up initailzation of the mouse.
@@ -35,6 +38,8 @@ module ps2_mouse
    
    output   ps2mdat_o,        //mouse PS/2 data
    output   ps2mclk_o,        //mouse PS/2 clk
+   
+   input [2:0] control_i,    // button reverse, dpi
    
 //  input [5:0] mou_emu,
 //  input sof,
@@ -58,6 +63,12 @@ reg  [12-1:0] msend;
 reg  [16-1:0] mtimer;
 reg  [ 3-1:0] mstate;
 reg  [ 3-1:0] mnext;
+
+reg           mreverse;
+reg  [1:0]    mdpi;
+
+reg  [7:0]    xydelta;
+reg  [2:0]    mbutton;
 
 wire          mclkneg;
 reg           mrreset;
@@ -151,6 +162,27 @@ end
 assign mtready = (mtimer[15:0]==16'hffff);
 assign mthalf = mtimer[11];
 
+always @ (posedge clk) begin
+  mreverse <= #1 control_i[2];
+  mdpi <= #1 control_i[1:0];
+end
+
+always @ (*) begin
+  case(mdpi)
+    2'b00   : xydelta = {mreceive[7:1],1'b0};
+    2'b01   : xydelta = mreceive[8:1];
+    2'b10   : xydelta = {mreceive[8],mreceive[8:2]};
+    default : xydelta = {mreceive[8],mreceive[8],mreceive[8:3]};
+  endcase
+end
+
+always @ (*) begin
+  if (mreverse)
+    mbutton = {mreceive[3],mreceive[1],mreceive[2]};
+  else
+    mbutton = {mreceive[3],mreceive[2],mreceive[1]};
+end
+
 // PS2 mouse packet decoding and handling
 always @ (posedge clk) begin
   if (reset) begin
@@ -162,11 +194,11 @@ always @ (posedge clk) begin
 //    if (test_load) // test value preload
 //      {ycount[7:2],xcount[7:2]} <= #1 {test_data[15:10],test_data[7:2]};
     if (mpacket == 3'd1) // buttons
-      {mthird,mright,mleft} <= #1 mreceive[3:1];
+        {mthird,mright,mleft} <= #1 mbutton;
     else if (mpacket == 3'd2) // delta X movement
-      xcount[7:0] <= #1 xcount[7:0] +  mreceive[8:1];
+      xcount[7:0] <= #1 xcount[7:0] + xydelta;
     else if (mpacket == 3'd3) // delta Y movement
-      ycount[7:0] <= #1 ycount[7:0] + mreceive[8:1];
+      ycount[7:0] <= #1 ycount[7:0] + xydelta;
     else if (mpacket == 3'd4) // delta Z movement
       zcount[7:0] <= #1 zcount[7:0] + {{4{mreceive[4]}}, mreceive[4:1]};
 //    else if (sof) begin

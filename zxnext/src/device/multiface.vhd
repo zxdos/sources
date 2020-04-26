@@ -32,19 +32,8 @@
 
 -- Multiface 128 schematics:
 -- http://projectspeccy.com/wp-content/uploads/2017/09/Spectrum_Multiface_128_v1.00-1.jpg
--- (beware several errors)
---
--- Port write 3F,BF: NMI_ACTIVE off
--- Port write 3F: INVISIBLE on
--- Port read 3F: MF_ENABLE off
--- Port read BF: if INVISIBLE off, MF_ENABLE on and D7=port_7ffd(3) else MF_ENABLE off
--- NMI_ACTIVE: 0=on holds /nmi low and prevents further button activations
--- MF_ENABLE: 0=on asserts /romcs and pages in multiface memory
--- 0x66 instruction fetch: immediate MF_ENABLE on if NMI_ACTIVE on
--- NMI_ACTIVE off and button press: INVISIBLE off, NMI_ACTIVE on
 
 -- Multiface 3:
--- Ports are reverse of 128 version
 -- 
 -- Port write BF,3F: NMI_ACTIVE off
 -- Port write BF: INVISIBLE on
@@ -138,8 +127,7 @@ begin
             nmi_active <= '0';
          elsif button_pulse = '1' then
             nmi_active <= '1';
---       elsif (port_mf_enable_wr_i = '1' or port_mf_disable_wr_i = '1') and port_io_dly = '0' then
-         elsif (port_mf_enable_wr_i = '1' or port_mf_disable_wr_i = '1' or port_mf_disable_rd_i = '1') and port_io_dly = '0' then
+         elsif (port_mf_enable_wr_i = '1' or port_mf_disable_wr_i = '1' or (port_mf_disable_rd_i = '1' and mode_p3_i = '1')) and port_io_dly = '0' then
             nmi_active <= '0';
          end if;
       end if;
@@ -156,8 +144,7 @@ begin
             invisible <= '1';
          elsif button_pulse = '1' then
             invisible <= '0';
---       elsif port_mf_disable_wr_i = '1' and port_io_dly = '0' then
-         elsif port_mf_enable_wr_i = '1' and port_io_dly = '0' then
+         elsif ((port_mf_disable_wr_i = '1' and mode_p3_i = '0') or (port_mf_enable_wr_i = '1' and mode_p3_i = '1')) and port_io_dly = '0' then
             invisible <= '1';
          end if;
       end if;
@@ -178,8 +165,8 @@ begin
             mf_enable <= '1';
          elsif port_mf_disable_rd_i = '1' then
             mf_enable <= '0';
-         elsif port_mf_enable_rd_i = '1' and invisible_eff = '0' then
-            mf_enable <= '1';
+         elsif port_mf_enable_rd_i = '1' then
+            mf_enable <= not invisible_eff;
          end if;
       end if;
    end process;

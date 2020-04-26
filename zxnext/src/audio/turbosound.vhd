@@ -137,7 +137,7 @@ begin
       end if;
    end process;
 
-   psg_addr <= '1' when psg_reg_addr_i = '1' and psg_d_i(7 downto 4) = "0000" else '0';
+   psg_addr <= '1' when psg_reg_addr_i = '1' and psg_d_i(7 downto 5) = "000" else '0';
    
    psg0_addr <= '1' when ay_select = "11" and psg_addr = '1' else '0';
    psg0_we <= '1' when ay_select = "11" and psg_reg_wr_i = '1' else '0';

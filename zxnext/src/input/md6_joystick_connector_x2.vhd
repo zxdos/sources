@@ -1,6 +1,6 @@
 
--- MegaDrive Joysticks x 2
--- Copyright 2020 Victor Trucco
+-- Sega Mega Drive Pads x 2
+-- Copyright 2020 Victor Trucco and Alvin Albrecht
 --
 -- This file is part of the ZX Spectrum Next Project
 -- <https://gitlab.com/SpectrumNext/ZX_Spectrum_Next_FPGA/tree/master/cores>
@@ -27,186 +27,164 @@ use ieee.std_logic_unsigned.all;
 entity md6_joystick_connector_x2 is
    port 
    (
-      reset_i     : in std_logic;
+      i_reset        : in std_logic;
       
-      CLK_28_i    : in std_logic;
-      CLK_EN_i    : in std_logic;      -- approximately 15kHz enable
+      i_CLK_28       : in std_logic;
+      i_CLK_EN       : in std_logic;
       
-      joy1_i      : in std_logic;
-      joy2_i      : in std_logic;
-      joy3_i      : in std_logic;
-      joy4_i      : in std_logic;
-      joy6_i      : in std_logic;
-      joy9_i      : in std_logic;
+      i_joy_1_n      : in std_logic;
+      i_joy_2_n      : in std_logic;
+      i_joy_3_n      : in std_logic;
+      i_joy_4_n      : in std_logic;
+      i_joy_6_n      : in std_logic;
+      i_joy_9_n      : in std_logic;
       
-      joy7_o      : out std_logic;     -- joystick pin out for md protocol
-      joys_o      : out std_logic;     -- joystick selection mux (0 = left, 1 = right)
+      i_io_mode_en      : in std_logic;
+      i_io_mode_lr      : in std_logic;
+      i_io_mode_pin_7   : in std_logic;
+      
+      o_joy_7        : out std_logic;
+      o_joy_select   : out std_logic;   -- 0 = left connector, 1 = right connector
 
-      joyleft_o   : out std_logic_vector(7 downto 0);   -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
-      joyright_o  : out std_logic_vector(7 downto 0)    -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
+      o_joy_left     : out std_logic_vector(10 downto 0);   -- active high  X Z Y START A C B U D L R
+      o_joy_right    : out std_logic_vector(10 downto 0)    -- active high  X Z Y START A C B U D L R
    );
 end entity;
 
 architecture rtl of md6_joystick_connector_x2 is
 
-   signal joy_raw_n           : std_logic_vector(5 downto 0);
-   signal joy_select          : std_logic;
-   signal joy1_raw_n          : std_logic_vector(5 downto 0);
-   signal joy2_raw_n          : std_logic_vector(5 downto 0);
-   signal state_raw           : std_logic_vector(2 downto 0);
-   
-   signal joyp7               : std_logic;
-   signal joy1_is_sixbutton   : std_logic;
-   signal joy2_is_sixbutton   : std_logic;
-   signal joy1_n              : std_logic_vector(7 downto 0);
-   signal joy2_n              : std_logic_vector(7 downto 0);
-   signal joy1_o              : std_logic_vector(7 downto 0);
-   signal joy2_o              : std_logic_vector(7 downto 0);
+   signal io_mode          : std_logic := '0';
+   signal io_mode_lr       : std_logic := '0';
+   signal io_mode_change   : std_logic;
 
-   -- The width of state_md determines the polling period for the md joysticks.
+   -- https://github.com/jonthysell/SegaController/wiki/How-To-Read-Sega-Controllers
    
-   -- According to online docs this must be at least 1.8ms but this number is ill-defined
-   -- as it depends on an RC constant and may be different on cheap clones.
+   -- The state machine consists of 64 states for a period of ~4.27ms
+   -- 48 states are padding to allow the md controllers time to reset between reads ~3.2ms
+
+   signal state      : std_logic_vector(5 downto 0);
+   signal state_next : std_logic_vector(5 downto 0);
    
-   -- Victor's original module had an 8-bit width which corresponds to a joystick scan
-   -- every 256 lines or every 17ms.  This is a little faster than once per frame so it
-   -- is likely a latency of one frame would be seen.  Not usually a problem but effort
-   -- is being expended to keep the keyboard low latency so we'll do the same here.
+   -- X X S S 7 J
+   --
+   --  XX = padding for md pad reset
+   -- SS7 = eight states in state machine, 7 = select on pin 7
+   --   J = connector being read: left = 0, right = 1
    
-   signal state_md            : std_logic_vector(5 downto 0);   -- 64/15kHz = 4.2ms
+   signal state_rest : std_logic;
+   
+   signal joy_left_n_six_button_n   : std_logic;
+   signal joy_left_n                : std_logic_vector(10 downto 0);
+   
+   signal joy_right_n_six_button_n  : std_logic;
+   signal joy_right_n               : std_logic_vector(10 downto 0);
+   
+   signal joy_raw                   : std_logic_vector(5 downto 0);
    
 begin
 
-   -- constantly read raw joystick state
+   -- io mode
    
-   joy_raw_n <= joy9_i & joy6_i & joy1_i & joy2_i & joy3_i & joy4_i;
-   
-   process (CLK_28_i)
+   process (i_CLK_28)
    begin
-      if rising_edge(CLK_28_i) then
-         if reset_i = '1' then
-         
-            joy_select <= '1';
-            joy1_raw_n <= (others => '1');
-            joy2_raw_n <= (others => '1');
-            state_raw  <= (others => '0');
-         
-         else
-         
-            case state_raw is
-            
-               when "000"  =>
-                  joy2_raw_n <= joy_raw_n;
-                  joy_select <= '0';
-                  
-               when "100"  =>
-                  joy1_raw_n <= joy_raw_n;
-                  joy_select <= '1';
-                  
-               when others =>
-                  null;
-                  
-            end case;
-         
-            state_raw <= state_raw + 1;
-            
-         end if;
+      if rising_edge(i_CLK_28) then
+         io_mode <= i_io_mode_en;
+         io_mode_lr <= i_io_mode_lr;
       end if;
    end process;
    
-   -- six button md protocol
+   io_mode_change <= (i_io_mode_en and not io_mode) or (io_mode and not i_io_mode_en);
+
+   -- md pad state machine
    
-   process (CLK_28_i)
+   state_rest <= state(5) or state(4);
+   state_next <= state + 1;
+   
+   process (i_CLK_28)
    begin
-      if rising_edge(CLK_28_i) then
-         if reset_i = '1' then
+      if rising_edge(i_CLK_28) then
+         if i_reset = '1' or io_mode = '1' then
+            state <= "110000";
+         elsif i_CLK_EN = '1' then
+            state <= state_next;
+         end if;
+      end if;
+   end process;
+
+   o_joy_7 <= (state_rest or state(1)) when io_mode = '0' else i_io_mode_pin_7;
+   o_joy_select <= state(0) when io_mode = '0' else io_mode_lr;
+   
+   -- build md pad state
+   
+   joy_raw <= i_joy_9_n & i_joy_6_n & i_joy_1_n & i_joy_2_n & i_joy_3_n & i_joy_4_n;
+   
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
+         if i_CLK_EN = '1' and state_rest = '0' then
          
-            joyp7 <= '1';
+            case state(3 downto 0) is
             
-            joy1_is_sixbutton <= '0';
-            joy2_is_sixbutton <= '0';
-            
-            joy1_n <= (others => '1');
-            joy2_n <= (others => '1');
-            
-            joy1_o <= (others => '0');
-            joy2_o <= (others => '0');
-            
-            state_md <= "00" & X"7";
-         
-         elsif CLK_EN_i = '1' then
-         
-            case state_md is
-            
-               when "00" & X"0" =>
-                  joyp7 <= '0';
-                  
-               when "00" & X"1" =>
-                  joyp7 <= '1';
-                  
-               when "00" & X"2" =>
-                  joy1_n(5 downto 0) <= joy1_raw_n;   --Fire2, Fire, Up, Down, Left, Right
-                  joy2_n(5 downto 0) <= joy2_raw_n;   --Fire2, Fire, Up, Down, Left, Right
-                  
-                  joyp7 <= '0';
-                  
-                  joy1_is_sixbutton <= '0';
-                  joy2_is_sixbutton <= '0';
-                  
-               when "00" & X"3" =>
-                  joy1_n(7 downto 6) <= joy1_raw_n(5 downto 4);   -- Start, A
-                  joy2_n(7 downto 6) <= joy2_raw_n(5 downto 4);   -- Start, A
-                  
-                  joyp7 <= '1';
-                  
-               when "00" & X"4" =>
-                  joyp7 <= '0';
-                  
-               when "00" & X"5" =>
-                  if joy1_raw_n(3 downto 0) = "0000" then
-                     joy1_is_sixbutton <= '1';
-                  end if;
-                  
-                  if joy2_raw_n(3 downto 0) = "0000" then
-                     joy2_is_sixbutton <= '1';
-                  end if;
-                  
-                  joyp7 <= '1';
-                  
-               when "00" & X"6" =>
-                  if joy1_is_sixbutton = '1' then
-                     joy1_n(7 downto 4) <= joy1_n(7 downto 4) and ('1' & joy1_raw_n(1) & joy1_raw_n(3) & joy1_raw_n(2));
-                  end if;
-                  
-                  if joy2_is_sixbutton = '1' then
-                     joy2_n(7 downto 4) <= joy2_n(7 downto 4) and ('1' & joy2_raw_n(1) & joy2_raw_n(3) & joy2_raw_n(2));
-                  end if;
-                  
-                  joyp7 <= '0';
+               when "000" & '0' =>
+                  joy_left_n_six_button_n <= '1';
+                  joy_left_n <= (others => '1');
+                  joy_right_n_six_button_n <= '1';
+                  joy_right_n <= (others => '1');
                
-               when "00" & X"7" =>
-                  joy1_o <= not joy1_n;   -- active high
-                  joy2_o <= not joy2_n;   -- active high
+               when "010" & '0' =>
+                  if i_joy_3_n = '0' and i_joy_4_n = '0' then
+                     joy_left_n(7 downto 6) <= i_joy_9_n & i_joy_6_n;
+                  end if;
+
+               when "010" & '1' =>
+                  if i_joy_3_n = '0' and i_joy_4_n = '0' then
+                     joy_right_n(7 downto 6) <= i_joy_9_n & i_joy_6_n;
+                  end if;
+
+               when "011" & '0' =>
+                  joy_left_n(5 downto 0) <= joy_raw;
+               
+               when "011" & '1' =>
+                  joy_right_n(5 downto 0) <= joy_raw;
+               
+               when "100" & '0' =>
+                  joy_left_n_six_button_n <= i_joy_1_n or i_joy_2_n;
+               
+               when "100" & '1' =>
+                  joy_right_n_six_button_n <= i_joy_1_n or i_joy_2_n;
+               
+               when "101" & '0' =>
+                  if joy_left_n_six_button_n = '0' then
+                     joy_left_n(10 downto 8) <= i_joy_3_n & i_joy_1_n & i_joy_2_n;
+                  end if;
+               
+               when "101" & '1' =>
+                  if joy_right_n_six_button_n = '0' then
+                     joy_right_n(10 downto 8) <= i_joy_3_n & i_joy_1_n & i_joy_2_n;
+                  end if;
                   
-                  joyp7 <= '1';
-                  
-               when others =>
-                  joyp7 <= '1';
-                  
+               when others => null;
+               
             end case;
-         
-            state_md <= state_md + 1;
             
          end if;
       end if;
    end process;
    
-   -- outputs
-   
-   joy7_o <= joyp7;
-   joys_o <= joy_select;
-   
-   joyleft_o <= joy1_o;
-   joyright_o <= joy2_o;
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
+         if i_reset = '1' or io_mode_change = '1' then
+            o_joy_left <= (others => '0');
+            o_joy_right <= (others => '0');
+         elsif io_mode = '1' then
+            o_joy_left(5 downto 0) <= not joy_raw;
+            o_joy_right(5 downto 0) <= not joy_raw;
+         elsif state_rest = '0' and state(3 downto 2) = "11" then
+            o_joy_left <= not joy_left_n;
+            o_joy_right <= not joy_right_n;
+         end if;
+      end if;
+   end process;
 
 end architecture;

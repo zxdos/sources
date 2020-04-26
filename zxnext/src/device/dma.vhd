@@ -925,7 +925,7 @@ begin
                      
                   when RD_COUNTER_LO => 
                      
-                        cpu_d_o <= dma_counter_s(15 downto 8);
+                        cpu_d_o <= dma_counter_s(7 downto 0);
                      
                         if R6_read_mask_s(2) = '1' then -- byte counter HI
                            reg_rd_seq_s := RD_COUNTER_HI;
@@ -956,7 +956,7 @@ begin
                      
                      when RD_COUNTER_HI => 
                      
-                        cpu_d_o <= dma_counter_s(7 downto 0);
+                        cpu_d_o <= dma_counter_s(15 downto 8);
                         
                         if R6_read_mask_s(3) = '1' then -- port A address counter LO
                            reg_rd_seq_s := RD_PORT_A_LO;

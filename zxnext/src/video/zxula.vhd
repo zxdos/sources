@@ -22,6 +22,7 @@
 --
 
 -- Features of this implementation:
+--
 -- * compatible with 48k, 128k, +3, pentagon ula including contention and floating bus
 -- * hardware pixel scrolling in X and Y
 -- * implements timex hi-res, hi-colour and dual screen

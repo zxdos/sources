@@ -72,6 +72,7 @@ architecture rtl of emu_fnkeys is
    signal local_rows       : std_logic_vector(7 downto 0);
    signal local_cols       : std_logic_vector(4 downto 0);
    
+   signal cancel_nmi       : std_logic := '0';
    signal local_fnkeys     : std_logic_vector(10 downto 1)  := (others => '0');
 
 begin
@@ -202,13 +203,26 @@ begin
    begin
       if rising_edge(i_CLK) then
          if i_reset = '1' then
+            cancel_nmi <= '0';
+         elsif state = S_IDLE then
+            cancel_nmi <= '0';
+         else
+            cancel_nmi <= cancel_nmi or not (i_cols(4) and i_cols(3) and i_cols(2) and i_cols(1) and i_cols(0));
+         end if;
+      end if;
+   end process;
+   
+   process (i_CLK)
+   begin
+      if rising_edge(i_CLK) then
+         if i_reset = '1' then
             local_fnkeys <= (others => '0');
          elsif state = S_MF_ROW_A11 then
             local_fnkeys(5 downto 1) <= not i_cols(4 downto 0);
          elsif state = S_MF_ROW_A12 then
             local_fnkeys(10 downto 6) <= not (i_cols(0) & i_cols(1) & i_cols(2) & i_cols(3) & i_cols(4));
          elsif state = S_MF_DONE then
-            local_fnkeys <= '0' & (not timer_expired) & "00000000";  -- F9 = multiface nmi on short press
+            local_fnkeys <= '0' & (not timer_expired and not cancel_nmi) & "00000000";  -- F9 = multiface nmi on short press
          elsif state = S_RESET_DONE then
             if timer_expired = '1' then
                local_fnkeys <= "0000000001";   -- F1 = hard reset on long press

@@ -1,6 +1,6 @@
 
 -- ZX Spectrum Next LoRes Display
--- Copyright 2020 Victor Trucco and Allen Albright
+-- Copyright 2020 Victor Trucco and Alvin Albrecht
 --
 -- This file is part of the ZX Spectrum Next Project
 -- <https://gitlab.com/SpectrumNext/ZX_Spectrum_Next_FPGA/tree/master/cores>

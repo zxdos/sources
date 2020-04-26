@@ -70,8 +70,12 @@ entity zxnext is
       
       -- MEMBRANE KEYBOARD
       
+      o_KBD_CANCEL         : out std_logic;                       -- cancel entering extended keys into standard 8x5 matrix
+      
       o_KBD_ROW            : out std_logic_vector(7 downto 0);    -- A15:A8 in keyboard read
-      i_KBD_COL            : in std_logic_vector(4 downto 0);     -- D4:D0 in keyboard read
+      i_KBD_COL            : in std_logic_vector(4 downto 0);     -- D4:D0 in keyboard read (D6:D5 are the new keys)
+      
+      i_KBD_EXTENDED_KEYS  : in std_logic_vector(15 downto 0);    -- state of extended keys independent of matrix
       
       -- PS/2 KEYBOARD SETUP
       
@@ -81,8 +85,12 @@ entity zxnext is
       
       -- JOYSTICK
       
-      i_JOY_LEFT           : in std_logic_vector(7 downto 0);     -- START, A, F2, F1, U, D, L, R
-      i_JOY_RIGHT          : in std_logic_vector(7 downto 0);     -- START, A, F2, F1, U, D, L, R
+      i_JOY_LEFT           : in std_logic_vector(10 downto 0);    -- active high  X Z Y START A C B U D L R
+      i_JOY_RIGHT          : in std_logic_vector(10 downto 0);    -- active high  X Z Y START A C B U D L R
+      
+      o_JOY_IO_MODE        : out std_logic_vector(1 downto 0);    -- x1 = io mode enabled, 1x = clock io mode selected
+      o_JOY_IO_MODE_LR     : out std_logic;
+      o_JOY_IO_MODE_PIN_7  : out std_logic;                       -- state of pin 7 if in io mode direct or clock speed if in io mode clock
       
       -- MOUSE
       
@@ -90,7 +98,9 @@ entity zxnext is
       i_MOUSE_Y            : in std_logic_vector(7 downto 0);
       i_MOUSE_BUTTON       : in std_logic_vector(2 downto 0);     -- M, R, L
       i_MOUSE_WHEEL        : in std_logic_vector(3 downto 0);
+      
       o_PS2_MODE           : out std_logic;
+      o_MOUSE_CONTROL      : out std_logic_vector(2 downto 0);    -- Button reverse, DPI(1:0)
       
       -- I2C
       
@@ -138,11 +148,16 @@ entity zxnext is
       
       -- AUDIO
       
-      o_AUDIO_HDMI_EN      : out std_logic;
-      o_AUDIO_SPEAKER_EN   : out std_logic;     -- testing: steer all audio to internal speaker
+      o_AUDIO_HDMI_AUDIO_EN : out std_logic;
+
+      o_AUDIO_SPEAKER_EN   : out std_logic;     -- enable internal speaker
+      o_AUDIO_SPEAKER_BEEP : out std_logic;     -- only beep to internal speaker
       
       i_AUDIO_EAR          : in std_logic;      -- tape in
       o_AUDIO_MIC          : out std_logic;     -- tape out
+      
+      o_AUDIO_SPEAKER_EAR  : out std_logic;
+      o_AUDIO_SPEAKER_MIC  : out std_logic;
 
       o_AUDIO_L            : out std_logic_vector(12 downto 0);   -- pcm audio
       o_AUDIO_R            : out std_logic_vector(12 downto 0);   -- pcm audio
@@ -243,8 +258,9 @@ architecture rtl of zxnext is
    signal dma_mreq_n             : std_logic;
    signal dma_iorq_n             : std_logic;
    
+   signal port_dma_dat_0         : std_logic_vector(7 downto 0);
    signal port_dma_dat           : std_logic_vector(7 downto 0);
-   signal port_6b_dat            : std_logic_vector(7 downto 0);
+   signal dma_mode               : std_logic := '0';
    
    signal dma_holds_bus          : std_logic;
    signal cpu_m1_n               : std_logic;
@@ -286,6 +302,7 @@ architecture rtl of zxnext is
    signal nr_80_expbus           : std_logic_vector(7 downto 0) := X"00";
 
    signal expbus_en              : std_logic;
+   signal expbus_romcs_replace   : std_logic;
    signal expbus_disable_io      : std_logic;
    signal expbus_disable_mem     : std_logic;
    signal expbus_clken           : std_logic;
@@ -300,6 +317,7 @@ architecture rtl of zxnext is
    signal port_propagate_7ffd    : std_logic;
    signal port_propagate_dffd    : std_logic;
    signal port_propagate_1ffd    : std_logic;
+   signal port_propagate_ff      : std_logic;
    
    signal port_propagate         : std_logic;
    signal bus_iorq_n             : std_logic;
@@ -330,7 +348,7 @@ architecture rtl of zxnext is
    signal pi_i2s_inout           : std_logic;
    signal pi_i2s_muteL           : std_logic;
    signal pi_i2s_muteR           : std_logic;
-   signal pi_i2s_slave           : std_logic;
+-- signal pi_i2s_slave           : std_logic;
    signal pi_i2s_ear             : std_logic;
    
    signal gpio_07_en             : std_logic;
@@ -373,14 +391,14 @@ architecture rtl of zxnext is
    
    -- PORT DECODING
    
-   signal internal_port_enable   : std_logic_vector(24 downto 0);
+   signal internal_port_enable   : std_logic_vector(25 downto 0);
    
    signal port_ff_io_en          : std_logic;
    signal port_7ffd_io_en        : std_logic;
    signal port_dffd_io_en        : std_logic;
    signal port_1ffd_io_en        : std_logic;
    signal port_p3_floating_bus_io_en         : std_logic;
-   signal port_dma_io_en         : std_logic;
+   signal port_dma_6b_io_en      : std_logic;
    signal port_1f_io_en          : std_logic;
    signal port_37_io_en          : std_logic;
    signal port_divmmc_io_en      : std_logic;
@@ -400,10 +418,12 @@ architecture rtl of zxnext is
    signal port_dac_mono_BC_b3_io_en          : std_logic;
    signal port_dac_mono_AD_df_io_en          : std_logic;
    signal port_ulap_io_en        : std_logic;
+   signal port_dma_0b_io_en      : std_logic;
    
    signal port_1f_hw_en          : std_logic;
    signal port_37_hw_en          : std_logic;
    signal p3_timing_hw_en        : std_logic;
+   signal s128_timing_hw_en      : std_logic;
    signal dac_hw_en              : std_logic;
    
    signal bus_iorq_ula           : std_logic := '0';
@@ -420,6 +440,7 @@ architecture rtl of zxnext is
    signal port_bfxx_msb          : std_logic;
    signal port_ffxx_msb          : std_logic;
 
+   signal port_0b_lsb            : std_logic;
    signal port_0f_lsb            : std_logic;
    signal port_1f_lsb            : std_logic;
    signal port_37_lsb            : std_logic;
@@ -448,9 +469,11 @@ architecture rtl of zxnext is
    signal port_p3_float_active   : std_logic;
    signal port_7ffd              : std_logic;
    signal port_7ffd_active       : std_logic;
+   signal port_7ffd_assert       : std_logic;
    signal port_dffd              : std_logic;
    signal port_1ffd              : std_logic;
    signal port_1ffd_active       : std_logic;
+   signal port_1ffd_assert       : std_logic;
    signal port_e3                : std_logic;
    signal port_mf_enable_io_a    : std_logic_vector(7 downto 0);
    signal port_mf_disable_io_a   : std_logic_vector(7 downto 0);
@@ -466,7 +489,7 @@ architecture rtl of zxnext is
    signal port_133b              : std_logic;
    signal port_143b              : std_logic;
    signal port_153b              : std_logic;
-   signal port_6b                : std_logic;
+   signal port_dma               : std_logic;
    signal port_fffd              : std_logic;
    signal port_bffd              : std_logic;
    signal port_dac_mono_AD       : std_logic;
@@ -525,8 +548,8 @@ architecture rtl of zxnext is
    signal port_143b_wr           : std_logic;
    signal port_153b_rd           : std_logic;
    signal port_153b_wr           : std_logic;
-   signal port_6b_rd             : std_logic;
-   signal port_6b_wr             : std_logic;
+   signal port_dma_rd            : std_logic;
+   signal port_dma_wr            : std_logic;
    signal port_fffd_rd           : std_logic;
    signal port_fffd_wr           : std_logic;
    signal port_bffd_wr           : std_logic;
@@ -539,6 +562,7 @@ architecture rtl of zxnext is
    signal port_ffdf_rd           : std_logic;
    signal port_1f_rd             : std_logic;
    signal port_37_rd             : std_logic;
+   signal port_37_wr             : std_logic;
    signal port_57_wr             : std_logic;
    signal port_5b_wr             : std_logic;
    signal port_303b_rd           : std_logic;
@@ -563,7 +587,7 @@ architecture rtl of zxnext is
    signal port_133b_rd_dat       : std_logic_vector(7 downto 0);
    signal port_143b_rd_dat       : std_logic_vector(7 downto 0);
    signal port_153b_rd_dat       : std_logic_vector(7 downto 0);
-   signal port_6b_rd_dat         : std_logic_vector(7 downto 0);
+   signal port_dma_rd_dat        : std_logic_vector(7 downto 0);
    signal port_fffd_rd_dat       : std_logic_vector(7 downto 0);
    signal port_fadf_rd_dat       : std_logic_vector(7 downto 0);
    signal port_fbdf_rd_dat       : std_logic_vector(7 downto 0);
@@ -593,6 +617,7 @@ architecture rtl of zxnext is
    signal mem_active_bank7       : std_logic;
    signal sram_active_rom        : std_logic_vector(1 downto 0);
    signal sram_alt_128           : std_logic;
+   signal eff_expbus_romcs_replace           : std_logic;
    
    signal layer2_pre_A21_A13     : std_logic_vector(8 downto 0);
    signal sram_pre_active        : std_logic;
@@ -602,6 +627,9 @@ architecture rtl of zxnext is
    signal sram_pre_romcs         : std_logic;
    signal sram_pre_alt_en        : std_logic;
    signal sram_pre_alt_128       : std_logic;
+   signal port_123b_layer2_map_rd_pre        : std_logic;
+   signal port_123b_layer2_map_wr_pre        : std_logic;
+   signal port_123b_layer2_map_segment_pre   : std_logic_vector(1 downto 0);
    signal sram_pre_A20_A13       : std_logic_vector(7 downto 0);
    
    signal layer2_map_en          : std_logic;
@@ -649,8 +677,12 @@ architecture rtl of zxnext is
    signal port_eb_dat            : std_logic_vector(7 downto 0);
    signal port_e7_reg            : std_logic_vector(7 downto 0) := X"FF";
    
+   signal uart0_tx_esp           : std_logic;
+   signal uart1_tx_pi            : std_logic;
+   
    signal uart0_tx_busy          : std_logic;
    signal uart0_tx               : std_logic;
+   signal uart0_rx               : std_logic;
    signal uart0_rx_avail         : std_logic;
    signal uart0_rx_byte          : std_logic_vector(7 downto 0);
    
@@ -661,6 +693,7 @@ architecture rtl of zxnext is
 
    signal uart1_tx_busy          : std_logic;
    signal uart1_tx               : std_logic;
+   signal uart1_rx               : std_logic;
    signal uart1_rx_avail         : std_logic;
    signal uart1_rx_byte          : std_logic_vector(7 downto 0);
    
@@ -698,6 +731,9 @@ architecture rtl of zxnext is
    
    signal keyrow                 : std_logic_vector(7 downto 0);
    
+   signal joyL_up                : std_logic;
+   signal joyR_up                : std_logic;
+   
    signal joyL_sinc1             : std_logic_vector(4 downto 0);
    signal joyL_sinc2             : std_logic_vector(4 downto 0);
    signal joyL_cursA             : std_logic_vector(4 downto 0);
@@ -714,15 +750,28 @@ architecture rtl of zxnext is
    signal port_fe_dat_0          : std_logic_vector(7 downto 0) := X"80";
    signal port_fe_dat            : std_logic_vector(7 downto 0);
    
+   signal mdL_1f_en              : std_logic;
+   signal mdL_37_en              : std_logic;
    signal joyL_1f_en             : std_logic;
    signal joyL_37_en             : std_logic;
    signal joyL_1f                : std_logic_vector(7 downto 0);
    signal joyL_37                : std_logic_vector(7 downto 0);
    
+   signal mdR_1f_en              : std_logic;
+   signal mdR_37_en              : std_logic;
    signal joyR_1f_en             : std_logic;
    signal joyR_37_en             : std_logic;
    signal joyR_1f                : std_logic_vector(7 downto 0);
    signal joyR_37                : std_logic_vector(7 downto 0);
+   
+   signal io_mode                : std_logic_vector(1 downto 0) := "00";
+   signal io_mode_en             : std_logic := '0';
+   signal io_mode_lr             : std_logic := '0';
+   signal io_mode_bit_0          : std_logic := '1';
+   signal io_mode_uart_en        : std_logic;
+   signal io_mode_uart_rx        : std_logic;
+   signal io_mode_uart_tx        : std_logic;
+   signal io_mode_pin_7          : std_logic;
    
    signal port_1f_dat            : std_logic_vector(7 downto 0);
    signal port_37_dat            : std_logic_vector(7 downto 0);
@@ -747,7 +796,8 @@ architecture rtl of zxnext is
    signal port_7ffd_shadow       : std_logic;
    signal port_7ffd_locked       : std_logic;
    
-   signal port_dffd_reg          : std_logic_vector(7 downto 0);
+   signal port_dffd_reg          : std_logic_vector(3 downto 0);
+   signal port_dffd_pentagon_512 : std_logic := '0';
    
    signal port_1ffd_reg          : std_logic_vector(7 downto 0);
    signal port_1ffd_dat          : std_logic_vector(7 downto 0);
@@ -755,8 +805,8 @@ architecture rtl of zxnext is
    signal port_1ffd_special_old  : std_logic;
    signal port_1ffd_rom          : std_logic_vector(1 downto 0);
    
-   signal port_memory_change     : std_logic;
    signal port_memory_change_dly : std_logic;
+   signal port_memory_ram_change_dly         : std_logic;
    
    signal port_123b_dat          : std_logic_vector(7 downto 0) := (others => '0');
    signal port_123b_layer2_en    : std_logic;
@@ -906,7 +956,7 @@ architecture rtl of zxnext is
    signal nr_sprite_mirror_inc   : std_logic;
    signal nr_palette_we          : std_logic;
    signal nr_palette_value       : std_logic_vector(8 downto 0);
-   signal nr_palette_priority    : std_logic_vector(6 downto 0);
+   signal nr_palette_priority    : std_logic_vector(1 downto 0);
    signal nr_mmu_we              : std_logic;
    signal nr_mmu                 : std_logic_vector(2 downto 0);
    signal nr_copper_we           : std_logic;
@@ -915,6 +965,7 @@ architecture rtl of zxnext is
    signal nr_69_we               : std_logic;
    signal nr_80_we               : std_logic;
    signal nr_8c_we               : std_logic;
+   signal nr_8e_we               : std_logic;
    signal nr_ff_we               : std_logic;
    
    signal nr_02_bus_reset        : std_logic;
@@ -922,17 +973,20 @@ architecture rtl of zxnext is
    signal nr_03_user_dt_lock     : std_logic := '0';
    signal bootrom_en             : std_logic := '1';
    signal eff_bootrom_en         : std_logic := '1';
-   signal nr_03_machine_type     : std_logic_vector(2 downto 0);
+   signal nr_03_machine_type     : std_logic_vector(2 downto 0) := "000";
    signal nr_04_romram_bank      : std_logic_vector(4 downto 0);
+   signal nr_05_joymode_0        : std_logic_vector(2 downto 0);
+   signal nr_05_joymode_1        : std_logic_vector(2 downto 0);
+   signal nr_05_io_mode          : std_logic;
    signal nr_05_joy0             : std_logic_vector(2 downto 0) := "001";
    signal nr_05_joy1             : std_logic_vector(2 downto 0) := "000";
    signal nr_06_hotkey_cpu_speed_en          : std_logic;
-   signal nr_06_dma_mode         : std_logic;
    signal nr_06_hotkey_5060_en   : std_logic;
    signal nr_06_divmmc_automap_en            : std_logic;
    signal nr_06_button_m1_nmi_en : std_logic;
    signal nr_06_ps2_mode         : std_logic := '1';
    signal nr_06_psg_mode         : std_logic_vector(1 downto 0) := "00";
+   signal nr_06_internal_speaker_beep        : std_logic := '0';
    signal nr_08_contention_disable           : std_logic := '0';
    signal nr_08_psg_stereo_mode  : std_logic;
    signal nr_08_internal_speaker_en          : std_logic;
@@ -1008,8 +1062,10 @@ architecture rtl of zxnext is
    signal nr_copper_addr         : std_logic_vector(10 downto 0);
    signal nr_copper_data_stored  : std_logic_vector(7 downto 0);
    signal nr_62_copper_mode      : std_logic_vector(1 downto 0);
+   signal nr_64_copper_offset    : std_logic_vector(7 downto 0);
    signal nr_68_ula_en           : std_logic;
-   signal nr_68_ula_mixer_mode   : std_logic;
+   signal nr_68_blend_mode       : std_logic_vector(1 downto 0);
+   signal nr_68_cancel_extended_keys         : std_logic;
    signal nr_68_ula_fine_scroll_x            : std_logic;
    signal nr_68_ula_stencil_mode : std_logic;
    signal nr_6a_lores_radastan   : std_logic;
@@ -1033,21 +1089,25 @@ architecture rtl of zxnext is
    signal nr_82_internal_port_enable         : std_logic_vector(7 downto 0);
    signal nr_83_internal_port_enable         : std_logic_vector(7 downto 0);
    signal nr_84_internal_port_enable         : std_logic_vector(7 downto 0);
-   signal nr_85_internal_port_enable         : std_logic;
+   signal nr_85_internal_port_enable         : std_logic_vector(1 downto 0);
+   signal nr_85_internal_port_reset_type     : std_logic := '1';
    signal nr_86_bus_port_enable  : std_logic_vector(7 downto 0);
    signal nr_87_bus_port_enable  : std_logic_vector(7 downto 0);
    signal nr_88_bus_port_enable  : std_logic_vector(7 downto 0);
-   signal nr_89_bus_port_enable  : std_logic;
-   signal nr_8a_bus_port_propagate           : std_logic_vector(3 downto 0);
+   signal nr_89_bus_port_enable  : std_logic_vector(1 downto 0);
+   signal nr_89_bus_port_reset_type          : std_logic := '1';
+   signal nr_8a_bus_port_propagate           : std_logic_vector(4 downto 0);
    signal nr_90_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
    signal nr_91_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
    signal nr_92_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
    signal nr_93_pi_gpio_o_en     : std_logic_vector(3 downto 0) := (others => '0');
    signal nr_a0_pi_peripheral_en : std_logic_vector(7 downto 0);
    signal nr_a2_pi_i2s_ctl       : std_logic_vector(7 downto 0);
-   signal nr_a3_pi_i2s_clkdiv    : std_logic_vector(7 downto 0);
+-- signal nr_a3_pi_i2s_clkdiv    : std_logic_vector(7 downto 0);
    signal nr_a8_esp_gpio0_en     : std_logic := '0';
    signal nr_a9_esp_gpio0        : std_logic := '1';
+   signal nr_0a_mouse_button_reverse         : std_logic := '0';
+   signal nr_0a_mouse_dpi        : std_logic_vector(1 downto 0) := "01";
    
    signal machine_type_config    : std_logic;
    signal machine_type_48        : std_logic;
@@ -1077,6 +1137,7 @@ architecture rtl of zxnext is
    
    signal nr_02_reset_type       : std_logic_vector(1 downto 0) := "10";
    signal port_253b_dat          : std_logic_vector(7 downto 0);
+   signal port_253b_dat_0        : std_logic_vector(7 downto 0);
    
    -- PS/2 KEYMAP & HOT KEYS
    
@@ -1097,6 +1158,9 @@ architecture rtl of zxnext is
    signal pcm_ay_L               : std_logic_vector(11 downto 0);
    signal pcm_ay_R               : std_logic_vector(11 downto 0);
    signal port_fffd_dat          : std_logic_vector(7 downto 0);
+   
+   signal port_fe_mic_final      : std_logic;
+   signal internal_speaker_beep_exclusive    : std_logic;
    
    signal pcm_dac_L              : std_logic_vector(8 downto 0);
    signal pcm_dac_R              : std_logic_vector(8 downto 0);
@@ -1151,6 +1215,7 @@ architecture rtl of zxnext is
    signal phc                    : unsigned(8 downto 0);
    signal whc                    : unsigned(8 downto 0);
    signal wvc                    : unsigned(8 downto 0);
+   signal cvc                    : unsigned(8 downto 0);
    signal rgb_hsync_n            : std_logic;
    signal rgb_vsync_n            : std_logic;
    signal rgb_hblank_n           : std_logic;
@@ -1164,7 +1229,7 @@ architecture rtl of zxnext is
    signal layer_priorities_0     : std_logic_vector(2 downto 0);
    signal ula_en_0               : std_logic;
    signal ula_stencil_mode_0     : std_logic;
-   signal ula_mix_mode_0         : std_logic;
+   signal ula_blend_mode_0       : std_logic_vector(1 downto 0);
    signal ulanext_en_0           : std_logic;
    signal ulanext_format_0       : std_logic_vector(7 downto 0);
    signal ulap_en_0              : std_logic;
@@ -1201,8 +1266,8 @@ architecture rtl of zxnext is
    signal ula_en_1a              : std_logic;
    signal ula_stencil_mode_1     : std_logic;
    signal ula_stencil_mode_1a    : std_logic;
-   signal ula_mix_mode_1         : std_logic;
-   signal ula_mix_mode_1a        : std_logic;
+   signal ula_blend_mode_1       : std_logic_vector(1 downto 0);
+   signal ula_blend_mode_1a      : std_logic_vector(1 downto 0);
    signal lores_en_1             : std_logic;
    signal lores_en_1a            : std_logic;
    signal sprite_en_1            : std_logic;
@@ -1227,7 +1292,7 @@ architecture rtl of zxnext is
    
    signal nr_palette_index       : std_logic_vector(9 downto 0);
    signal nr_palette_index_utm   : std_logic_vector(9 downto 0);
-   signal nr_palette_dat         : std_logic_vector(15 downto 0);
+   signal nr_palette_dat         : std_logic_vector(10 downto 0);
    signal nr_palette_rd          : std_logic;
    signal nr_ulatm_we            : std_logic;
    signal nr_ulatm_palette_dat   : std_logic_vector(8 downto 0);
@@ -1242,7 +1307,7 @@ architecture rtl of zxnext is
    signal nr_l2s_palette_dat     : std_logic_vector(15 downto 0);
    signal l2s_prgb_1             : std_logic_vector(15 downto 0);
    signal l2s_pixel_1            : std_logic_vector(9 downto 0);
-   signal layer2_prgb_1          : std_logic_vector(15 downto 0);
+   signal layer2_prgb_1          : std_logic_vector(9 downto 0);
    signal layer2_rgb_2           : std_logic_vector(8 downto 0);
    signal layer2_priority_2      : std_logic;
    signal sprite_rgb_2           : std_logic_vector(8 downto 0);
@@ -1250,7 +1315,7 @@ architecture rtl of zxnext is
    signal ula_border_2           : std_logic;
    signal ula_clipped_2          : std_logic;
    signal ula_stencil_mode_2     : std_logic;
-   signal ula_mix_mode_2         : std_logic;
+   signal ula_blend_mode_2       : std_logic_vector(1 downto 0);
 -- signal lores_en_2             : std_logic;
    signal tm_en_2                : std_logic;
    signal tm_pixel_en_2          : std_logic;
@@ -1269,6 +1334,10 @@ architecture rtl of zxnext is
    
    signal ula_mix_transparent    : std_logic;
    signal ula_mix_rgb            : std_logic_vector(8 downto 0);
+   signal mix_top_transparent    : std_logic;
+   signal mix_top_rgb            : std_logic_vector(8 downto 0);
+   signal mix_bot_transparent    : std_logic;
+   signal mix_bot_rgb            : std_logic_vector(8 downto 0);
    signal ula_transparent        : std_logic;
    signal ula_rgb                : std_logic_vector(8 downto 0);
 -- signal lores_transparent      : std_logic;
@@ -1286,23 +1355,33 @@ architecture rtl of zxnext is
    signal layer2_priority        : std_logic;
    signal ula_final_rgb          : std_logic_vector(8 downto 0);
    signal ula_final_transparent  : std_logic;
-   signal mix_transparent        : std_logic;
    signal mix_rgb                : std_logic_vector(8 downto 0);
+   signal mix_rgb_transparent    : std_logic;
    signal rgb_out_2              : std_logic_vector(8 downto 0);
    signal rgb_out_2a             : std_logic_vector(8 downto 0);
-   
+
+   signal rgb_vsync_n_7          : std_logic;
+   signal rgb_vsync_n_6          : std_logic;
    signal rgb_vsync_n_5          : std_logic;
    signal rgb_vsync_n_4          : std_logic;
    signal rgb_vsync_n_3          : std_logic;
+   signal rgb_vblank_n_7         : std_logic;
+   signal rgb_vblank_n_6         : std_logic;
    signal rgb_vblank_n_5         : std_logic;
    signal rgb_vblank_n_4         : std_logic;
    signal rgb_vblank_n_3         : std_logic;
+   signal rgb_hblank_n_7         : std_logic;
+   signal rgb_hblank_n_6         : std_logic;
    signal rgb_hblank_n_5         : std_logic;
    signal rgb_hblank_n_4         : std_logic;
    signal rgb_hblank_n_3         : std_logic;
+   signal rgb_hsync_n_7          : std_logic;
+   signal rgb_hsync_n_6          : std_logic;
    signal rgb_hsync_n_5          : std_logic;
    signal rgb_hsync_n_4          : std_logic;
    signal rgb_hsync_n_3          : std_logic;
+   signal rgb_out_7              : std_logic_vector(8 downto 0);
+   signal rgb_out_6              : std_logic_vector(8 downto 0);
    signal rgb_out_5              : std_logic_vector(8 downto 0);
    signal rgb_out_4              : std_logic_vector(8 downto 0);
    signal rgb_out_3              : std_logic_vector(8 downto 0);
@@ -1331,13 +1410,19 @@ begin
    o_FLASH_BOOT <= nr_10_flashboot;
    o_CORE_ID <= nr_10_coreid;
 
+   o_KBD_CANCEL <= nr_68_cancel_extended_keys;
    o_KBD_ROW <= keyrow;
 
    o_KEYMAP_ADDR <= nr_keymap_addr;
    o_KEYMAP_DATA <= nr_keymap_dat;
    o_KEYMAP_WE <= nr_keymap_we;
 
+   o_JOY_IO_MODE <= io_mode(0) & io_mode_en;
+   o_JOY_IO_MODE_LR <= io_mode_lr;
+   o_JOY_IO_MODE_PIN_7 <= io_mode_pin_7;
+
    o_PS2_MODE <= nr_06_ps2_mode;
+   o_MOUSE_CONTROL <= nr_0a_mouse_button_reverse & nr_0a_mouse_dpi;
    
    o_I2C_SCL_n <= i2c_scl_o;
    o_I2C_SDA_n <= i2c_sda_o;
@@ -1349,7 +1434,7 @@ begin
    o_SPI_SCK <= spi_sck;
    o_SPI_MOSI <= spi_mosi;
 
-   o_UART0_TX <= uart0_tx;
+   o_UART0_TX <= uart0_tx_esp;
 
    o_RGB <= rgb_out_o;
    o_RGB_CS_n <= rgb_csync_n_o;
@@ -1366,12 +1451,17 @@ begin
    o_MACHINE_TIMING <= eff_nr_03_machine_timing;
    
    o_HDMI_RESET <= video_timing_change_d;
-
-   o_AUDIO_HDMI_EN <= not nr_09_hdmi_audio_disable;
+   
+   o_AUDIO_HDMI_AUDIO_EN <= not nr_09_hdmi_audio_disable;
+   
    o_AUDIO_SPEAKER_EN <= nr_08_internal_speaker_en;
+   o_AUDIO_SPEAKER_BEEP <= internal_speaker_beep_exclusive;
    
    o_AUDIO_MIC <= port_fe_mic xor pi_fe_ear;
-      
+   
+   o_AUDIO_SPEAKER_EAR <= port_fe_ear;
+   o_AUDIO_SPEAKER_MIC <= port_fe_mic_final;
+   
    o_AUDIO_L <= pcm_audio_L;
    o_AUDIO_R <= pcm_audio_R;
 
@@ -1452,10 +1542,10 @@ begin
       reset_i        => reset,
       clk_i          => i_CLK_CPU,
       turbo_i        => cpu_speed,
-      dma_mode_i     => nr_06_dma_mode,
+      dma_mode_i     => dma_mode,       -- 0 = zxn dma, 1 = z80 dma
 
-      dma_en_wr_s    => port_6b_wr,     -- allow dma to program itself? ans: no
-      dma_en_rd_s    => port_6b_rd,
+      dma_en_wr_s    => port_dma_wr,    -- allow dma to program itself? ans: no
+      dma_en_rd_s    => port_dma_rd,
 
       cpu_d_i        => z80_do,
       wait_n_i       => dma_wait_n,
@@ -1474,13 +1564,24 @@ begin
       dma_mreq_n_o   => dma_mreq_n,
       dma_iorq_n_o   => dma_iorq_n,
 
-      cpu_d_o        => port_dma_dat
+      cpu_d_o        => port_dma_dat_0
    );
    
    process (i_CLK_CPU)
    begin
       if falling_edge(i_CLK_CPU) then
-         port_6b_dat <= port_dma_dat;
+         port_dma_dat <= port_dma_dat_0;
+      end if;
+   end process;
+   
+   process (i_CLK_CPU)
+   begin
+      if falling_edge(i_CLK_CPU) then
+         if reset = '1' then
+            dma_mode <= '0';
+         elsif port_dma_rd = '1' or port_dma_wr = '1' then
+            dma_mode <= port_0b_lsb;
+         end if;
       end if;
    end process;
    
@@ -1509,7 +1610,7 @@ begin
    cpu_di <= cpu_di_mem when cpu_mreq_n = '0' and cpu_rfsh_n = '1' else cpu_di_io when cpu_iorq_n = '0' else X"FF";
    
    cpu_di_mem <= bootrom_do when cpu_a(15 downto 14) = "00" and eff_bootrom_en = '1' else
-      i_BUS_DI when sram_romcs = '1' else
+      i_BUS_DI when sram_romcs = '1' and eff_expbus_romcs_replace = '0' else
       cpu_bank5_do when sram_bank5 = '1' else
       cpu_bank7_do when sram_bank7 = '1' else
       i_RAM_A_DI;
@@ -1651,6 +1752,7 @@ begin
    end process;
    
    expbus_en <= nr_80_expbus(7);
+   expbus_romcs_replace <= nr_80_expbus(6);
    expbus_disable_io <= nr_80_expbus(5);
    expbus_disable_mem <= nr_80_expbus(4);
    
@@ -1668,8 +1770,9 @@ begin
    port_propagate_7ffd <= port_7ffd and nr_8a_bus_port_propagate(1);
    port_propagate_dffd <= port_dffd and nr_8a_bus_port_propagate(2);
    port_propagate_1ffd <= port_1ffd and nr_8a_bus_port_propagate(3);
+   port_propagate_ff <= port_ff and nr_8a_bus_port_propagate(4);
 
-   port_propagate <= port_propagate_fe or port_propagate_7ffd or port_propagate_dffd or port_propagate_1ffd;
+   port_propagate <= port_propagate_fe or port_propagate_7ffd or port_propagate_dffd or port_propagate_1ffd or port_propagate_ff;
    
    bus_iorq_n <= cpu_iorq_n or (cpu_m1_n and ((port_internal_response or expbus_eff_disable_io) and not port_propagate));
    bus_mreq_n <= cpu_mreq_n or ((expbus_eff_disable_mem or (not cpu_a(15) and (not cpu_a(14)) and not sram_romcs_en)) and cpu_rfsh_n);
@@ -1730,7 +1833,7 @@ begin
    pi_i2s_inout <= nr_a2_pi_i2s_ctl(4);
    pi_i2s_muteL <= nr_a2_pi_i2s_ctl(3);
    pi_i2s_muteR <= nr_a2_pi_i2s_ctl(2);
-   pi_i2s_slave <= nr_a2_pi_i2s_ctl(1);
+-- pi_i2s_slave <= nr_a2_pi_i2s_ctl(1);
    pi_i2s_ear <= nr_a2_pi_i2s_ctl(0);
 
    -- spi0 7,8,9,10,11
@@ -1767,15 +1870,17 @@ begin
    gpio_14_en <= not pi_uart_rxtx when pi_uart_en = '1' else pi_gpio_en(14);
    gpio_15_en <= pi_uart_rxtx when pi_uart_en = '1' else pi_gpio_en(15);
    
-   gpio_14 <= uart1_tx when pi_uart_en = '1' else pi_gpio_o(14);
-   gpio_15 <= uart1_tx when pi_uart_en = '1' else pi_gpio_o(15);
+   gpio_14 <= uart1_tx_pi when pi_uart_en = '1' else pi_gpio_o(14);
+   gpio_15 <= uart1_tx_pi when pi_uart_en = '1' else pi_gpio_o(15);
    
    pi_uart_rx <= (i_GPIO(14) and pi_uart_rxtx) or (i_GPIO(15) and not pi_uart_rxtx) when pi_uart_en = '1' else '1';
 
    -- i2s 18,19,20,21
    
-   gpio_18_en <= '1' when pi_i2s_en = '1' and pi_i2s_slave = '0' else '0' when pi_i2s_en = '1' and pi_i2s_slave = '1' else pi_gpio_en(18);
-   gpio_19_en <= '1' when pi_i2s_en = '1' and pi_i2s_slave = '0' else '0' when pi_i2s_en = '1' and pi_i2s_slave = '1' else pi_gpio_en(19);
+-- gpio_18_en <= '1' when pi_i2s_en = '1' and pi_i2s_slave = '0' else '0' when pi_i2s_en = '1' and pi_i2s_slave = '1' else pi_gpio_en(18);
+-- gpio_19_en <= '1' when pi_i2s_en = '1' and pi_i2s_slave = '0' else '0' when pi_i2s_en = '1' and pi_i2s_slave = '1' else pi_gpio_en(19);
+   gpio_18_en <= '0' when pi_i2s_en = '1' else pi_gpio_en(18);
+   gpio_19_en <= '0' when pi_i2s_en = '1' else pi_gpio_en(19);
    gpio_20_en <= pi_i2s_inout when pi_i2s_en = '1' else pi_gpio_en(20);
    gpio_21_en <= not pi_i2s_inout when pi_i2s_en = '1' else pi_gpio_en(21);
    
@@ -1786,8 +1891,11 @@ begin
    
    pi_i2s_sd_i <= ((i_GPIO(21) and pi_i2s_inout) or (i_GPIO(20) and not pi_i2s_inout)) and pi_i2s_en;
    
-   pi_si2s_sck <= i_GPIO(18) and pi_i2s_en and pi_i2s_slave;
-   pi_si2s_ws <= i_GPIO(19) and pi_i2s_en and pi_i2s_slave;
+-- pi_si2s_sck <= i_GPIO(18) and pi_i2s_en and pi_i2s_slave;
+-- pi_si2s_ws <= i_GPIO(19) and pi_i2s_en and pi_i2s_slave;
+
+   pi_si2s_sck <= i_GPIO(18) and pi_i2s_en;
+   pi_si2s_ws <= i_GPIO(19) and pi_i2s_en;
    
    pi_audio_L <= ("10" & X"00") when (pi_i2s_en = '0' or pi_i2s_muteL = '1' or pi_i2s_ear = '1') else pi_i2s_audio_L when pi_i2s_enL = '1' else pi_i2s_audio_R;
    pi_audio_R <= ("10" & X"00") when (pi_i2s_en = '0' or pi_i2s_muteR = '1' or pi_i2s_ear = '1') else pi_i2s_audio_R when pi_i2s_enR = '1' else pi_i2s_audio_L;
@@ -1838,7 +1946,7 @@ begin
    
    port_p3_floating_bus_io_en <= internal_port_enable(4);
    
-   port_dma_io_en <= internal_port_enable(5);
+   port_dma_6b_io_en <= internal_port_enable(5);
    
    port_1f_io_en <= internal_port_enable(6);
    port_37_io_en <= internal_port_enable(7);
@@ -1870,6 +1978,7 @@ begin
    --
    
    port_ulap_io_en <= internal_port_enable(24);
+   port_dma_0b_io_en <= internal_port_enable(25);
    
    --
    -- peripheral disable
@@ -1885,6 +1994,7 @@ begin
             port_37_hw_en <= joyL_37_en or joyR_37_en;
             
             p3_timing_hw_en <= machine_timing_p3;
+            s128_timing_hw_en <= machine_timing_128;
             
             dac_hw_en <= nr_08_dac_en;
 
@@ -1944,6 +2054,7 @@ begin
    process (cpu_a(7 downto 0))
    begin
    
+      port_0b_lsb <= '0';
       port_0f_lsb <= '0';
       port_1f_lsb <= '0';
       port_37_lsb <= '0';
@@ -1967,6 +2078,7 @@ begin
    
       case cpu_a(7 downto 0) is
    
+         when X"0B"  => port_0b_lsb <= '1';
          when X"0F"  => port_0f_lsb <= '1';
          when X"1F"  => port_1f_lsb <= '1';
          when X"37"  => port_37_lsb <= '1';
@@ -2007,13 +2119,15 @@ begin
    
    -- original spectrum banking
 
-   port_7ffd_active <= '1' when cpu_a(15) = '0' and (cpu_a(14) = '1' or machine_type_p3 = '0') and port_fd = '1' and (machine_type_128 = '1' or machine_type_p3 = '1') else '0';
-   port_7ffd <= '1' when port_7ffd_active = '1' and port_7ffd_io_en = '1' else '0';
+   port_7ffd_assert <= '1' when cpu_a(15) = '0' and (cpu_a(14) = '1' or p3_timing_hw_en = '0') and port_fd = '1' and port_1ffd = '0' else '0';
+   port_7ffd_active <= '1' when port_7ffd_assert = '1' and (s128_timing_hw_en = '1' or p3_timing_hw_en = '1') else '0';
+   port_7ffd <= '1' when port_7ffd_assert = '1' and port_7ffd_io_en = '1' else '0';
    
-   port_dffd <= '1' when cpu_a(15 downto 12) = "1101" and port_fd = '1' and (machine_type_128 = '1' or machine_type_p3 = '1') and port_dffd_io_en = '1' else '0';
-   
-   port_1ffd_active <= '1' when cpu_a(15 downto 12) = "0001" and port_fd = '1' and machine_type_p3 = '1' else '0';
-   port_1ffd <= '1' when port_1ffd_active = '1' and port_1ffd_io_en = '1' else '0';
+   port_dffd <= '1' when cpu_a(15 downto 12) = "1101" and port_fd = '1' and port_dffd_io_en = '1' else '0';
+
+   port_1ffd_assert <= '1' when cpu_a(15 downto 12) = "0001" and port_fd = '1' else '0';
+   port_1ffd_active <= '1' when port_1ffd_assert = '1' and p3_timing_hw_en = '1' else '0';
+   port_1ffd <= '1' when port_1ffd_assert = '1' and port_1ffd_io_en = '1' else '0';
    
    -- divmmc control
    
@@ -2021,8 +2135,8 @@ begin
    
    -- multiface
 
-   port_mf_enable_io_a <= X"BF" when machine_type_128 = '1' else X"3F" when machine_type_p3 = '1' else X"9F";
-   port_mf_disable_io_a <= X"3F" when machine_type_128 = '1' else X"BF" when machine_type_p3 = '1' else X"1F";
+   port_mf_enable_io_a <= X"3F" when machine_type_p3 = '1' else X"9F";
+   port_mf_disable_io_a <= X"BF" when machine_type_p3 = '1' else X"1F";
    
    port_mf_enable <= '1' when cpu_a(7 downto 0) = port_mf_enable_io_a and port_multiface_io_en = '1' else '0';
    port_mf_disable <= '1' when cpu_a(7 downto 0) = port_mf_disable_io_a and port_multiface_io_en = '1' else '0';
@@ -2054,7 +2168,7 @@ begin
    
    -- dma
    
-   port_6b <= '1' when port_6b_lsb = '1' and port_dma_io_en = '1' else '0';
+   port_dma <= '1' when (port_6b_lsb = '1' and port_dma_6b_io_en = '1') or (port_0b_lsb = '1' and port_dma_0b_io_en = '1') else '0';
    
    -- ay
    
@@ -2085,7 +2199,7 @@ begin
    -- joystick
    
    port_1f <= '1' when port_1f_lsb = '1' and port_1f_io_en = '1' and port_1f_hw_en = '1' else '0';
-   port_37 <= '1' when port_37_lsb = '1' and port_37_io_en = '1' and port_37_hw_en = '1' else '0';
+   port_37 <= '1' when port_37_lsb = '1' and port_37_io_en = '1' else '0';
    
    -- sprites
    
@@ -2104,7 +2218,7 @@ begin
    
    port_internal_response <= port_fe or port_ff or port_p3_float or port_7ffd or port_dffd or port_1ffd or port_e3 or port_mf_enable or
       port_mf_disable or port_e7 or port_eb or port_243b or port_253b or port_103b or port_113b or port_123b or port_133b or 
-      port_143b or port_153b or port_6b or port_fffd or port_bffd or port_dac_A or port_dac_B or port_dac_C or port_dac_D or
+      port_143b or port_153b or port_dma or port_fffd or port_bffd or port_dac_A or port_dac_B or port_dac_C or port_dac_D or
       port_fadf or port_fbdf or port_ffdf or port_1f or port_37 or port_57 or port_5b or port_303b or port_bf3b or port_ff3b;
    
    --
@@ -2160,10 +2274,10 @@ begin
    port_153b_rd <= iord and port_153b;
    port_153b_wr <= iowr and port_153b;
    
-   port_6b_rd <= iord and port_6b and not dma_holds_bus;
-   port_6b_wr <= iowr and port_6b and not dma_holds_bus;
+   port_dma_rd <= iord and port_dma and not dma_holds_bus;
+   port_dma_wr <= iowr and port_dma and not dma_holds_bus;
    
-   port_fffd_rd <= iord and (port_fffd or (port_bffd and machine_type_p3));   -- bffd is readable equivalent to fffd on +3
+   port_fffd_rd <= iord and (port_fffd or (port_bffd and machine_timing_p3));   -- bffd is readable equivalent to fffd on +3
    port_fffd_wr <= iowr and port_fffd and not port_dffd;
    port_bffd_wr <= iowr and port_bffd;
 
@@ -2177,7 +2291,8 @@ begin
    port_ffdf_rd <= iord and port_ffdf;
    
    port_1f_rd <= iord and port_1f;
-   port_37_rd <= iord and port_37;
+   port_37_rd <= iord and port_37 and port_37_hw_en;
+   port_37_wr <= iowr and port_37;
    
    port_57_wr <= iowr and port_57;
    port_5b_wr <= iowr and port_5b;
@@ -2194,7 +2309,7 @@ begin
    
    port_internal_rd_response <= port_fe_rd or port_ff_rd or port_p3_float_rd or port_e3_rd or mf_port_en or 
       port_eb_rd or port_243b_rd or port_253b_rd or port_103b_rd or port_113b_rd or port_123b_rd or port_133b_rd or
-      port_143b_rd or port_153b_rd or port_6b_rd or port_fffd_rd or port_fadf_rd or port_fbdf_rd or port_ffdf_rd or
+      port_143b_rd or port_153b_rd or port_dma_rd or port_fffd_rd or port_fadf_rd or port_fbdf_rd or port_ffdf_rd or
       port_1f_rd or port_37_rd or port_303b_rd or port_ff3b_rd;
    
    --
@@ -2208,14 +2323,14 @@ begin
    port_mf_rd_dat <= mf_port_dat when mf_port_en = '1' else X"00";
    port_eb_rd_dat <= port_eb_dat when port_eb_rd = '1' else X"00";
    port_243b_rd_dat <= port_243b_dat when port_243b_rd = '1' else X"00";
-   port_253b_rd_dat <= port_253b_dat when port_253b_rd = '1' else X"00";
+   port_253b_rd_dat <= port_253b_dat_0 when port_253b_rd = '1' else X"00";
    port_103b_rd_dat <= port_103b_dat when port_103b_rd = '1' else X"00";
    port_113b_rd_dat <= port_113b_dat when port_113b_rd = '1' else X"00";
    port_123b_rd_dat <= port_123b_dat when port_123b_rd = '1' else X"00";
    port_133b_rd_dat <= port_133b_dat when port_133b_rd = '1' else X"00";
    port_143b_rd_dat <= port_143b_dat when port_143b_rd = '1' else X"00";
    port_153b_rd_dat <= port_153b_dat when port_153b_rd = '1' else X"00";
-   port_6b_rd_dat <= port_6b_dat when port_6b_rd = '1' else X"00";
+   port_dma_rd_dat <= port_dma_dat when port_dma_rd = '1' else X"00";
    port_fffd_rd_dat <= port_fffd_dat when port_fffd_rd = '1' else X"00";
    port_fadf_rd_dat <= port_fadf_dat when port_fadf_rd = '1' else X"00";
    port_fbdf_rd_dat <= port_fbdf_dat when port_fbdf_rd = '1' else X"00";
@@ -2229,7 +2344,7 @@ begin
    
    port_rd_dat <= port_fe_rd_dat or port_ff_rd_dat or port_p3_float_rd_dat or port_e3_rd_dat or port_mf_rd_dat or 
       port_eb_rd_dat or port_243b_rd_dat or port_253b_rd_dat or port_103b_rd_dat or port_113b_rd_dat or port_123b_rd_dat or port_133b_rd_dat or
-      port_143b_rd_dat or port_153b_rd_dat or port_6b_rd_dat or port_fffd_rd_dat or port_fadf_rd_dat or port_fbdf_rd_dat or
+      port_143b_rd_dat or port_153b_rd_dat or port_dma_rd_dat or port_fffd_rd_dat or port_fadf_rd_dat or port_fbdf_rd_dat or
       port_ffdf_rd_dat or port_1f_rd_dat or port_37_rd_dat or port_303b_rd_dat or port_ff3b_rd_dat;
    
    ------------------------------------------------------------
@@ -2287,7 +2402,7 @@ begin
    --
    -- early memory decode before assertion of mreq where possible
    --
-   
+
    sram_config_active <= '1' when bootrom_en = '1' or machine_type_config = '1' else '0';
 
    mmu_A21_A13 <= ("0001" + ('0' & mem_active_page(7 downto 5))) & mem_active_page(4 downto 0);
@@ -2327,7 +2442,11 @@ begin
          
             layer2_pre_A21_A13 <= layer2_A21_A13;
             eff_bootrom_en <= bootrom_en;
+            eff_expbus_romcs_replace <= expbus_romcs_replace;
             sram_pre_alt_128 <= sram_alt_128;
+            port_123b_layer2_map_rd_pre <= port_123b_layer2_map_rd_en;
+            port_123b_layer2_map_wr_pre <= port_123b_layer2_map_wr_en;
+            port_123b_layer2_map_segment_pre <= port_123b_layer2_map_segment;
             
             sram_pre_active <= '0';
             sram_pre_bank5 <= '0';
@@ -2366,11 +2485,11 @@ begin
    -- finish memory decode after mreq is asserted
    --
    
-   layer2_map_en <= (port_123b_layer2_map_wr_en and cpu_rd_n) or (port_123b_layer2_map_rd_en and not cpu_rd_n);
+   layer2_map_en <= (port_123b_layer2_map_wr_pre and cpu_rd_n) or (port_123b_layer2_map_rd_pre and not cpu_rd_n);
    altrom_en <= '0' when (sram_pre_alt_en = '0') or (sram_pre_rdonly = '1' and cpu_wr_n = '0') or (sram_pre_rdonly = '0' and cpu_rd_n = '0') else '1';
 
    process (cpu_a, sram_config_active, sram_pre_A20_A13, sram_pre_active, mf_mem_en, divmmc_rom_en, divmmc_ram_en, divmmc_bank, altrom_en, sram_pre_alt_128,
-            divmmc_rdonly, layer2_map_en, layer2_pre_A21_A13, sram_pre_bank5, sram_pre_bank7, sram_pre_rdonly, sram_pre_romcs, port_123b_layer2_map_segment)
+            divmmc_rdonly, layer2_map_en, layer2_pre_A21_A13, sram_pre_bank5, sram_pre_bank7, sram_pre_rdonly, sram_pre_romcs, port_123b_layer2_map_segment_pre)
    begin
       if cpu_a(15 downto 14) = "00" then
          if sram_config_active = '1' then
@@ -2409,20 +2528,24 @@ begin
             sram_rdonly <= '0';
             sram_romcs_en <= '0';
          else
-            sram_A20_A13(7 downto 4) <= sram_pre_A20_A13(7 downto 4);
-            sram_A20_A13(0) <= sram_pre_A20_A13(0);
-            if altrom_en = '0' then
-               sram_A20_A13(3 downto 1) <= sram_pre_A20_A13(3 downto 1);
+            if sram_romcs = '1' then
+               sram_A20_A13 <= "0001111" & cpu_a(13);    -- divmmc banks 14 and 15
             else
-               sram_A20_A13(3 downto 1) <= "11" & not sram_pre_alt_128;
+               sram_A20_A13(7 downto 4) <= sram_pre_A20_A13(7 downto 4);
+               sram_A20_A13(0) <= sram_pre_A20_A13(0);
+               if altrom_en = '0' then
+                  sram_A20_A13(3 downto 1) <= sram_pre_A20_A13(3 downto 1);
+               else
+                  sram_A20_A13(3 downto 1) <= "11" & not sram_pre_alt_128;
+               end if;
             end if;
             sram_active <= sram_pre_active;
             sram_bank5 <= sram_pre_bank5;
             sram_bank7 <= sram_pre_bank7;
-            sram_rdonly <= sram_pre_rdonly;
+            sram_rdonly <= sram_pre_rdonly or sram_romcs;
             sram_romcs_en <= sram_pre_romcs;
          end if;
-      elsif cpu_a(15 downto 14) /= "11" and layer2_map_en = '1' and port_123b_layer2_map_segment = "11" then
+      elsif cpu_a(15 downto 14) /= "11" and layer2_map_en = '1' and port_123b_layer2_map_segment_pre = "11" then
          sram_A20_A13 <= layer2_pre_A21_A13(7 downto 0);
          sram_active <= not layer2_pre_A21_A13(8);
          sram_bank5 <= '0';
@@ -2496,7 +2619,7 @@ begin
    
    sram_addr <= sram_A20_A13 & cpu_a(12 downto 0);
    sram_rd <= not cpu_rd_n;
-   sram_req <= memcycle and memcycle_delay_complete and (not sram_romcs) and sram_active and ((not cpu_rd_n) or ((not sram_rdonly) and not cpu_wr_n));
+   sram_req <= memcycle and memcycle_delay_complete and (eff_expbus_romcs_replace or not sram_romcs) and sram_active and ((not cpu_rd_n) or ((not sram_rdonly) and not cpu_wr_n));
    
    process (i_CLK_28)
    begin
@@ -2662,6 +2785,14 @@ begin
    -- todo: enforce minimum prescalar
    -- todo: add cts/rts
    
+   -- multiplex uart with joystick connector
+
+   uart0_rx <= io_mode_uart_rx when io_mode_uart_en = '1' and io_mode_bit_0 = '0' else i_UART0_RX;
+   uart1_rx <= io_mode_uart_rx when io_mode_uart_en = '1' and io_mode_bit_0 = '1' else pi_uart_rx;
+   
+   uart0_tx_esp <= '1' when io_mode_uart_en = '1' and io_mode_bit_0 = '0' else uart0_tx;
+   uart1_tx_pi <= '1' when io_mode_uart_en = '1' and io_mode_bit_0 = '1' else uart1_tx;
+
    -- uart 0 8/1/N
    
    uart0_mod: entity work.uart
@@ -2677,7 +2808,7 @@ begin
       TX_out_o             => uart0_tx,                           -- Tx
       TX_byte_finished_o   => open,                               -- when complete, 1 for one cycle
       
-      RX_in_i              => i_UART0_RX,                         -- Rx
+      RX_in_i              => uart0_rx,                           -- Rx
       RX_byte_finished_o   => uart0_rx_avail,                     -- when complete, 1 for one cycle
       RX_byte_o            => uart0_rx_byte                       -- incoming byte
    );
@@ -2715,7 +2846,7 @@ begin
       TX_out_o             => uart1_tx,                        -- Tx
       TX_byte_finished_o   => open,                            -- when complete, 1 for one cycle
       
-      RX_in_i              => pi_uart_rx,                      -- Rx
+      RX_in_i              => uart1_rx,                        -- Rx
       RX_byte_finished_o   => uart1_rx_avail,                  -- when complete, 1 for one cycle
       RX_byte_o            => uart1_rx_byte                    -- incoming byte
    );
@@ -2916,6 +3047,7 @@ begin
    -- 100 = Kempston 2 (port 0x37)
    -- 101 = MD 1 (3 or 6 button joystick port 0x1F)
    -- 110 = MD 2 (3 or 6 button joystick port 0x37)
+   -- 111 = Both joysticks in I/O Mode
    --
    -- Physical connector:
    --
@@ -2934,17 +3066,20 @@ begin
    -- todo: older tbblue mapped extra fire buttons to Q and W; should we do this?
    -- todo: user defined keys joystick (maybe makes previous point moot)
    
-   joyL_sinc1 <= not(i_JOY_LEFT(4) & i_JOY_LEFT(3) & i_JOY_LEFT(2) & i_JOY_LEFT(0) & i_JOY_LEFT(1)) when keyrow(3) = '0' and nr_05_joy0 = "011" else (others => '1');
-   joyL_sinc2 <= not(i_JOY_LEFT(1) & i_JOY_LEFT(0) & i_JOY_LEFT(2) & i_JOY_LEFT(3) & i_JOY_LEFT(4)) when keyrow(4) = '0' and nr_05_joy0 = "000" else (others => '1');
+   joyL_up <= i_JOY_LEFT(6) or i_JOY_LEFT(3);
+   joyR_up <= i_JOY_RIGHT(6) or i_JOY_RIGHT(3);
+
+   joyL_sinc1 <= not(i_JOY_LEFT(1) & i_JOY_LEFT(0) & i_JOY_LEFT(2) & joyL_up & i_JOY_LEFT(4)) when keyrow(4) = '0' and nr_05_joy0 = "011" else (others => '1');
+   joyL_sinc2 <= not(i_JOY_LEFT(4) & joyL_up & i_JOY_LEFT(2) & i_JOY_LEFT(0) & i_JOY_LEFT(1)) when keyrow(3) = '0' and nr_05_joy0 = "000" else (others => '1');
    joyL_cursA <= (not i_JOY_LEFT(1)) & "1111" when keyrow(3) = '0' and nr_05_joy0 = "010" else (others => '1');
-   joyL_cursB <= not(i_JOY_LEFT(2) & i_JOY_LEFT(3) & i_JOY_LEFT(0) & '0' & i_JOY_LEFT(4)) when keyrow(4) = '0' and nr_05_joy0 = "010" else (others => '1');
-   
-   joyR_sinc1 <= not(i_JOY_RIGHT(4) & i_JOY_RIGHT(3) & i_JOY_RIGHT(2) & i_JOY_RIGHT(0) & i_JOY_RIGHT(1)) when keyrow(3) = '0' and nr_05_joy1 = "011" else (others => '1');
-   joyR_sinc2 <= not(i_JOY_RIGHT(1) & i_JOY_RIGHT(0) & i_JOY_RIGHT(2) & i_JOY_RIGHT(3) & i_JOY_RIGHT(4)) when keyrow(4) = '0' and nr_05_joy1 = "000" else (others => '1');
+   joyL_cursB <= not(i_JOY_LEFT(2) & joyL_up & i_JOY_LEFT(0) & '0' & i_JOY_LEFT(4)) when keyrow(4) = '0' and nr_05_joy0 = "010" else (others => '1');
+
+   joyR_sinc1 <= not(i_JOY_RIGHT(1) & i_JOY_RIGHT(0) & i_JOY_RIGHT(2) & joyR_up & i_JOY_RIGHT(4)) when keyrow(4) = '0' and nr_05_joy1 = "011" else (others => '1');
+   joyR_sinc2 <= not(i_JOY_RIGHT(4) & joyR_up & i_JOY_RIGHT(2) & i_JOY_RIGHT(0) & i_JOY_RIGHT(1)) when keyrow(3) = '0' and nr_05_joy1 = "000" else (others => '1');
    joyR_cursA <= (not i_JOY_RIGHT(1)) & "1111" when keyrow(3) = '0' and nr_05_joy1 = "010" else (others => '1');
-   joyR_cursB <= not(i_JOY_RIGHT(2) & i_JOY_RIGHT(3) & i_JOY_RIGHT(0) & '0' & i_JOY_RIGHT(4)) when keyrow(4) = '0' and nr_05_joy1 = "010" else (others => '1');   
+   joyR_cursB <= not(i_JOY_RIGHT(2) & joyR_up & i_JOY_RIGHT(0) & '0' & i_JOY_RIGHT(4)) when keyrow(4) = '0' and nr_05_joy1 = "010" else (others => '1');   
    
-   joy_key <= joyL_sinc1 and joyL_sinc2 and joyL_cursA and joyL_cursB and joyR_sinc1 and joyR_sinc2 and joyR_cursA and joyR_cursB;
+   joy_key <= (joyL_sinc1 and joyL_sinc2 and joyL_cursA and joyL_cursB and joyR_sinc1 and joyR_sinc2 and joyR_cursA and joyR_cursB) when io_mode_en = '0' else (others => '1');
 
    port_fe_bus <= i_BUS_DI when expbus_eff_en = '1' and port_propagate_fe = '1' else X"FF";
 
@@ -2961,23 +3096,29 @@ begin
 
    -- other joysticks
    
-   joyL_1f_en <= '1' when nr_05_joy0 = "001" or nr_05_joy0 = "101" else '0';
-   joyL_37_en <= '1' when nr_05_joy0 = "100" or nr_05_joy0 = "110" else '0';
+   mdL_1f_en <= '1' when nr_05_joy0 = "101" else '0';
+   mdL_37_en <= '1' when nr_05_joy0 = "110" else '0';
    
-   joyL_1f(7 downto 6) <= i_JOY_LEFT(7 downto 6) when nr_05_joy0 = "101" else (others => '0');
-   joyL_1f(5 downto 0) <= i_JOY_LEFT(5 downto 0) when joyL_1f_en = '1' else (others => '0');
+   joyL_1f_en <= '1' when nr_05_joy0 = "001" or mdL_1f_en = '1' or io_mode_en = '1' else '0';
+   joyL_37_en <= '1' when (nr_05_joy0 = "100" or mdL_37_en = '1') and io_mode_en = '0' else '0';
+   
+   joyL_1f(7 downto 6) <= i_JOY_LEFT(7 downto 6) when mdL_1f_en = '1' else (others => '0');
+   joyL_1f(5 downto 0) <= (i_JOY_LEFT(5 downto 4) & (i_JOY_LEFT(3) or (i_JOY_LEFT(6) and not mdL_1f_en)) & i_JOY_LEFT(2 downto 0)) when joyL_1f_en = '1' else (others => '0');
 
-   joyL_37(7 downto 6) <= i_JOY_LEFT(7 downto 6) when nr_05_joy0 = "110" else (others => '0');
-   joyL_37(5 downto 0) <= i_JOY_LEFT(5 downto 0) when joyL_37_en = '1' else (others => '0');
+   joyL_37(7 downto 6) <= i_JOY_LEFT(7 downto 6) when mdL_37_en = '1' else (others => '0');
+   joyL_37(5 downto 0) <= (i_JOY_LEFT(5 downto 4) & (i_JOY_LEFT(3) or (i_JOY_LEFT(6) and not mdL_37_en)) & i_JOY_LEFT(2 downto 0)) when joyL_37_en = '1' else (others => '0');
 
-   joyR_1f_en <= '1' when nr_05_joy1 = "001" or nr_05_joy1 = "101" else '0';
-   joyR_37_en <= '1' when nr_05_joy1 = "100" or nr_05_joy1 = "110" else '0';
+   mdR_1f_en <= '1' when nr_05_joy1 = "101" else '0';
+   mdR_37_en <= '1' when nr_05_joy1 = "110" else '0';
    
-   joyR_1f(7 downto 6) <= i_JOY_RIGHT(7 downto 6) when nr_05_joy1 = "101" else (others => '0');
-   joyR_1f(5 downto 0) <= i_JOY_RIGHT(5 downto 0) when joyR_1f_en = '1' else (others => '0');
+   joyR_1f_en <= '1' when (nr_05_joy1 = "001" or mdR_1f_en = '1') and io_mode_en = '0' else '0';
+   joyR_37_en <= '1' when nr_05_joy1 = "100" or mdR_37_en = '1' or io_mode_en = '1' else '0';
    
-   joyR_37(7 downto 6) <= i_JOY_RIGHT(7 downto 6) when nr_05_joy1 = "110" else (others => '0');
-   joyR_37(5 downto 0) <= i_JOY_RIGHT(5 downto 0) when joyR_37_en = '1' else (others => '0');
+   joyR_1f(7 downto 6) <= i_JOY_RIGHT(7 downto 6) when mdR_1f_en = '1' else (others => '0');
+   joyR_1f(5 downto 0) <= (i_JOY_RIGHT(5 downto 4) & (i_JOY_RIGHT(3) or (i_JOY_RIGHT(6) and not mdR_1f_en)) & i_JOY_RIGHT(2 downto 0)) when joyR_1f_en = '1' else (others => '0');
+   
+   joyR_37(7 downto 6) <= i_JOY_RIGHT(7 downto 6) when mdR_37_en = '1' else (others => '0');
+   joyR_37(5 downto 0) <= (i_JOY_RIGHT(5 downto 4) & (i_JOY_RIGHT(3) or (i_JOY_RIGHT(6) and not mdR_37_en)) & i_JOY_RIGHT(2 downto 0)) when joyR_37_en = '1' else (others => '0');
    
    process (i_CLK_CPU)
    begin
@@ -2992,6 +3133,28 @@ begin
          port_37_dat <= joyL_37 or joyR_37;
       end if;
    end process;
+   
+   -- port 0x37 joystick control io mode
+
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
+         if reset = '1' then
+            io_mode <= "00";
+            io_mode_bit_0 <= '1';
+         elsif port_37_wr = '1' then
+            io_mode <= cpu_do(7 downto 6);
+            io_mode_lr <= cpu_do(4);
+            io_mode_bit_0 <= cpu_do(0);
+         end if;
+      end if;
+   end process;
+
+   io_mode_uart_en <= '1' when io_mode_en = '1' and io_mode = "10" else '0';
+   io_mode_uart_rx <= not i_JOY_LEFT(5);
+   io_mode_uart_tx <= uart0_tx when io_mode_bit_0 = '0' else uart1_tx;
+   
+   io_mode_pin_7 <= io_mode_uart_tx when io_mode_uart_en = '1' else io_mode_bit_0;
    
    -- mouse
    
@@ -3102,6 +3265,13 @@ begin
             port_7ffd_reg(5) <= '0';
          elsif nr_69_we = '1' then
             port_7ffd_reg(3) <= nr_wr_dat(6);
+         elsif nr_8e_we = '1' then
+            if nr_wr_dat(3) = '1' then
+               port_7ffd_reg(2 downto 0) <= nr_wr_dat(6 downto 4);
+            end if;
+            if nr_wr_dat(2) = '0' then
+               port_7ffd_reg(4) <= nr_wr_dat(0);
+            end if;
          end if;
       end if;
    end process;
@@ -3116,10 +3286,25 @@ begin
    process (i_CLK_28)
    begin
       if rising_edge(i_CLK_28) then
-         if reset = '1' then
+         if reset_hard = '1' then
+            port_dffd_reg <= (others => '0');
+            port_dffd_pentagon_512 <= '0';
+         elsif reset_soft = '1' then
             port_dffd_reg <= (others => '0');
          elsif port_dffd_wr = '1' and port_7ffd_locked = '0' then
-            port_dffd_reg <= cpu_do;
+            if machine_timing_pentagon = '0' or port_dffd_pentagon_512 = '0' then
+               port_dffd_reg <= cpu_do(3 downto 0);
+            end if;
+            if machine_timing_pentagon = '0' then
+               port_dffd_pentagon_512 <= cpu_do(7);
+            end if;
+         elsif nr_8e_we = '1' and nr_wr_dat(3) = '1' then
+            if machine_timing_pentagon = '0' or port_dffd_pentagon_512 = '0' then
+               port_dffd_reg <= "000" & nr_wr_dat(7);
+            end if;
+            if machine_timing_pentagon = '0' then
+               port_dffd_pentagon_512 <= '0';
+            end if;
          end if;
       end if;
    end process;
@@ -3139,6 +3324,16 @@ begin
             end if;
             
             port_1ffd_reg <= cpu_do;
+         
+         elsif nr_8e_we = '1' then
+            
+            if port_memory_change_dly = '0' then
+               port_1ffd_special_old <= port_1ffd_special;
+            end if;
+            
+            port_1ffd_reg(2) <= nr_wr_dat(1);
+            port_1ffd_reg(1) <= nr_wr_dat(0);
+            port_1ffd_reg(0) <= nr_wr_dat(2);
             
          else
          
@@ -3150,7 +3345,7 @@ begin
    
    port_1ffd_dat <= port_1ffd_reg;
 
-   port_7ffd_bank <= port_dffd_reg(3 downto 0) & port_7ffd_reg(2 downto 0);
+   port_7ffd_bank <= (port_dffd_reg(3 downto 0) & port_7ffd_reg(2 downto 0)) when (port_dffd_pentagon_512 = '0' or machine_timing_pentagon = '0') else ("00" & port_7ffd_reg(7 downto 6) & port_7ffd_reg(2 downto 0));
    port_7ffd_shadow <= port_7ffd_dat(3);
    port_7ffd_locked <= port_7ffd_reg(5);
    
@@ -3158,16 +3353,16 @@ begin
    port_1ffd_rom <= port_1ffd_reg(2) & port_7ffd_reg(4);
 
    -- communicate paging changes to mmu
-   
-   port_memory_change <= (port_7ffd_wr or port_dffd_wr or port_1ffd_wr) and not port_7ffd_locked;
 
    process (i_CLK_28)
    begin
       if rising_edge(i_CLK_28) then
          if reset = '1' then
             port_memory_change_dly <= '0';
+            port_memory_ram_change_dly <= '0';
          else
-            port_memory_change_dly <= port_memory_change;
+            port_memory_change_dly <= ((port_7ffd_wr or port_dffd_wr or port_1ffd_wr) and not port_7ffd_locked) or nr_8e_we;
+            port_memory_ram_change_dly <= not (nr_8e_we and not nr_wr_dat(3));
          end if;
       end if;
    end process;
@@ -3221,8 +3416,8 @@ begin
       
       copper_en_i          => nr_62_copper_mode,
       
-      hcount_i             => unsigned(hc),
-      vcount_i             => unsigned(vc),
+      hcount_i             => hc,
+      vcount_i             => cvc,
       
       copper_list_addr_o   => copper_instr_addr,
       copper_list_data_i   => copper_instr_data,
@@ -3679,7 +3874,7 @@ begin
                port_ff3b_dat <= nr_ulatm_palette_dat(5 downto 3) & nr_ulatm_palette_dat(8 downto 6) & nr_ulatm_palette_dat(2 downto 1);
             end if;
          else
-            port_ff3b_dat <= "01" & port_ff_reg(5 downto 0);
+            port_ff3b_dat <= "0000000" & port_ff3b_ulap_en;
          end if;
       end if;
    end process;
@@ -3751,8 +3946,13 @@ begin
             
                MMU0 <= X"FF";
                MMU1 <= X"FF";
-               MMU6 <= port_7ffd_bank & '0';
-               MMU7 <= port_7ffd_bank & '1';
+               
+               if port_1ffd_special_old = '1' or port_memory_ram_change_dly = '1' then
+               
+                  MMU6 <= port_7ffd_bank & '0';
+                  MMU7 <= port_7ffd_bank & '1';
+               
+               end if;
                
                if port_1ffd_special_old = '1' then
                
@@ -3890,6 +4090,7 @@ begin
       nr_69_we <= '0';
       nr_80_we <= '0';
       nr_8c_we <= '0';
+      nr_8e_we <= '0';
       nr_ff_we <= '0';
 
       nr_sprite_mirror_we <= '0';
@@ -3954,6 +4155,7 @@ begin
             when X"69" => nr_69_we <= '1';
             when X"80" => nr_80_we <= '1';
             when X"8C" => nr_8c_we <= '1';
+            when X"8E" => nr_8e_we <= '1';
             when X"FF" => nr_ff_we <= '1';
             
             when others => null;
@@ -3968,17 +4170,23 @@ begin
    
    nr_palette_we <= '1' when nr_41_we = '1' or (nr_44_we = '1' and nr_palette_sub_idx = '1') else '0';
    nr_palette_value <= (nr_wr_dat & (nr_wr_dat(1) or nr_wr_dat(0))) when (nr_41_we = '1' or nr_ff_we = '1') else (nr_stored_palette_value & nr_wr_dat(0));
-   nr_palette_priority <= nr_wr_dat(7 downto 1) when nr_44_we = '1' else (others => '0');
+   nr_palette_priority <= nr_wr_dat(7 downto 6) when nr_44_we = '1' else (others => '0');
 
    nr_mmu <= nr_wr_reg(2 downto 0);
    
    -- state
-   
+            
+   nr_05_joymode_0 <= nr_wr_dat(3) & nr_wr_dat(7 downto 6);
+   nr_05_joymode_1 <= nr_wr_dat(1) & nr_wr_dat(5 downto 4);
+   nr_05_io_mode <= '1' when nr_05_joymode_0 = "111" or nr_05_joymode_1 = "111" else '0';
+
    process (i_CLK_28)
    begin
       if rising_edge(i_CLK_28) then
 
          if reset = '1' then
+
+            io_mode_en <= '0';
 
             nr_06_hotkey_cpu_speed_en <= '1';
             nr_06_hotkey_5060_en <= '1';
@@ -4068,8 +4276,11 @@ begin
             nr_copper_addr <= (others => '0');
             nr_copper_data_stored <= X"00";
             
+            nr_64_copper_offset <= (others => '0');
+            
             nr_68_ula_en <= '1';
-            nr_68_ula_mixer_mode <= '0';
+            nr_68_blend_mode <= "00";
+            nr_68_cancel_extended_keys <= '0';
             nr_68_ula_fine_scroll_x <= '0';
             nr_68_ula_stencil_mode <= '0';
             
@@ -4093,10 +4304,23 @@ begin
             
             nr_7f_user_register_0 <= (others => '1');
 
-            nr_82_internal_port_enable <= (others => '1');
-            nr_83_internal_port_enable <= (others => '1');
-            nr_84_internal_port_enable <= (others => '1');
-            nr_85_internal_port_enable <= '1';
+            if nr_85_internal_port_reset_type = '1' or reset_hard = '1' then
+            
+               nr_82_internal_port_enable <= (others => '1');
+               nr_83_internal_port_enable <= (others => '1');
+               nr_84_internal_port_enable <= (others => '1');
+               nr_85_internal_port_enable <= "11";
+            
+            end if;
+
+            if nr_89_bus_port_reset_type = '0' or reset_hard = '1' then
+            
+               nr_86_bus_port_enable <= (others => '1');
+               nr_87_bus_port_enable <= (others => '1');
+               nr_88_bus_port_enable <= (others => '1');
+               nr_89_bus_port_enable <= "11";
+            
+            end if;
 
             nr_98_pi_gpio_o <= X"FF";
             nr_99_pi_gpio_o <= X"01";
@@ -4110,7 +4334,7 @@ begin
          
             nr_a0_pi_peripheral_en <= (others => '0');
             nr_a2_pi_i2s_ctl <= (others => '0');
-            nr_a3_pi_i2s_clkdiv <= X"0B";  -- ~44.1kHz
+--          nr_a3_pi_i2s_clkdiv <= X"0B";  -- ~44.1kHz
 
             nr_a8_esp_gpio0_en <= '0';
             nr_a9_esp_gpio0 <= '1';
@@ -4127,7 +4351,7 @@ begin
                nr_04_romram_bank <= (others => '0');
                nr_03_user_dt_lock <= '0';
 
-               nr_06_dma_mode <= '0';
+               nr_06_internal_speaker_beep <= '0';
                nr_06_divmmc_automap_en <= '0';
                nr_06_button_m1_nmi_en <= '0';
 
@@ -4139,18 +4363,20 @@ begin
                nr_08_keyboard_issue2 <= '0';
                
                nr_09_psg_mono <= (others => '0');
+               nr_09_hdmi_audio_disable <= '0';
+               
+               nr_0a_mouse_button_reverse <= '0';
+               nr_0a_mouse_dpi <= "01";
                
                nr_10_flashboot <= '0';
                
                nr_81_expbus_clken <= '0';
                nr_81_expbus_speed <= (others => '0');
-               
-               nr_86_bus_port_enable <= (others => '1');
-               nr_87_bus_port_enable <= (others => '1');
-               nr_88_bus_port_enable <= (others => '1');
-               nr_89_bus_port_enable <= '1';
 
-               nr_8a_bus_port_propagate <= "0001";
+               nr_85_internal_port_reset_type <= '1';
+               nr_89_bus_port_reset_type <= '1';
+               
+               nr_8a_bus_port_propagate <= (others => '0');
          
             end if;
          
@@ -4192,13 +4418,18 @@ begin
                   nr_04_romram_bank <= nr_wr_dat(4 downto 0);
                
                when X"05" =>
-                  nr_05_joy0 <= nr_wr_dat(3) & nr_wr_dat(7 downto 6);
-                  nr_05_joy1 <= nr_wr_dat(1) & nr_wr_dat(5 downto 4);
+                  io_mode_en <= nr_05_io_mode;
+                  
+                  if nr_05_io_mode = '0' then
+                     nr_05_joy0 <= nr_05_joymode_0;
+                     nr_05_joy1 <= nr_05_joymode_1;
+                  end if;
+
 --                nr_05_we <= '1';
-               
+
                when X"06" =>
                   nr_06_hotkey_cpu_speed_en <= nr_wr_dat(7);
-                  nr_06_dma_mode <= nr_wr_dat(6);
+                  nr_06_internal_speaker_beep <= nr_wr_dat(6);
                   nr_06_hotkey_5060_en <= nr_wr_dat(5);
                   nr_06_divmmc_automap_en <= nr_wr_dat(4);
                   nr_06_button_m1_nmi_en <= nr_wr_dat(3);
@@ -4225,6 +4456,10 @@ begin
                   nr_09_sprite_tie <= nr_wr_dat(4);
                   nr_09_hdmi_audio_disable <= nr_09_hdmi_audio_disable or nr_wr_dat(2);
 --                nr_09_we <= '1';
+
+               when X"0A" =>
+                  nr_0a_mouse_button_reverse <= nr_wr_dat(2);
+                  nr_0a_mouse_dpi <= nr_wr_dat(1 downto 0);
                
                when X"10" =>
                   nr_10_flashboot <= nr_wr_dat(7);
@@ -4455,10 +4690,14 @@ begin
                   nr_copper_addr <= nr_copper_addr + 1;
 --                nr_copper_we <= '1';
 --                nr_copper_write_8 <= '0';
+
+               when X"64" =>
+                  nr_64_copper_offset <= nr_wr_dat;
                
                when X"68" =>
                   nr_68_ula_en <= not nr_wr_dat(7);
-                  nr_68_ula_mixer_mode <= nr_wr_dat(6);
+                  nr_68_blend_mode <= nr_wr_dat(6 downto 5);
+                  nr_68_cancel_extended_keys <= nr_wr_dat(4);
 --                nr_68_ulap_en <= nr_wr_dat(3);
                   nr_68_ula_fine_scroll_x <= nr_wr_dat(2);
                   nr_68_ula_stencil_mode <= nr_wr_dat(0);
@@ -4514,7 +4753,8 @@ begin
                   nr_84_internal_port_enable <= nr_wr_dat;
                
                when X"85" =>
-                  nr_85_internal_port_enable <= nr_wr_dat(0);
+                  nr_85_internal_port_enable <= nr_wr_dat(1 downto 0);
+                  nr_85_internal_port_reset_type <= nr_wr_dat(7);
                
                when X"86" =>
                   nr_86_bus_port_enable <= nr_wr_dat;
@@ -4526,13 +4766,17 @@ begin
                   nr_88_bus_port_enable <= nr_wr_dat;
                
                when X"89" =>
-                  nr_89_bus_port_enable <= nr_wr_dat(0);
+                  nr_89_bus_port_enable <= nr_wr_dat(1 downto 0);
+                  nr_89_bus_port_reset_type <= nr_wr_dat(7);
                   
                when X"8A" =>
-                  nr_8a_bus_port_propagate <= nr_wr_dat(3 downto 0);
+                  nr_8a_bus_port_propagate <= nr_wr_dat(4 downto 0);
 
 --             when X"8C" =>
---                nr_8C_we <= '1';
+--                nr_8c_we <= '1';
+
+--             when X"8E" =>
+--                nr_8e_we <= '1';
 
                when X"90" =>
                   nr_90_pi_gpio_o_en <= nr_wr_dat(7 downto 2) & "00";   -- not enabling output on GPIO 1:0
@@ -4564,8 +4808,8 @@ begin
                when X"A2" =>
                   nr_a2_pi_i2s_ctl <= nr_wr_dat;
                
-               when X"A3" =>
-                  nr_a3_pi_i2s_clkdiv <= nr_wr_dat;
+--             when X"A3" =>
+--                nr_a3_pi_i2s_clkdiv <= nr_wr_dat;
                
                when X"A8" =>
                   nr_a8_esp_gpio0_en <= nr_wr_dat(0);
@@ -4573,6 +4817,12 @@ begin
                when X"A9" =>
                   nr_a9_esp_gpio0 <= nr_wr_dat(0);
                
+--             when X"B0" =>
+--                read only extended keys
+
+--             when X"B1" =>
+--                read only extended keys
+
                when others =>
                   null;
             
@@ -4592,10 +4842,10 @@ begin
 
    -- Machine Timing
    
-   machine_timing_48 <= '1' when eff_nr_03_machine_timing(2 downto 1) = "00" else '0';
-   machine_timing_128 <= '1' when eff_nr_03_machine_timing = "010" else '0';
-   machine_timing_p3 <= '1' when eff_nr_03_machine_timing = "011" else '0';
-   machine_timing_pentagon <= '1' when eff_nr_03_machine_timing = "100" else '0';
+   machine_timing_48 <= '1' when nr_03_machine_timing(2 downto 1) = "00" else '0';
+   machine_timing_128 <= '1' when nr_03_machine_timing = "010" else '0';
+   machine_timing_p3 <= '1' when nr_03_machine_timing = "011" else '0';
+   machine_timing_pentagon <= '1' when nr_03_machine_timing = "100" else '0';
    
    -- CPU Speed
    
@@ -4705,10 +4955,17 @@ begin
          end if;
       end if;
    end process;
-
+   
    process (i_CLK_CPU)
    begin
       if falling_edge(i_CLK_CPU) then
+         port_253b_dat_0 <= port_253b_dat;
+      end if;
+   end process;
+
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
 
          case nr_register is
       
@@ -4722,13 +4979,13 @@ begin
                port_253b_dat <= nr_02_bus_reset & "00000" & nr_02_reset_type;
          
             when X"03" =>
-               port_253b_dat <= nr_palette_sub_idx & eff_nr_03_machine_timing & nr_03_user_dt_lock & nr_03_machine_type;
+               port_253b_dat <= nr_palette_sub_idx & nr_03_machine_timing & nr_03_user_dt_lock & nr_03_machine_type;
             
             when X"05" =>
                port_253b_dat <= nr_05_joy0(1 downto 0) & nr_05_joy1(1 downto 0) & nr_05_joy0(2) & eff_nr_05_5060 & nr_05_joy1(2) & eff_nr_05_scandouble_en;
 
             when X"06" =>
-               port_253b_dat <= nr_06_hotkey_cpu_speed_en & nr_06_dma_mode & nr_06_hotkey_5060_en & nr_06_divmmc_automap_en & nr_06_button_m1_nmi_en & nr_06_ps2_mode & nr_06_psg_mode;
+               port_253b_dat <= nr_06_hotkey_cpu_speed_en & nr_06_internal_speaker_beep & nr_06_hotkey_5060_en & nr_06_divmmc_automap_en & nr_06_button_m1_nmi_en & nr_06_ps2_mode & nr_06_psg_mode;
 
             when X"07" =>
                port_253b_dat <= "00" & cpu_speed & "00" & nr_07_cpu_speed;
@@ -4739,6 +4996,9 @@ begin
             when X"09" =>
                port_253b_dat <= nr_09_psg_mono & nr_09_sprite_tie & '0' & nr_09_hdmi_audio_disable & eff_nr_09_scanlines;
 
+            when X"0A" =>
+               port_253b_dat <= "00000" & nr_0a_mouse_button_reverse & nr_0a_mouse_dpi;
+ 
             when X"0E" =>
                port_253b_dat <= std_logic_vector(g_sub_version);
          
@@ -4802,10 +5062,10 @@ begin
                port_253b_dat <= nr_1b_tm_clip_idx & nr_1a_ula_clip_idx & nr_19_sprite_clip_idx & nr_18_layer2_clip_idx;
 
             when X"1E" =>
-               port_253b_dat <= "0000000" & vc(8);
+               port_253b_dat <= "0000000" & cvc(8);
          
             when X"1F" =>
-               port_253b_dat <= std_logic_vector(vc(7 downto 0));
+               port_253b_dat <= std_logic_vector(cvc(7 downto 0));
          
             when X"22" =>
                port_253b_dat <= (not ula_int_n) & "0000" & port_ff_interrupt_disable & nr_22_line_interrupt_en & nr_23_line_interrupt(8);
@@ -4864,7 +5124,7 @@ begin
                port_253b_dat <= nr_43_palette_autoinc_disable & nr_43_palette_write_select & nr_43_active_sprite_palette & nr_43_active_layer2_palette & nr_43_active_ula_palette & nr_43_ulanext_en;
          
             when X"44" =>
-               port_253b_dat <= nr_palette_dat(15 downto 9) & nr_palette_dat(0);
+               port_253b_dat <= nr_palette_dat(10 downto 9) & "00000" & nr_palette_dat(0);
          
             when X"4A" =>
                port_253b_dat <= nr_4a_fallback_rgb;
@@ -4904,9 +5164,12 @@ begin
                
             when X"62" =>
                port_253b_dat <= nr_62_copper_mode & "000" & nr_copper_addr(10 downto 8);
+            
+            when X"64"=>
+               port_253b_dat <= nr_64_copper_offset;
 
             when X"68" =>
-               port_253b_dat <= (not nr_68_ula_en) & nr_68_ula_mixer_mode & "00" & port_ff3b_ulap_en & nr_68_ula_fine_scroll_x & '0' & nr_68_ula_stencil_mode;
+               port_253b_dat <= (not nr_68_ula_en) & nr_68_blend_mode & nr_68_cancel_extended_keys & port_ff3b_ulap_en & nr_68_ula_fine_scroll_x & '0' & nr_68_ula_stencil_mode;
          
             when X"69" =>
                port_253b_dat <= port_123b_layer2_en & port_7ffd_shadow & port_ff_reg(5 downto 0);
@@ -4951,7 +5214,7 @@ begin
                port_253b_dat <= nr_84_internal_port_enable;
             
             when X"85" =>
-               port_253b_dat <= "0000000" & nr_85_internal_port_enable;
+               port_253b_dat <= nr_85_internal_port_reset_type & "00000" & nr_85_internal_port_enable;
             
             when X"86" =>
                port_253b_dat <= nr_86_bus_port_enable;
@@ -4963,13 +5226,16 @@ begin
                port_253b_dat <= nr_88_bus_port_enable;
 
             when X"89" =>
-               port_253b_dat <= "0000000" & nr_89_bus_port_enable;
+               port_253b_dat <= nr_89_bus_port_reset_type & "00000" & nr_89_bus_port_enable;
             
             when X"8A" =>
-               port_253b_dat <= "0000" & nr_8a_bus_port_propagate;
+               port_253b_dat <= "000" & nr_8a_bus_port_propagate;
             
             when X"8C" =>
                port_253b_dat <= nr_8c_altrom;
+            
+            when X"8E" =>
+               port_253b_dat <= port_dffd_reg(0) & port_7ffd_reg(2 downto 0) & '1' & port_1ffd_reg(0) & port_1ffd_reg(2) & ((port_7ffd_reg(4) and not port_1ffd_reg(0)) or (port_1ffd_reg(1) and port_1ffd_reg(0)));
             
             when X"90" =>
                port_253b_dat <= nr_90_pi_gpio_o_en;
@@ -4999,10 +5265,10 @@ begin
                port_253b_dat <= "00" & nr_a0_pi_peripheral_en(5 downto 3) & "00" & nr_a0_pi_peripheral_en(0);
 
             when X"A2" =>
-               port_253b_dat <= nr_a2_pi_i2s_ctl(7 downto 6) & '0' & nr_a2_pi_i2s_ctl(4 downto 0);
+               port_253b_dat <= nr_a2_pi_i2s_ctl(7 downto 6) & '0' & nr_a2_pi_i2s_ctl(4 downto 2) & '1' & nr_a2_pi_i2s_ctl(0);
 
-            when X"A3" =>
-               port_253b_dat <= nr_a3_pi_i2s_clkdiv;
+--          when X"A3" =>
+--             port_253b_dat <= nr_a3_pi_i2s_clkdiv;
             
             when X"A8" =>
                port_253b_dat <= "0000000" & nr_a8_esp_gpio0_en;
@@ -5010,6 +5276,17 @@ begin
             when X"A9" =>
                port_253b_dat <= "00000" & i_ESP_GPIO_20(2) & '0' & i_ESP_GPIO_20(0);
             
+            -- i_KBD_EXTENDED_KEYS(15 downto 8) = DOWN LEFT RIGHT DELETE . , " ;
+            -- i_KBD_EXTENDED_KEYS( 7 downto 0) = EDIT BREAK INV TRU GRAPH CAPSLOCK UP EXTEND
+            
+            when X"B0" =>
+               -- ; " , . UP DOWN LEFT RIGHT
+               port_253b_dat <= i_KBD_EXTENDED_KEYS(8) & i_KBD_EXTENDED_KEYS(9) & i_KBD_EXTENDED_KEYS(10) & i_KBD_EXTENDED_KEYS(11) & i_KBD_EXTENDED_KEYS(1) & i_KBD_EXTENDED_KEYS(15 downto 13);
+               
+            when X"B1" =>
+               -- DELETE EDIT BREAK INV TRU GRAPH CAPSLOCK EXTEND
+               port_253b_dat <= i_KBD_EXTENDED_KEYS(12) & i_KBD_EXTENDED_KEYS(7 downto 2) & i_KBD_EXTENDED_KEYS(0);
+
             when others =>
                port_253b_dat <= (others => '0');
 
@@ -5167,9 +5444,9 @@ begin
       i_reset        => reset or not pi_i2s_en,
       
       i_CLK          => i_CLK_28,
-      i_CLK_DIV      => nr_a3_pi_i2s_clkdiv,
+--    i_CLK_DIV      => nr_a3_pi_i2s_clkdiv,
       
-      i_slave_mode   => pi_i2s_slave,
+--    i_slave_mode   => pi_i2s_slave,
       
       -- slave mode (incoming clock signals, synchronized)
       
@@ -5197,6 +5474,9 @@ begin
 
    -- todo: power of two volume adjustment on all inputs (?)
    
+   port_fe_mic_final <= port_fe_mic xor i_AUDIO_EAR xor pi_fe_ear;
+   internal_speaker_beep_exclusive <= nr_06_internal_speaker_beep and nr_08_internal_speaker_en;
+   
    audio_mixer_mod: entity work.audio_mixer
    port map
    (
@@ -5205,8 +5485,8 @@ begin
       
       -- beeper and tape
       
-      ear_i          => port_fe_ear,
-      mic_i          => port_fe_mic xor i_AUDIO_EAR xor pi_fe_ear,
+      ear_i          => port_fe_ear and not internal_speaker_beep_exclusive,
+      mic_i          => port_fe_mic_final and not internal_speaker_beep_exclusive,
       
       -- ay
       
@@ -5418,11 +5698,13 @@ begin
       mode_i         => eff_nr_03_machine_timing,
       video_timing_i => nr_11_video_timing,
       vf50_60_i      => eff_nr_05_5060,
+      cu_offset_i    => nr_64_copper_offset,
       hcount_o       => hc,
       vcount_o       => vc,
       phcount_o      => phc,
       whcount_o      => whc,
       wvcount_o      => wvc,
+      cvcount_o      => cvc,
       sc_o           => sc,
       hsync_n_o      => rgb_hsync_n,
       vsync_n_o      => rgb_vsync_n,
@@ -5514,7 +5796,7 @@ begin
             
             ula_en_0 <= nr_68_ula_en;
             ula_stencil_mode_0 <= nr_68_ula_stencil_mode;
-            ula_mix_mode_0 <= nr_68_ula_mixer_mode;
+            ula_blend_mode_0 <= nr_68_blend_mode;
 
             ulanext_en_0 <= nr_43_ulanext_en;
             ulanext_format_0 <= nr_42_ulanext_format;
@@ -5566,7 +5848,7 @@ begin
 
          tm_pixel_1 <= tm_pixel;
          tm_pixel_en_1 <= tm_pixel_en;
-         tm_pixel_below_1 <= tm_pixel_below;
+         tm_pixel_below_1 <= (tm_pixel_below and tm_en_1a) or ((not nr_6b_tm_control(0)) and not tm_en_1a);
          tm_pixel_textmode_1 <= tm_pixel_textmode;
 
          layer2_pixel_1 <= layer2_pixel;
@@ -5603,8 +5885,8 @@ begin
          ula_stencil_mode_1 <= ula_stencil_mode_1a;
          ula_stencil_mode_1a <= ula_stencil_mode_0;
          
-         ula_mix_mode_1 <= ula_mix_mode_1a;
-         ula_mix_mode_1a <= ula_mix_mode_0;
+         ula_blend_mode_1 <= ula_blend_mode_1a;
+         ula_blend_mode_1a <= ula_blend_mode_0;
          
          lores_en_1 <= lores_en_1a;
          lores_en_1a <= lores_en_0;
@@ -5656,7 +5938,7 @@ begin
    -- todo: investigate giving every layer priority bits
 
    nr_palette_index <= nr_43_palette_write_select(1) & nr_43_palette_write_select(2) & nr_palette_idx;
-   nr_palette_dat <= ("0000000" & nr_ulatm_palette_dat) when (nr_43_palette_write_select(1) = nr_43_palette_write_select(0)) else nr_l2s_palette_dat;
+   nr_palette_dat <= ("00" & nr_ulatm_palette_dat) when (nr_43_palette_write_select(1) = nr_43_palette_write_select(0)) else (nr_l2s_palette_dat(15 downto 14) & nr_l2s_palette_dat(8 downto 0));
    
    -- ULA / Tilemap palette
    
@@ -5728,7 +6010,7 @@ begin
       clk_a_i  => i_CLK_28,
       we_i     => nr_l2s_palette_we,
       addr_a_i => nr_palette_index,
-      data_a_i => nr_palette_priority & nr_palette_value,
+      data_a_i => nr_palette_priority & "00000" & nr_palette_value,
       data_a_o => nr_l2s_palette_dat,
       -- layer 2 / sprite
       clk_b_i  => i_CLK_28_n,
@@ -5742,7 +6024,7 @@ begin
    begin
       if rising_edge(i_CLK_28) then
          if sc(0) = '0' then
-            layer2_prgb_1 <= l2s_prgb_1;
+            layer2_prgb_1 <= l2s_prgb_1(15) & l2s_prgb_1(8 downto 0);
          end if;
       end if;
    end process;
@@ -5753,7 +6035,7 @@ begin
    begin
       if rising_edge(i_CLK_14) then
          layer2_rgb_2 <= layer2_prgb_1(8 downto 0);
-         layer2_priority_2 <= layer2_prgb_1(15);
+         layer2_priority_2 <= layer2_prgb_1(9);
          sprite_rgb_2 <= l2s_prgb_1(8 downto 0);
       end if;
    end process;
@@ -5768,7 +6050,7 @@ begin
          ula_border_2 <= ula_border_1;
          ula_clipped_2 <= ula_clipped_1 and not lores_pixel_en_1;
          ula_stencil_mode_2 <= ula_stencil_mode_1;
-         ula_mix_mode_2 <= ula_mix_mode_1;
+         ula_blend_mode_2 <= ula_blend_mode_1;
       
 --       lores_en_2 <= lores_pixel_en_1;
          
@@ -5841,12 +6123,47 @@ begin
          ula_final_transparent <= ulatm_transparent;
       end if;
    end process;
-   
--- mix_transparent <= lores_transparent when (lores_en_2 = '1') else ula_mix_transparent when (ula_mix_mode_2 = '0') else ula_final_transparent;
--- mix_rgb <= "000000000" when mix_transparent = '1' else lores_rgb when (lores_en_2 = '1') else ula_mix_rgb when (ula_mix_mode_2 = '0') else ula_final_rgb;
 
-   mix_transparent <= ula_mix_transparent when (ula_mix_mode_2 = '0') else ula_final_transparent;
-   mix_rgb <= "000000000" when mix_transparent = '1' else ula_mix_rgb when (ula_mix_mode_2 = '0') else ula_final_rgb;
+   process (ula_blend_mode_2, ula_mix_transparent, ula_mix_rgb, ula_final_transparent, ula_final_rgb, tm_transparent, tm_rgb, tm_pixel_below_2, ula_transparent, ula_rgb, layer_priorities_2)
+   begin
+      case ula_blend_mode_2 is
+         when "00" =>
+            mix_rgb <= ula_mix_rgb;
+            mix_rgb_transparent <= ula_mix_transparent;
+            mix_top_transparent <= tm_transparent or tm_pixel_below_2;
+            mix_top_rgb <= tm_rgb;
+            mix_bot_transparent <= tm_transparent or not tm_pixel_below_2;
+            mix_bot_rgb <= tm_rgb;
+         when "10" => 
+            mix_rgb <= ula_final_rgb;
+            mix_rgb_transparent <= ula_final_transparent;
+            mix_top_transparent <= '1';
+            mix_top_rgb <= tm_rgb;
+            mix_bot_transparent <= '1';
+            mix_bot_rgb <= tm_rgb;
+         when "11" =>
+            mix_rgb <= tm_rgb;
+            mix_rgb_transparent <= tm_transparent;
+            mix_top_transparent <= ula_transparent or not tm_pixel_below_2;
+            mix_top_rgb <= ula_rgb;
+            mix_bot_transparent <= ula_transparent or tm_pixel_below_2;
+            mix_bot_rgb <= ula_rgb;
+         when others =>
+            mix_rgb <= (others => '0');
+            mix_rgb_transparent <= '1';
+            if tm_pixel_below_2 = '1' then
+               mix_top_transparent <= ula_transparent;
+               mix_top_rgb <= ula_rgb;
+               mix_bot_transparent <= tm_transparent;
+               mix_bot_rgb <= tm_rgb;
+            else
+               mix_top_transparent <= tm_transparent;
+               mix_top_rgb <= tm_rgb;
+               mix_bot_transparent <= ula_transparent;
+               mix_bot_rgb <= ula_rgb;
+            end if;
+      end case;
+   end process;
 
    -- Implement SLU Ordering
    -- todo: insert layer priority shuffle-memory
@@ -5855,7 +6172,6 @@ begin
    --   ula_final_rgb: layer U colour
    --   ula_final_transparent: layer U transparent
    --   mix_rgb: layer U colour for modes 6 & 7
-   --   mix_transparent: layer U transparent for modes 6 & 7
    --   sprite_rgb: layer S colour
    --   sprite_transparent: layer S transparent
    --   layer2_rgb: layer L colour
@@ -5863,7 +6179,8 @@ begin
    --   layer2_priority: layer L promotion bit and non-transparent
 
    process (layer2_rgb, mix_rgb, fallback_rgb_2, layer_priorities_2, layer2_priority, sprite_transparent, sprite_rgb,
-            layer2_transparent, ula_final_transparent, ula_final_rgb, ula_border_2, tm_transparent, mix_transparent)
+            layer2_transparent, ula_final_transparent, ula_final_rgb, ula_border_2, tm_transparent,
+            mix_top_transparent, mix_top_rgb, mix_bot_transparent, mix_bot_rgb, mix_rgb_transparent)
       variable mixer_r_t         : std_logic_vector(3 downto 0);
       variable mixer_g_t         : std_logic_vector(3 downto 0);
       variable mixer_b_t         : std_logic_vector(3 downto 0);
@@ -5954,7 +6271,7 @@ begin
                rgb_out_2 <= sprite_rgb;
             end if;
          
-         when "110" =>  -- S(U+L)UL
+         when "110" =>  -- (U|T)S(T|U)(B+L)
          
             if mixer_r_t(3) = '1' then  -- greater than 7
                mixer_r_t := "0111";
@@ -5970,52 +6287,56 @@ begin
             
             if layer2_priority = '1' then
                rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
+            elsif mix_top_transparent = '0' then
+               rgb_out_2 <= mix_top_rgb;
             elsif sprite_transparent = '0' then
                rgb_out_2 <= sprite_rgb;
-            elsif layer2_transparent = '0' and mix_transparent = '0' then
-               rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
-            elsif ula_final_transparent = '0' then
-               rgb_out_2 <= ula_final_rgb;
+            elsif mix_bot_transparent = '0' then
+               rgb_out_2 <= mix_bot_rgb;
             elsif layer2_transparent = '0' then
-               rgb_out_2 <= layer2_rgb;
+               rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
             end if;
 
-         when others =>  -- S(U+L-5)UL
+         when others =>  -- (U|T)S(T|U)(B+L-5)
          
-            if mixer_r_t <= 4 then
-               mixer_r_t := "0000";
-            elsif mixer_r_t(3 downto 2) = "11" then
-               mixer_r_t := "0111";
-            else
-               mixer_r_t := mixer_r_t + "1011";  -- minus 5
-            end if;
+            if mix_rgb_transparent = '0' then
             
-            if mixer_g_t <= 4 then
-               mixer_g_t := "0000";
-            elsif mixer_g_t(3 downto 2) = "11" then
-               mixer_g_t := "0111";
-            else
-               mixer_g_t := mixer_g_t + "1011";  -- minus 5
-            end if;
+               if mixer_r_t <= 4 then
+                  mixer_r_t := "0000";
+               elsif mixer_r_t(3 downto 2) = "11" then
+                  mixer_r_t := "0111";
+               else
+                  mixer_r_t := mixer_r_t + "1011";  -- minus 5
+               end if;
             
-            if mixer_b_t <= 4 then
-               mixer_b_t := "0000";
-            elsif mixer_b_t(3 downto 2) = "11" then
-               mixer_b_t := "0111";
-            else
-               mixer_b_t := mixer_b_t + "1011";  -- minus 5
+               if mixer_g_t <= 4 then
+                  mixer_g_t := "0000";
+               elsif mixer_g_t(3 downto 2) = "11" then
+                  mixer_g_t := "0111";
+               else
+                  mixer_g_t := mixer_g_t + "1011";  -- minus 5
+               end if;
+               
+               if mixer_b_t <= 4 then
+                  mixer_b_t := "0000";
+               elsif mixer_b_t(3 downto 2) = "11" then
+                  mixer_b_t := "0111";
+               else
+                  mixer_b_t := mixer_b_t + "1011";  -- minus 5
+               end if;
+            
             end if;
             
             if layer2_priority = '1' then
                rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
+            elsif mix_top_transparent = '0' then
+               rgb_out_2 <= mix_top_rgb;
             elsif sprite_transparent = '0' then
                rgb_out_2 <= sprite_rgb;
-            elsif layer2_transparent = '0' and mix_transparent = '0' then
-               rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
-            elsif ula_final_transparent = '0' then
-               rgb_out_2 <= ula_final_rgb;
+            elsif mix_bot_transparent = '0' then
+               rgb_out_2 <= mix_bot_rgb;
             elsif layer2_transparent = '0' then
-               rgb_out_2 <= layer2_rgb;
+               rgb_out_2 <= mixer_r_t(2 downto 0) & mixer_g_t(2 downto 0) & mixer_b_t(2 downto 0);
             end if;
          
       end case;
@@ -6032,19 +6353,29 @@ begin
    process (i_CLK_14)
    begin
       if rising_edge(i_CLK_14) then
-         
+
+         rgb_vsync_n_6 <= rgb_vsync_n_5;
+         rgb_vsync_n_5 <= rgb_vsync_n_4;
          rgb_vsync_n_4 <= rgb_vsync_n_3;
          rgb_vsync_n_3 <= rgb_vsync_n_2;
-         
+
+         rgb_vblank_n_6 <= rgb_vblank_n_5;
+         rgb_vblank_n_5 <= rgb_vblank_n_4;
          rgb_vblank_n_4 <= rgb_vblank_n_3;
          rgb_vblank_n_3 <= rgb_vblank_n_2;
-         
+
+         rgb_hblank_n_6 <= rgb_hblank_n_5;
+         rgb_hblank_n_5 <= rgb_hblank_n_4;
          rgb_hblank_n_4 <= rgb_hblank_n_3;
          rgb_hblank_n_3 <= rgb_hblank_n_2;
-         
+
+         rgb_hsync_n_6 <= rgb_hsync_n_5;
+         rgb_hsync_n_5 <= rgb_hsync_n_4;
          rgb_hsync_n_4 <= rgb_hsync_n_3;
          rgb_hsync_n_3 <= rgb_hsync_n_2;
 
+         rgb_out_6 <= rgb_out_5;
+         rgb_out_5 <= rgb_out_4;
          rgb_out_4 <= rgb_out_3;
          rgb_out_3 <= rgb_out_2a;
 
@@ -6055,20 +6386,20 @@ begin
    begin
       if falling_edge(i_CLK_28) then
       
-         rgb_vsync_n_5 <= rgb_vsync_n_4;
-         rgb_vblank_n_5 <= rgb_vblank_n_4;
-         rgb_hblank_n_5 <= rgb_hblank_n_4;
-         rgb_hsync_n_5 <= rgb_hsync_n_4;
-         rgb_out_5 <= rgb_out_4;
+         rgb_vsync_n_7 <= rgb_vsync_n_6;
+         rgb_vblank_n_7 <= rgb_vblank_n_6;
+         rgb_hblank_n_7 <= rgb_hblank_n_6;
+         rgb_hsync_n_7 <= rgb_hsync_n_6;
+         rgb_out_7 <= rgb_out_6;
       
       end if;
    end process;
    
-   rgb_vsync_n_o <= rgb_vsync_n_5;
-   rgb_vblank_n_o <= rgb_vblank_n_5;
-   rgb_hblank_n_o <= rgb_hblank_n_5;
-   rgb_hsync_n_o <= rgb_hsync_n_5;
-   rgb_out_o <= rgb_out_5;
-   rgb_csync_n_o <= rgb_vsync_n_5 and rgb_hsync_n_5;
+   rgb_vsync_n_o <= rgb_vsync_n_7;
+   rgb_vblank_n_o <= rgb_vblank_n_7;
+   rgb_hblank_n_o <= rgb_hblank_n_7;
+   rgb_hsync_n_o <= rgb_hsync_n_7;
+   rgb_out_o <= rgb_out_7;
+   rgb_csync_n_o <= rgb_vsync_n_7 and rgb_hsync_n_7;
 
 end architecture;

@@ -39,13 +39,16 @@ entity membrane is
       o_cols            : out std_logic_vector(4 downto 0);   -- key cols returned for read
       
       o_membrane_rows   : out std_logic_vector(7 downto 0);   -- physical membrane rows  0 = active, 1 = Z
-      i_membrane_cols   : in  std_logic_vector(6 downto 0)    -- physical membrane cols returned, 6:5 are extra columns
+      i_membrane_cols   : in  std_logic_vector(6 downto 0);   -- physical membrane cols returned, 6:5 are extra columns
+      
+      i_cancel_extended_entries  : in std_logic;              -- cancel making entries in the standard 8x5 matrix for the extra keys
+      o_extended_keys   : out std_logic_vector(15 downto 0)
    );
 end entity;
 
 architecture rtl of membrane is
 
-   type key_matrix_t is array (7 downto 0) of std_logic_vector(4 downto 0);
+   type key_matrix_t is array (7 downto 0) of std_logic_vector(6 downto 0);
 
    signal state            : std_logic_vector(8 downto 0) := '1' & X"FE";
    signal index            : natural range 0 to 7;
@@ -142,7 +145,7 @@ begin
                   matrix_state(I) <= matrix_work(I);
                end loop;
             else
-               matrix_work(index) <= i_membrane_cols(4 downto 0);
+               matrix_work(index) <= i_membrane_cols;
             end if;
          end if;
       end if;
@@ -174,7 +177,7 @@ begin
    process (i_CLK)
    begin
       if rising_edge(i_CLK) then
-         if i_reset = '1' then
+         if i_reset = '1' or i_cancel_extended_entries = '1' then
             matrix_state_ex_1 <= (others => '1');
             matrix_state_ex_0 <= (others => '1');
             matrix_work_ex <= (others => '1');
@@ -228,20 +231,23 @@ begin
    -- read matrix state
 
    matrix_state_0 <= matrix_state(0)(4 downto 1) & (matrix_state(0)(0) and matrix_state_ex(0));
-   matrix_state_3 <= matrix_state(3) and matrix_state_ex(5 downto 1);
-   matrix_state_4 <= matrix_state(4) and matrix_state_ex(10 downto 6);
+   matrix_state_3 <= matrix_state(3)(4 downto 0) and matrix_state_ex(5 downto 1);
+   matrix_state_4 <= matrix_state(4)(4 downto 0) and matrix_state_ex(10 downto 6);
    matrix_state_5 <= matrix_state(5)(4 downto 2) & (matrix_state(5)(1 downto 0) and matrix_state_ex(12 downto 11));
    matrix_state_7 <= matrix_state(7)(4) & (matrix_state(7)(3 downto 0) and matrix_state_ex(16 downto 13));
    
    r0 <= matrix_state_0  when i_rows(0) = '0' else (others => '1');
-   r1 <= matrix_state(1) when i_rows(1) = '0' else (others => '1');
-   r2 <= matrix_state(2) when i_rows(2) = '0' else (others => '1');
+   r1 <= matrix_state(1)(4 downto 0) when i_rows(1) = '0' else (others => '1');
+   r2 <= matrix_state(2)(4 downto 0) when i_rows(2) = '0' else (others => '1');
    r3 <= matrix_state_3  when i_rows(3) = '0' else (others => '1');
    r4 <= matrix_state_4  when i_rows(4) = '0' else (others => '1');
    r5 <= matrix_state_5  when i_rows(5) = '0' else (others => '1');
-   r6 <= matrix_state(6) when i_rows(6) = '0' else (others => '1');
+   r6 <= matrix_state(6)(4 downto 0) when i_rows(6) = '0' else (others => '1');
    r7 <= matrix_state_7  when i_rows(7) = '0' else (others => '1');
    
    o_cols <= r0 and r1 and r2 and r3 and r4 and r5 and r6 and r7;
-
+   
+   o_extended_keys <= not (matrix_state(7)(6 downto 5) & matrix_state(6)(6 downto 5) & matrix_state(5)(6 downto 5) & matrix_state(4)(6 downto 5) &
+                      matrix_state(3)(6 downto 5) & matrix_state(2)(6 downto 5) & matrix_state(1)(6 downto 5) & matrix_state(0)(6 downto 5));
+   
 end architecture;

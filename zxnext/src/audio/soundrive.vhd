@@ -1,5 +1,5 @@
 
--- ZX Spectrum Next Layer 2 Bitmap Display
+-- ZX Spectrum Next 4 x 8-bit DAC
 -- Copyright 2020 Victor Trucco
 --
 -- This file is part of the ZX Spectrum Next Project

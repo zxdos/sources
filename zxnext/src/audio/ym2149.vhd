@@ -59,6 +59,8 @@
 -- 3. Eliminate unnecessary busctrl_re
 -- 4. Make zero volume actually zero volume in the tables.
 --    (Not how the real hw works but it makes audio out of the zx next cleaner)
+-- 5. Add differences in how registers are read back on YM and AY
+-- 6. Fix bug where envelope period counter was not reset on envelope reset
 
 library ieee;
 use IEEE.std_logic_1164.all;
@@ -95,10 +97,12 @@ architecture RTL of YM2149 is
    type  array_16x8 is array (0 to 15) of std_logic_vector(7 downto 0);
    type  array_3x12 is array (1 to 3) of std_logic_vector(11 downto 0);
    
-   signal cnt_div          : unsigned(3 downto 0) := (others => '0');
+   signal cnt_div          : std_logic_vector(3 downto 0) := (others => '0');
    signal noise_div        : std_logic := '0';
    signal ena_div          : std_logic;
    signal ena_div_noise    : std_logic;
+   signal noise_gen_comp   : std_logic_vector(4 downto 0);
+   signal poly17_zero      : std_logic;
    signal poly17           : std_logic_vector(16 downto 0) := (others => '0');
    
    -- registers
@@ -107,16 +111,29 @@ architecture RTL of YM2149 is
    signal reg              : array_16x8;
    signal env_reset        : std_logic;
    
-   signal noise_gen_cnt    : unsigned(4 downto 0);
+   signal noise_gen_cnt    : std_logic_vector(4 downto 0);
    signal noise_gen_op     : std_logic;
+   signal tone_gen_freq    : array_3x12;
+   signal tone_gen_comp    : array_3x12;
    signal tone_gen_cnt     : array_3x12 := (others => (others => '0'));
    signal tone_gen_op      : std_logic_vector(3 downto 1) := "000";
    
+   signal is_zero          : std_logic;
+   signal is_ones          : std_logic;
+   signal is_bot           : std_logic;
+   signal is_bot_p1        : std_logic;
+   signal is_top_m1        : std_logic;
+   signal is_top           : std_logic;
+   
+   signal env_gen_freq     : std_logic_vector(15 downto 0);
+   signal env_gen_comp     : std_logic_vector(15 downto 0);
    signal env_gen_cnt      : std_logic_vector(15 downto 0);
    signal env_ena          : std_logic;
    signal env_hold         : std_logic;
    signal env_inc          : std_logic;
    signal env_vol          : std_logic_vector(4 downto 0);
+   
+   signal chan_mixed       : std_logic_vector(2 downto 0);
    
    signal A                : std_logic_vector(4 downto 0);
    signal B                : std_logic_vector(4 downto 0);
@@ -157,35 +174,36 @@ begin
    process(clk)
    begin
       if clk'event and clk = '1' then
+         env_reset <= '0';
+         
          if RESET_H = '1' then
             reg <= (others => (others => '0'));
             reg(7) <= x"ff";
       
-         elsif busctrl_we = '1' then
-            case addr(3 downto 0) is
-               when x"0" => reg(0)  <= I_DA;
-               when x"1" => reg(1)  <= I_DA;
-               when x"2" => reg(2)  <= I_DA;
-               when x"3" => reg(3)  <= I_DA;
-               when x"4" => reg(4)  <= I_DA;
-               when x"5" => reg(5)  <= I_DA;
-               when x"6" => reg(6)  <= I_DA;
-               when x"7" => reg(7)  <= I_DA;
-               when x"8" => reg(8)  <= I_DA;
-               when x"9" => reg(9)  <= I_DA;
-               when x"A" => reg(10) <= I_DA;
-               when x"B" => reg(11) <= I_DA;
-               when x"C" => reg(12) <= I_DA;
-               when x"D" => reg(13) <= I_DA;
-               when x"E" => reg(14) <= I_DA;
-               when x"F" => reg(15) <= I_DA;
-               when others => null;
-            end case;
-         end if;
-      
-         env_reset <= '0';
-         if busctrl_we = '1' and addr(3 downto 0) = x"D" then
-            env_reset <= '1';
+         elsif busctrl_we = '1' and addr(4) = '0' then    -- bits 7:5 are checked for 0 outside this module
+               case addr(3 downto 0) is
+                  when x"0" => reg(0)  <= I_DA;
+                  when x"1" => reg(1)  <= I_DA;
+                  when x"2" => reg(2)  <= I_DA;
+                  when x"3" => reg(3)  <= I_DA;
+                  when x"4" => reg(4)  <= I_DA;
+                  when x"5" => reg(5)  <= I_DA;
+                  when x"6" => reg(6)  <= I_DA;
+                  when x"7" => reg(7)  <= I_DA;
+                  when x"8" => reg(8)  <= I_DA;
+                  when x"9" => reg(9)  <= I_DA;
+                  when x"A" => reg(10) <= I_DA;
+                  when x"B" => reg(11) <= I_DA;
+                  when x"C" => reg(12) <= I_DA;
+                  when x"D" => reg(13) <= I_DA;
+                  when x"E" => reg(14) <= I_DA;
+                  when x"F" => reg(15) <= I_DA;
+                  when others => null;
+               end case;
+            
+               if addr(3 downto 0) = x"D" then
+                  env_reset <= '1';
+               end if;
          end if;
       end if;
    end process;
@@ -194,21 +212,24 @@ begin
    process(clk)
    begin
       if clk'event and clk = '1' then
+         if addr(4) = '1' and ctrl_aymode = '0' then
+            O_DA <= x"FF";
+         else
             case addr(3 downto 0) is
                when x"0" => O_DA <= reg(0) ;
-               when x"1" => O_DA <= "0000" & reg(1)(3 downto 0) ;
+               when x"1" => O_DA <= (reg(1)(7) and not ctrl_aymode) & (reg(1)(6) and not ctrl_aymode) & (reg(1)(5) and not ctrl_aymode) & (reg(1)(4) and not ctrl_aymode) & reg(1)(3 downto 0) ;
                when x"2" => O_DA <= reg(2) ;
-               when x"3" => O_DA <= "0000" & reg(3)(3 downto 0) ;
+               when x"3" => O_DA <= (reg(3)(7) and not ctrl_aymode) & (reg(3)(6) and not ctrl_aymode) & (reg(3)(5) and not ctrl_aymode) & (reg(3)(4) and not ctrl_aymode) & reg(3)(3 downto 0) ;
                when x"4" => O_DA <= reg(4) ;
-               when x"5" => O_DA <= "0000" & reg(5)(3 downto 0) ;
-               when x"6" => O_DA <= "000"  & reg(6)(4 downto 0) ;
+               when x"5" => O_DA <= (reg(5)(7) and not ctrl_aymode) & (reg(5)(6) and not ctrl_aymode) & (reg(5)(5) and not ctrl_aymode) & (reg(5)(4) and not ctrl_aymode) & reg(5)(3 downto 0) ;
+               when x"6" => O_DA <= (reg(6)(7) and not ctrl_aymode) & (reg(6)(6) and not ctrl_aymode) & (reg(6)(5) and not ctrl_aymode) & reg(6)(4 downto 0) ;
                when x"7" => O_DA <= reg(7) ;
-               when x"8" => O_DA <= "000"  & reg(8)(4 downto 0) ;
-               when x"9" => O_DA <= "000"  & reg(9)(4 downto 0) ;
-               when x"A" => O_DA <= "000"  & reg(10)(4 downto 0) ;
+               when x"8" => O_DA <= (reg(8)(7) and not ctrl_aymode) & (reg(8)(6) and not ctrl_aymode) & (reg(8)(5) and not ctrl_aymode) & reg(8)(4 downto 0) ;
+               when x"9" => O_DA <= (reg(9)(7) and not ctrl_aymode) & (reg(9)(6) and not ctrl_aymode) & (reg(9)(5) and not ctrl_aymode) & reg(9)(4 downto 0) ;
+               when x"A" => O_DA <= (reg(10)(7) and not ctrl_aymode) & (reg(10)(6) and not ctrl_aymode) & (reg(10)(5) and not ctrl_aymode) & reg(10)(4 downto 0) ;
                when x"B" => O_DA <= reg(11);
                when x"C" => O_DA <= reg(12);
-               when x"D" => O_DA <= "0000" & reg(13)(3 downto 0);
+               when x"D" => O_DA <= (reg(13)(7) and not ctrl_aymode) & (reg(13)(6) and not ctrl_aymode) & (reg(13)(5) and not ctrl_aymode) & (reg(13)(4) and not ctrl_aymode) & reg(13)(3 downto 0) ;
                when x"E" => if (reg(7)(6) = '0') then -- input
                      O_DA <= port_a_i;
                   else
@@ -219,8 +240,9 @@ begin
                   else
                      O_DA <= reg(15) and port_b_i;
                   end if;
-            when others => null;
+               when others => null;
             end case;
+         end if;
       end if;
    end process;
 
@@ -243,73 +265,56 @@ begin
                   ena_div_noise <= '1';
                end if;
             else
-               cnt_div <= cnt_div - "1";
+               cnt_div <= std_logic_vector(unsigned(cnt_div) - 1);
             end if;
          end if;
       end if;
    end process;  
 
    --  p_noise_gen            : process
+   
+   noise_gen_comp <= (std_logic_vector(unsigned(reg(6)(4 downto 0)) - 1)) when (reg(6)(4 downto 1) /= "0000") else (others => '0');
+   poly17_zero <= '1' when (poly17 = "00000000000000000") else '0';
+   
    process(clk)
-      variable noise_gen_comp : unsigned(4 downto 0);
-      variable poly17_zero : std_logic;
    begin
       if clk'event and clk = '1' then
-  
-         if (reg(6)(4 downto 0) = "00000") then
-            noise_gen_comp := "00000";
-         else
-            noise_gen_comp := unsigned( reg(6)(4 downto 0) ) - 1;
-         end if;
-
-         poly17_zero := '0';
-         if (poly17 = "00000000000000000") then
-            poly17_zero := '1'; 
-         end if;
-
          if (ENA = '1') then
             if (ena_div_noise = '1') then -- divider ena
                if (noise_gen_cnt >= noise_gen_comp) then
                   noise_gen_cnt <= "00000";
                   poly17 <= (poly17(0) xor poly17(2) xor poly17_zero) & poly17(16 downto 1);
                else
-                  noise_gen_cnt <= noise_gen_cnt + 1;
+                  noise_gen_cnt <= std_logic_vector(unsigned(noise_gen_cnt) + 1);
                end if;
             end if;
          end if;
       end if;
    end process;
+   
    noise_gen_op <= poly17(0);
 
    --p_tone_gens            : process
+   
+   tone_gen_freq(1) <= reg(1)(3 downto 0) & reg(0);
+   tone_gen_freq(2) <= reg(3)(3 downto 0) & reg(2);
+   tone_gen_freq(3) <= reg(5)(3 downto 0) & reg(4);
+   
+   tone_gen_comp(1) <= (std_logic_vector(unsigned(tone_gen_freq(1)) - 1)) when (tone_gen_freq(1)(11 downto 1) /= (x"00" & "000")) else (others => '0');
+   tone_gen_comp(2) <= (std_logic_vector(unsigned(tone_gen_freq(2)) - 1)) when (tone_gen_freq(2)(11 downto 1) /= (x"00" & "000")) else (others => '0');
+   tone_gen_comp(3) <= (std_logic_vector(unsigned(tone_gen_freq(3)) - 1)) when (tone_gen_freq(3)(11 downto 1) /= (x"00" & "000")) else (others => '0');
+   
    process(clk)
-      variable tone_gen_freq : array_3x12;
-      variable tone_gen_comp : array_3x12;
    begin
       if clk'event and clk = '1' then
-         -- looks like real chips count up - we need to get the Exact behaviour ..
-         tone_gen_freq(1) := reg(1)(3 downto 0) & reg(0);
-         tone_gen_freq(2) := reg(3)(3 downto 0) & reg(2);
-         tone_gen_freq(3) := reg(5)(3 downto 0) & reg(4);
-      
-         -- period 0 = period 1
-         for i in 1 to 3 loop
-            if (tone_gen_freq(i) = x"000") then
-               tone_gen_comp(i) := x"000";
-            else
-               tone_gen_comp(i) := std_logic_vector( unsigned(tone_gen_freq(i)) - 1 );
-            end if;
-         end loop;
-
          if (ENA = '1') then
             for i in 1 to 3 loop
                if (ena_div = '1') then -- divider ena
-
                   if (tone_gen_cnt(i) >= tone_gen_comp(i)) then
                      tone_gen_cnt(i) <= x"000";
                      tone_gen_op(i) <= not tone_gen_op(i);
                   else
-                     tone_gen_cnt(i) <= std_logic_vector( unsigned(tone_gen_cnt(i)) + 1 );
+                     tone_gen_cnt(i) <= std_logic_vector(unsigned(tone_gen_cnt(i)) + 1);
                   end if;
                end if;
             end loop;
@@ -318,40 +323,43 @@ begin
    end process;
 
    --p_envelope_freq        : process
+   
+   env_gen_freq <= reg(12) & reg(11);
+   env_gen_comp <= (std_logic_vector(unsigned(env_gen_freq) - 1)) when (env_gen_freq(15 downto 1) /= (x"000" & "000")) else (others => '0');
+   
    process(clk)
-      variable env_gen_freq : std_logic_vector(15 downto 0);
-      variable env_gen_comp : std_logic_vector(15 downto 0);
    begin
       if clk'event and clk = '1' then
-   
-         env_gen_freq := reg(12) & reg(11);
-         -- envelope freqs 1 and 0 are the same.
-         if (env_gen_freq = x"0000") then
-            env_gen_comp := x"0000";
-         else
-            env_gen_comp := std_logic_vector( unsigned(env_gen_freq) - 1 );
-         end if;
-
-         if (ENA = '1') then
-            env_ena <= '0';
+         if env_reset = '1' then
+            env_gen_cnt <= x"0000";
+            env_ena <= '1';
+         elsif (ENA = '1') then
             if (ena_div = '1') then -- divider ena
                if (env_gen_cnt >= env_gen_comp) then
                   env_gen_cnt <= x"0000";
                   env_ena <= '1';
                else
                   env_gen_cnt <= std_logic_vector( unsigned( env_gen_cnt ) + 1 );
+                  env_ena <= '0';
                end if;
+            else
+               env_ena <= '0';
             end if;
          end if;
       end if;
    end process;
 
    --p_envelope_shape       : process(env_reset, CLK)
+   
+   is_zero <= '1' when env_vol(4 downto 1) = "0000" else '0';
+   is_ones <= '1' when env_vol(4 downto 1) = "1111" else '0';
+   
+   is_bot <= '1' when is_zero = '1' and env_vol(0) = '0' else '0';
+   is_bot_p1 <= '1' when is_zero ='1' and env_vol(0) = '1' else '0';
+   is_top_m1 <= '1' when is_ones = '1' and env_vol(0) = '0' else '0';
+   is_top <= '1' when is_ones = '1' and env_vol(0) = '1' else '0';
+
    process(clk)
-      variable is_bot    : boolean;
-      variable is_bot_p1 : boolean;
-      variable is_top_m1 : boolean;
-      variable is_top    : boolean;
    begin
         -- envelope shapes
         -- C AtAlH
@@ -385,76 +393,63 @@ begin
                env_inc <= '1'; -- +1
             end if;
             env_hold <= '0';
-         else
-            is_bot    := (env_vol = "00000");
-            is_bot_p1 := (env_vol = "00001");
-            is_top_m1 := (env_vol = "11110");
-            is_top    := (env_vol = "11111");
-
-            if (ENA = '1') then
-               if (env_ena = '1') then
-                  if (env_hold = '0') then
-                     if (env_inc = '1') then
-                        env_vol <= std_logic_vector( unsigned( env_vol ) + "00001");
-                     else
-                        env_vol <= std_logic_vector( unsigned( env_vol ) + "11111");
-                     end if;
+         elsif (ENA = '1') and (env_ena = '1') then
+            if (env_hold = '0') then
+               if (env_inc = '1') then
+                  env_vol <= std_logic_vector( unsigned( env_vol ) + "00001");
+               else
+                  env_vol <= std_logic_vector( unsigned( env_vol ) + "11111");
+               end if;
+            end if;
+            -- envelope shape control.
+            if (reg(13)(3) = '0') then
+               if (env_inc = '0') then -- down
+                  if is_bot_p1 = '1' then
+                     env_hold <= '1'; 
                   end if;
-
-                  -- envelope shape control.
-                  if (reg(13)(3) = '0') then
-                     if (env_inc = '0') then -- down
-                        if is_bot_p1 then
-                           env_hold <= '1'; 
-                        end if;
-                     else
-                        if is_top then
-                           env_hold <= '1';
-                        end if;
+               else
+                  if is_top = '1' then
+                     env_hold <= '1';
+                  end if;
+               end if;
+            elsif (reg(13)(0) = '1') then -- hold = 1
+               if (env_inc = '0') then -- down
+                  if (reg(13)(1) = '1') then -- alt
+                     if is_bot = '1' then
+                        env_hold <= '1';
                      end if;
                   else
-                     if (reg(13)(0) = '1') then -- hold = 1
-                        if (env_inc = '0') then -- down
-                           if (reg(13)(1) = '1') then -- alt
-                              if is_bot then
-                                 env_hold <= '1';
-                              end if;
-                           else
-                              if is_bot_p1 then
-                                 env_hold <= '1';
-                              end if;
-                           end if;
-                        else
-                           if (reg(13)(1) = '1') then -- alt
-                              if is_top then
-                                 env_hold <= '1';
-                              end if;
-                           else
-                              if is_top_m1 then
-                                 env_hold <= '1'; 
-                              end if;
-                           end if;
-                        end if;
-
-                     elsif (reg(13)(1) = '1') then -- alternate
-                        if (env_inc = '0') then -- down
-                           if is_bot_p1 then 
-                              env_hold <= '1';
-                           end if;
-                           if is_bot then
-                              env_hold <= '0';
-                              env_inc <= '1';
-                           end if;
-                        else
-                           if is_top_m1 then
-                              env_hold <= '1';
-                           end if;
-                           if is_top then
-                              env_hold <= '0';
-                              env_inc <= '0';
-                           end if;
-                        end if;
+                     if is_bot_p1 = '1' then
+                        env_hold <= '1';
                      end if;
+                  end if;
+               else
+                  if (reg(13)(1) = '1') then -- alt
+                     if is_top = '1' then
+                        env_hold <= '1';
+                     end if;
+                  else
+                     if is_top_m1 = '1' then
+                        env_hold <= '1'; 
+                     end if;
+                  end if;
+               end if;
+            elsif (reg(13)(1) = '1') then -- alternate
+               if (env_inc = '0') then -- down
+                  if is_bot_p1 = '1' then 
+                     env_hold <= '1';
+                  end if;
+                  if is_bot = '1' then
+                     env_hold <= '0';
+                     env_inc <= '1';
+                  end if;
+               else
+                  if is_top_m1 = '1' then
+                     env_hold <= '1';
+                  end if;
+                  if is_top = '1' then
+                     env_hold <= '0';
+                     env_inc <= '0';
                   end if;
                end if;
             end if;
@@ -463,14 +458,15 @@ begin
    end process;
 
    --p_chan_mixer_table     : process
+   
+   chan_mixed(0) <= (reg(7)(0) or tone_gen_op(1)) and (reg(7)(3) or noise_gen_op);
+   chan_mixed(1) <= (reg(7)(1) or tone_gen_op(2)) and (reg(7)(4) or noise_gen_op);
+   chan_mixed(2) <= (reg(7)(2) or tone_gen_op(3)) and (reg(7)(5) or noise_gen_op);
+   
    process(clk)
-      variable chan_mixed : std_logic_vector(2 downto 0);
    begin
       if clk'event and clk = '1' then
          if (ENA = '1') then
-            chan_mixed(0) := (reg(7)(0) or tone_gen_op(1)) and (reg(7)(3) or noise_gen_op);
-            chan_mixed(1) := (reg(7)(1) or tone_gen_op(2)) and (reg(7)(4) or noise_gen_op);
-            chan_mixed(2) := (reg(7)(2) or tone_gen_op(3)) and (reg(7)(5) or noise_gen_op);
 
             A <= "00000";
             B <= "00000";
@@ -511,6 +507,7 @@ begin
                   C <= env_vol(4 downto 0);
                end if;
             end if;
+
          end if;
       end if;    
    end process;

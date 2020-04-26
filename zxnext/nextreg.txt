@@ -23,6 +23,7 @@ Generally a set bit indicates the property is asserted
   00000111 = WXEDA
   00001000 = EMULATORS *
   00001010 = ZX Spectrum Next *
+  11101010 = ZX Spectrum Next on ZX-DOS fpga platform *
   00001011 = Multicore
   11111010 = ZX Spectrum Next Anti-brick *
   * = Relevant for ZX Next machines & software
@@ -57,6 +58,7 @@ Generally a set bit indicates the property is asserted
   A write to this register disables the bootrom in config mode
   bit 7 = 1 to allow changes to bits 6:4
   bits 6:4 = Selects display timing (VGA/RGB only)
+    affects port decoding
     000 = Internal Use
     001 = ZX 48K display timing
     010 = ZX 128K/+2 display timing
@@ -64,7 +66,7 @@ Generally a set bit indicates the property is asserted
     100 = Pentagon display timing 50 Hz only
   bit 3 = 1 to toggle user lock on display timing (hard reset = 0)
   bits 2:0 = Selects machine type (config mode only)
-    may affect port decoding and enabling of some hardware
+    determines roms loaded and multiface type
     000 = Configuration mode
     001 = ZX 48K
     010 = ZX 128K/+2
@@ -85,18 +87,25 @@ Generally a set bit indicates the property is asserted
   bit 1 = Joystick 2 mode (MSB)
   bit 0 = Enable scandoubler (1 = enabled)
 Joystick modes:
-  000 = Sinclair 2 (67890)
+  000 = Sinclair 2 (12345)
   001 = Kempston 1 (port 0x1F)
   010 = Cursor (56780)
-  011 = Sinclair 1 (12345)
+  011 = Sinclair 1 (67890)
   100 = Kempston 2 (port 0x37)
   101 = MD 1 (3 or 6 button joystick port 0x1F)
   110 = MD 2 (3 or 6 button joystick port 0x37)
+  111 = I/O Mode
+Both joysticks are placed in I/O Mode if either is set to I/O Mode. The underlying
+joystick type is not changed and reads of this register will continue to return
+the last joystick type. Whether the joystick is in io mode or not is invisible
+but this state can be cleared either through reset or by re-writing the register
+with joystick type not equal to 111. Recovery time for a normal joystick read after
+leaving I/O Mode is at most 64 scan lines.
 
 0x06 (06) => Peripheral 2 Setting
 (R/W)
   bit 7 = Enable F8 cpu speed hotkey (soft reset = 1)
-  bit 6 = DMA mode (0 = zxn dma, 1 = z80 dma) (hard reset  = 0)
+  bit 6 = Divert BEEP only to internal speaker (hard reset = 0)
   bit 5 = Enable F3 50/60 Hz hotkey (soft reset = 1)
   bit 4 = Enable divmmc automap and divmmc nmi by DRIVE button (hard reset = 0)
   bit 3 = Enable multiface nmi by M1 button (hard reset = 0)
@@ -124,7 +133,7 @@ Joystick modes:
   bit 5 = AY stereo mode (0 = ABC, 1 = ACB) (hard reset = 0)
   bit 4 = Enable internal speaker (hard reset = 1)
   bit 3 = Enable 8-bit DACs (A,B,C,D) (hard reset = 0)
-  bit 2 = Enable port 0xff Timex video mode read (disables floating bus on 0xff) (hard reset = 0)
+  bit 2 = Enable port 0xff Timex video mode read (hides floating bus on 0xff) (hard reset = 0)
   bit 1 = Enable turbosound (currently selected AY is frozen when disabled) (hard reset = 0)
   bit 0 = Implement issue 2 keyboard (hard reset = 0)
 
@@ -138,9 +147,18 @@ Joystick modes:
   bit 2 = 1 to silence hdmi audio (hard reset = 0)
   bits 1:0 = Scanline weight
     00 = scanlines off
-    01 = scanlines 75%
-    10 = scanlines 50%
-    11 = scanlines 25%
+    01 = scanlines 50%
+    10 = scanlines 25%
+    11 = scanlines 12.5%
+
+0x0A (10) => Peripheral 5 Setting
+  bits 7:3 = Reserved, must be zero
+  bit 2 = 1 to reverse left and right mouse buttons (hard reset = 0)
+  bits 1:0 = mouse dpi (hard reset = 01)
+    00 = low dpi
+    01 = default
+    10 = medium dpi
+    11 = high dpi
 
 0x0E (14) => Core Version (sub minor number)
 (R) (see register 0x01 for the major and minor version number)
@@ -199,8 +217,8 @@ Joystick modes:
     011 - L U S
     100 - U S L
     101 - U L S
-    110 - S(U+L) ULA and Layer 2 combined, colours clamped to 7
-    111 - S(U+L-5) ULA and Layer 2 combined, colours clamped to [0,7]
+    110 - (U|T)S(T|U)(B+L) Blending layer and Layer 2 combined, colours clamped to [0,7]
+    111 - (U|T)S(T|U)(B+L-5) Blending layer and Layer 2 combined, colours clamped to [0,7]
   bit 1 = Enable sprites over border (soft reset = 0)
   bit 0 = Enable sprites (soft reset = 0)
 
@@ -210,7 +228,7 @@ Joystick modes:
 
 0x17 (23) => Layer2 Y Scroll
 (R/W)
-  bits 7:0 = Y Offset (0-191) (soft reset = 0)
+  bits 7:0 = Y Offset (limited to 0-191 when vertical resolution is 192 pixels) (soft reset = 0)
 
 0x18 (24) => Clip Window Layer 2
 (R/W)
@@ -525,7 +543,7 @@ Joystick modes:
 
 0x61 (97) => Copper Address LSB
 (R/W)
-  bits 7-0 = Copper instruction memory address LSB (soft reset = 0)
+  bits 7:0 = Copper instruction memory address LSB (soft reset = 0)
   (Copper addresses range over 0 - 0x7FF = 2K)
 
 0x62 (98) => Copper Control
@@ -548,12 +566,25 @@ Joystick modes:
   After each write, the copper address is auto-incremented to the next memory position
   After a write to an odd address, the entire 16-bits is written to copper memory at once
 
+0x64 (100) => Vertical Line Count Offset
+(R/W)
+  bits 7:0 = Offset added to the vertical line counter affects copper, line interrupt and active line count.
+  Normally the ula's pixel row 0 aligns with vertical line count 0.  With a non-zero
+  offset, the ula's pixel row 0 will align with the vertical line offset.  Eg, if the offset is 32
+  then vertical line 32 will correspond to the first pixel row in the ula and vertical line 0
+  will align with the first pixel row of the tilemap and sprites.
+  * Since a change in offset takes effect when the ula reaches row 0, the change can take up to
+  one frame to occur.
+
 0x68 (104) => ULA Control
 (R/W)
   bit 7 = Disable ULA output (soft reset = 0)
-  bit 6 = 0 to select the ULA colour for blending in SLU modes 6 & 7 (soft reset = 0)
-        = 1 to select the ULA/tilemap mix for blending in SLU modes 6 & 7
-  bits 5:4 = Reserved, must be 0
+  bits 6:5 = Blending in SLU modes 6 & 7 (soft reset = 0)
+           = 00 for ula as blend colour
+           = 10 for ula/tilemap mix result as blend colour
+           = 11 for tilemap as blend colour
+           = 01 for no blending
+  bit 4 = Cancel entries in 8x5 matrix for extended keys
   bit 3 = ULA+ enable (soft reset = 0)
   bit 2 = ULA half pixel scroll (may change) (soft reset = 0)
   bit 1 = Reserved, must be 0
@@ -651,10 +682,12 @@ NEXTREG 0x80 AND HIGHER ARE INACCESSIBLE TO THE COPPER
 (R/W) (hard reset = 0)
 IMMEDIATE
 bit 7 = 1 to enable the expansion bus
+bit 6 = 1 to enable romcs rom replacement from divmmc banks 14/15
 bit 5 = 1 to disable i/o cycles & ignore iorqula
 bit 4 = 1 to disable memory cycles & ignore romcs
 AFTER SOFT RESET (copied into bits 7-4)
 bit 3 = 1 to enable the expansion bus
+bit 2 = 1 to enable romcs rom replacement from divmmc banks 14/15
 bit 1 = 1 to disable i/o cycles & ignore iorqula
 bit 0 = 1 to disable memory cycles & ignore romcs
 
@@ -664,17 +697,17 @@ bit 7 = 1 if ROMCS is asserted on the expansion bus (read only)
 bit 4 = 1 to propagate the max cpu clock at all times including when the expansion bus is off
 bits 1-0 = max cpu speed when the expansion bus is on (currently fixed at 00 = 3.5MHz)
 
-0x85,0x84,0x83,0x82 (133-130) => Internal Port Decoding Enables (0x85 is MSB) (soft reset = all 1)
-0x89,0x88,0x87,0x86 (137-134) => Expansion Bus Decoding Enables (0x89 is MSB) (hard reset = all 1)
+0x85,0x84,0x83,0x82 (133-130) => Internal Port Decoding Enables (0x85 is MSB) (soft reset if bit 31 = 1, hard reset if bit 31 = 0 : all 1)
+0x89,0x88,0x87,0x86 (137-134) => Expansion Bus Decoding Enables (0x89 is MSB) (soft reset if bit 31 = 0, hard reset if bit 31 = 1 : all 1)
 (R/W)
   bit 0 = port ff
   bit 1 = port 7ffd
   bit 2 = port dffd
   bit 3 = port 1ffd
   bit 4 = +3 floating bus
-  bit 5 = port 6b dma
+  bit 5 = port 6b zxn dma
   bit 6 = port 1f kempston / md1
-  bit 7 = port 37 kempston 2 / md2
+  bit 7 = port 37 kempston 2 / md2 / joystick control
   -----
   bit 8 = port e3 divmmc control
   bit 9 = multiface (two variable ports)
@@ -695,6 +728,9 @@ bits 1-0 = max cpu speed when the expansion bus is on (currently fixed at 00 = 3
   bit 23 = port df dac mono specdrum
   -----
   bit 24 = port bf3b, ff3b ula+
+  bit 25 = port 0b z80 dma
+  ...
+  bit 31 = register reset mode (soft or hard reset selection)
   -----
   The internal port decoding enables always apply.
   When the expansion bus is on, the expansion port decoding enables are logically ANDed with the internal enables.
@@ -703,11 +739,12 @@ bits 1-0 = max cpu speed when the expansion bus is on (currently fixed at 00 = 3
 
 0x8A (138) => Expansion Bus IO Propagate
 (R/W)
-  bits 7:4 = Reserved, must be 0
+  bits 7:5 = Reserved, must be 0
+  bit 4 = Propagate port 0xff io cycles (hard reset  = 0)
   bit 3 = Propagate port 0x1ffd io cycles (hard reset = 0)
   bit 2 = Propagate port 0xdffd io cycles (hard reset = 0)
   bit 1 = Propagate port 0x7ffd io cycles (hard reset = 0)
-  bit 0 = Propagare port 0xfe io cycles (hard reset = 1)
+  bit 0 = Propagare port 0xfe io cycles (hard reset = 0)
   If any of the bits are set, io cycles for the corresponding ports are propagated to the expansion bus when
   the expansion bus is on.  If the internal port decode is still active, any response sent by devices on the
   expansion bus will be ignored.  The purpose here is to allow external peripherals to monitor changes in state
@@ -730,6 +767,23 @@ AFTER SOFT RESET (copied into bits 7-4)
 The locking mechanism also applies if the alt rom is not enabled. For the +3 and zx next, if the two lock bits are not
 zero, then the corresponding rom page is locked in place. Other models use the bits to preferentially lock the corresponding
 48K rom or the 128K rom.
+
+0x8E (142) => Spectrum Memory Mapping
+(R/W)
+  bit 7 = port 0xdffd bit 0         \  RAM
+  bits 6:4 = port 0x7ffd bits 2:0   /  bank 0-15
+R bit 3 = 1
+W bit 3 = 1 to change RAM bank, 0 = no change to mmu6 / mmu7 / RAM bank in ports 0x7ffd, 0xdffd
+  bit 2 = port 0x1ffd bit 0            paging mode
+If bit 2 = paging mode = 0 (normal)
+  bit 1 = port 0x1ffd bit 2         \  ROM
+  bit 0 = port 0x7ffd bit 4         /  select
+If bit 2 = paging mode = 1 (special allRAM)
+  bit 1 = port 0x1ffd bit 2         \  all
+  bit 0 = port 0x1ffd bit 1         /  RAM
+Writes can affect all ports 0x7ffd, 0xdffd, 0x1ffd
+Writes always change the ROM / allRAM mapping
+Writes immediately change the current mmu mapping as if by port write
 
 0x93,0x92,0x91,0x90 (147-144) => PI GPIO Output Enable (0x93 is MSB)
 (R/W)
@@ -763,13 +817,14 @@ zero, then the corresponding rom page is locked in place. Other models use the b
         = 1 PCM_DOUT from pi, PCM_DIN to pi (pi)
   bit 3 = Mute left side (soft reset = 0)
   bit 2 = Mute right side (soft reset = 0)
-  bit 1 = Slave mode (PCM_CLK, PCM_FS supplied externally) (soft reset = 0)
+//bit 1 = Slave mode (PCM_CLK, PCM_FS supplied externally) (soft reset = 0)
+  bit 1 = Reserved must be 1
   bit 0 = Direct i2s audio to EAR on port 0xFE (soft reset = 0)
 
-0xA3 (163) => PI I2S Clock Divide (Master Mode)
-(R/W)
-  bits 7:0 = Clock divide sets sample rate when in master mode (soft reset = 11)
-    clock divider = 538461 / SampleRateHz - 1
+// 0xA3 (163) => PI I2S Clock Divide (Master Mode)
+// (R/W)
+//   bits 7:0 = Clock divide sets sample rate when in master mode (soft reset = 11)
+//     clock divider = 538461 / SampleRateHz - 1
 
 0xA8 (168) => ESP Wifi GPIO Output Enable
 (R/W) (soft reset = 0)
@@ -781,24 +836,24 @@ zero, then the corresponding rom page is locked in place. Other models use the b
   bit 2 = Read / Write ESP GPIO2 (soft reset = 1)
   bit 0 = Read / Write ESP GPIO0 (soft reset = 1)
 
-0xB2 (178) => DIVMMC Trap Enable 1
-(R/W) (hard reset = 0x83)
-  bit 7 = (trap, delayed) enable 0x0038
-  bit 6 = (trap, delayed) enable 0x0030
-  bit 5 = (trap, delayed) enable 0x0028
-  bit 4 = (trap, delayed) enable 0x0020
-  bit 3 = (trap, delayed) enable 0x0018
-  bit 2 = (trap, delayed) enable 0x0010
-  bit 1 = (trap, delayed) enable 0x0008
-  bit 0 = (trap, delayed) enable 0x0000
+0xB0 (176) => EXTENDED KEYS 0
+  bit 7 = 1 if ; pressed
+  bit 6 = 1 if " pressed
+  bit 5 = 1 if , pressed
+  bit 4 = 1 if . pressed
+  bit 3 = 1 if UP pressed
+  bit 2 = 1 if DOWN pressed
+  bit 1 = 1 if LEFT pressed
+  bit 0 = 1 if RIGHT pressed
 
-0xB4 (180) => DIVMMC Trap Enable 2
-(R/W) (hard reset = 0x1B)
-  bits 7:5 = Reserved, must be 0
-  bit 4 = (trap, instant) enable 0x3D00 - 0x3DFF
-  bit 3 = (trap, delayed) disable 0x1FF8 - 0x1FFF
-  bit 2 = (trap, instant) enable 0x04CB, 0x056B
-  bit 1 = (trap, delayed) enable 0x04C6, 0x0562
-  bit 0 = (trap, delayed) enable 0x0066
+0xB1 (177) => EXTENDED KEYS 1
+  bit 7 = 1 if DELETE pressed
+  bit 6 = 1 if EDIT pressed
+  bit 5 = 1 if BREAK pressed
+  bit 4 = 1 if INV VIDEO pressed
+  bit 3 = 1 if TRUE VIDEO pressed
+  bit 2 = 1 if GRAPH pressed
+  bit 1 = 1 if CAPS LOCK pressed
+  bit 0 = 1 if EXTEND pressed
 
 0xFF (255) => Reserved for internal use

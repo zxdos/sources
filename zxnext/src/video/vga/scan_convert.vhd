@@ -106,7 +106,14 @@ architecture RTL of scan_convert is
    signal impar_31      : std_logic                      := '0';
    signal video_31_s    : std_logic_vector(8 downto 0);
    
-   signal blank_s       : std_logic;   
+   signal blank_s       : std_logic;
+
+   signal rgb_r_25      : std_logic_vector(3 downto 0);
+   signal rgb_g_25      : std_logic_vector(3 downto 0);
+   signal rgb_b_25      : std_logic_vector(3 downto 0);
+   signal rgb_r_12      : std_logic_vector(3 downto 0);
+   signal rgb_g_12      : std_logic_vector(3 downto 0);
+   signal rgb_b_12      : std_logic_vector(3 downto 0);
 
 begin
    -- dual port line buffer, max line of 1024 pixels
@@ -129,31 +136,31 @@ begin
    );
    
    -- Scanlines
+   
+   rgb_r_25 <= std_logic_vector(unsigned('0' & video_31_s(8 downto 6)) + unsigned("00" & video_31_s(8 downto 7)));
+   rgb_g_25 <= std_logic_vector(unsigned('0' & video_31_s(5 downto 3)) + unsigned("00" & video_31_s(5 downto 4)));
+   rgb_b_25 <= std_logic_vector(unsigned('0' & video_31_s(2 downto 0)) + unsigned("00" & video_31_s(2 downto 1)));
+   
+   rgb_r_12 <= std_logic_vector(unsigned(rgb_r_25) + unsigned("000" & video_31_s(8 downto 8)));
+   rgb_g_12 <= std_logic_vector(unsigned(rgb_g_25) + unsigned("000" & video_31_s(5 downto 5)));
+   rgb_b_12 <= std_logic_vector(unsigned(rgb_b_25) + unsigned("000" & video_31_s(2 downto 2)));
+
     process (CLK_X2)
-      variable r_v : unsigned(2 downto 0);
-      variable g_v : unsigned(2 downto 0);
-      variable b_v : unsigned(2 downto 0);
     begin
         if rising_edge(CLK_X2) then
-        
+
             if blank_s = '0' then
             
                 O_VIDEO_31 <= video_31_s;
                 
                 if impar_31 = '1' then
                 
-                        if I_SCANLIN = "01" then -- 75%
-                        O_VIDEO_31 <= "00" & video_31_s(8) & "00" & video_31_s(5) & "00" & video_31_s(2);
-                     elsif I_SCANLIN = "10" then -- 50%
+                     if I_SCANLIN = "01" then -- 50%
                         O_VIDEO_31 <= '0' & video_31_s(8 downto 7) & '0' & video_31_s(5 downto 4) & '0' & video_31_s(2 downto 1);
-                     elsif I_SCANLIN = "11" then -- 25%
-                        
-                        r_v := unsigned('0' & video_31_s(8 downto 7)) + unsigned("00" & video_31_s(8 downto 8));
-                        g_v := unsigned('0' & video_31_s(5 downto 4)) + unsigned("00" & video_31_s(5 downto 5));
-                        b_v := unsigned('0' & video_31_s(2 downto 1)) + unsigned("00" & video_31_s(2 downto 2));
-
-                        O_VIDEO_31 <= std_logic_vector(r_v & g_v & b_v);   
-                        
+                     elsif I_SCANLIN = "10" then -- 25%
+                        O_VIDEO_31 <= rgb_r_25(3 downto 1) & rgb_g_25(3 downto 1) & rgb_b_25(3 downto 1);
+                     elsif I_SCANLIN = "11" then -- 12.5%
+                        O_VIDEO_31 <= rgb_r_12(3 downto 1) & rgb_g_12(3 downto 1) & rgb_b_12(3 downto 1);
                      end if;
                      
                 end if;

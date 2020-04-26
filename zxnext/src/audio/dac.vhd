@@ -24,7 +24,7 @@ entity dac is
   );
   port (
     clk_i   : in  std_logic;
-    res_n_i : in  std_logic;
+    res_i   : in  std_logic;
     dac_i   : in  std_logic_vector(msbi_g downto 0);
     dac_o   : out std_logic
   );
@@ -52,15 +52,16 @@ begin
 
   SigmaAdder_s <= DeltaAdder_s + SigmaLatch_q;
 
-  seq: process (clk_i, res_n_i)
+  seq: process (clk_i)
   begin
-    if res_n_i = '0' then
-      SigmaLatch_q <= to_unsigned(2**(msbi_g+1), SigmaLatch_q'length);
-      DACout_q     <= '0';
-
-    elsif clk_i'event and clk_i = '1' then
-      SigmaLatch_q <= SigmaAdder_s;
-      DACout_q     <= SigmaLatch_q(msbi_g+2);
+    if clk_i'event and clk_i = '1' then
+      if res_i = '1' then
+        SigmaLatch_q <= to_unsigned(2**(msbi_g+1), SigmaLatch_q'length);
+        DACout_q     <= '0';
+      else
+        SigmaLatch_q <= SigmaAdder_s;
+        DACout_q     <= SigmaLatch_q(msbi_g+2);
+      end if;
     end if;
   end process seq;
 

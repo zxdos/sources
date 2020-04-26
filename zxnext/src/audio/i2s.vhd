@@ -38,6 +38,7 @@
 --
 -- i2s exchanges signed audio.
 
+-- Note: Restricted to slave mode only
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -50,9 +51,9 @@ entity i2s is
       i_reset        : in std_logic;
       
       i_CLK          : in std_logic;
-      i_CLK_DIV      : in std_logic_vector(7 downto 0);
+--    i_CLK_DIV      : in std_logic_vector(7 downto 0);
       
-      i_slave_mode   : in std_logic;   -- 1 = slave, external clock used
+--    i_slave_mode   : in std_logic;   -- 1 = slave, external clock used
 
       -- slave mode (incoming clock signals, synchronized)
       
@@ -101,27 +102,27 @@ architecture rtl of i2s is
 
 begin
 
-   -- i2s master
+-- -- i2s master
    
-   i2s_master_mod : entity work.i2s_master
-   generic map
-   (
-      CLK_DIV_PRE    => 0,
-      CLK_DIV_MBIT   => 7,
-      LR_WIDTH       => 13,
-      LR_WIDTH_MBIT  => 3
-   )
-   port map
-   (
-      i_reset        => i_reset or i_slave_mode,
-      
-      i_CLK          => i_CLK,
-      i_CLK_DIV      => i_CLK_DIV,
-
-      o_i2s_sck      => m_i2s_sck,
-      o_i2s_ws       => m_i2s_ws,
-      o_i2s_wsp      => m_i2s_wsp
-   );
+-- i2s_master_mod : entity work.i2s_master
+-- generic map
+-- (
+--    CLK_DIV_PRE    => 0,
+--    CLK_DIV_MBIT   => 7,
+--    LR_WIDTH       => 13,
+--    LR_WIDTH_MBIT  => 3
+-- )
+-- port map
+-- (
+--    i_reset        => i_reset or i_slave_mode,
+--    
+--    i_CLK          => i_CLK,
+--    i_CLK_DIV      => i_CLK_DIV,
+--
+--    o_i2s_sck      => m_i2s_sck,
+--    o_i2s_ws       => m_i2s_ws,
+--    o_i2s_wsp      => m_i2s_wsp
+--   );
    
    -- i2s slave
    
@@ -142,9 +143,9 @@ begin
    
    -- master or slave
    
-   i2s_sck <= s_i2s_sck when i_slave_mode = '1' else m_i2s_sck;
-   i2s_ws <= s_i2s_ws when i_slave_mode = '1' else m_i2s_ws;
-   i2s_wsp <= s_i2s_wsp when i_slave_mode = '1' else m_i2s_wsp;
+   i2s_sck <= s_i2s_sck; -- when i_slave_mode = '1' else m_i2s_sck;
+   i2s_ws <= s_i2s_ws; -- when i_slave_mode = '1' else m_i2s_ws;
+   i2s_wsp <= s_i2s_wsp; -- when i_slave_mode = '1' else m_i2s_wsp;
    
    o_i2s_sck <= i2s_sck;
    o_i2s_ws <= i2s_ws;

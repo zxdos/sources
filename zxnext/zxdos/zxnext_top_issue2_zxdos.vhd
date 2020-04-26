@@ -1,9 +1,11 @@
+
 -- ZX Spectrum Next Issue 2 FPGA Top Level
 -- Copyright 2020 Alvin Albrecht and Fabio Belavenuto
 --
 -- TBBLUE Issue 2 Top - Fabio Belavenuto
 -- ZXNext Refactor - Alvin Albrecht
 -- Ported to ZXDOS by AvlixA, joystick implementation by Fernando Mosquera
+-- Version for ZXDOS + 512kb addon (optional)
 --
 -- This file is part of the ZX Spectrum Next Project
 -- <https://gitlab.com/SpectrumNext/ZX_Spectrum_Next_FPGA/tree/master/cores>
@@ -35,7 +37,7 @@ entity zxnext_top_issue2 is
       --g_machine_id      : unsigned(7 downto 0)  := X"0A";   -- 10 = ZX Spectrum Next
 		g_machine_id      : unsigned(7 downto 0)  := X"EA";   -- EA = ZXDOS
       g_version         : unsigned(7 downto 0)  := X"31";   -- 3.01
-      g_sub_version     : unsigned(7 downto 0)  := X"01"    -- .01
+      g_sub_version     : unsigned(7 downto 0)  := X"05"    -- .05
    );
    port (
       -- Clocks
@@ -190,6 +192,8 @@ architecture rtl of zxnext_top_issue2 is
       
       ps2mdat_o   : out std_logic;
       ps2mclk_o   : out std_logic;
+      
+      control_i   : in  std_logic_vector(2 downto 0);
       
       xcount      : out std_logic_vector(7 downto 0);
       ycount      : out std_logic_vector(7 downto 0);
@@ -365,14 +369,22 @@ architecture rtl of zxnext_top_issue2 is
    signal audioext_r             : std_logic;
    
    signal zxn_hdmi_audio         : std_logic;
-   signal zxn_speaker            : std_logic;
+   signal zxn_speaker_en         : std_logic;
+   signal zxn_speaker_beep       : std_logic;
    signal zxn_tape_mic           : std_logic;
-   
-   signal zxn_audio_M_s          : std_logic_vector(13 downto 0);
-   signal zxn_audio_M            : std_logic_vector(13 downto 0);
-   signal zxn_audio_L            : std_logic_vector(12 downto 0);
-   signal zxn_audio_R            : std_logic_vector(12 downto 0);
 
+   signal zxn_audio_ear          : std_logic;
+   signal zxn_audio_mic          : std_logic;
+   
+   signal zxn_audio_L_pre        : std_logic_vector(12 downto 0);
+   signal zxn_audio_R_pre        : std_logic_vector(12 downto 0);
+   
+   signal zxn_audio_L            : std_logic_vector(11 downto 0);
+   signal zxn_audio_R            : std_logic_vector(11 downto 0);
+
+   signal zxn_audio_M_s          : std_logic_vector(13 downto 0);
+   signal zxn_audio_M            : std_logic_vector(14 downto 0);
+   
    --zxdos audio adaptation
 	signal audioint_o        : std_logic                      := '0';
    signal mic_port_o        : std_logic                      := '0';
@@ -417,9 +429,6 @@ architecture rtl of zxnext_top_issue2 is
    signal toHDMI_vsync           : std_logic;
    signal toHDMI_blank           : std_logic;
    
-   signal zxn_audio_L_hdmi       : std_logic_vector(12 downto 0);
-   signal zxn_audio_R_hdmi       : std_logic_vector(12 downto 0);
-   
    signal tdms_r                 : std_logic_vector(9 downto 0);
    signal tdms_g                 : std_logic_vector(9 downto 0);
    signal tdms_b                 : std_logic_vector(9 downto 0);
@@ -440,9 +449,15 @@ architecture rtl of zxnext_top_issue2 is
    signal rgb_hs_n_dly           : std_logic_vector(1 downto 0);
 --   signal CLK_28_HSYNC_EN        : std_logic;
    
-   signal zxn_joy_left           : std_logic_vector(7 downto 0);
-   signal zxn_joy_right          : std_logic_vector(7 downto 0);
+   signal io_mode_pin_7          : std_logic;
    
+   signal zxn_joy_left           : std_logic_vector(10 downto 0);
+   signal zxn_joy_right          : std_logic_vector(10 downto 0);
+   
+   signal zxn_joy_io_mode_en     : std_logic_vector(1 downto 0);
+   signal zxn_joy_io_mode_lr     : std_logic;
+   signal zxn_joy_io_mode_pin_7  : std_logic;
+
    signal ps2_mouse_data_in      : std_logic;
    signal ps2_mouse_clock_in     : std_logic;
    signal m_reset                : std_logic_vector(1 downto 0);
@@ -450,6 +465,7 @@ architecture rtl of zxnext_top_issue2 is
    signal ps2_mouse_clock_out    : std_logic;
 
    signal zxn_ps2_mode           : std_logic;
+   signal zxn_mouse_control      : std_logic_vector(2 downto 0);
    signal zxn_mouse_x            : std_logic_vector(7 downto 0);
    signal zxn_mouse_y            : std_logic_vector(7 downto 0);
    signal zxn_mouse_wheel        : std_logic_vector(7 downto 0);
@@ -472,6 +488,9 @@ architecture rtl of zxnext_top_issue2 is
    signal key_row_filtered       : std_logic_vector(7 downto 0);
    signal zxn_key_col            : std_logic_vector(4 downto 0);
    signal membrane_function_keys : std_logic_vector(10 downto 1);
+   
+   signal zxn_cancel_extended_entries  : std_logic;
+   signal zxn_extended_keys      : std_logic_vector(15 downto 0);
    
    signal membrane_col           : std_logic_vector(4 downto 0);
    signal membrane_rows          : std_logic_vector(7 downto 0);
@@ -1050,9 +1069,8 @@ begin
       clock_i     => CLK_14,
       start_i     => zxn_flashboot,
       --spiaddr_i   => "0110" & "1011" & zxn_coreid & "0000000000000000000"
-		spiaddr_i   => X"030BC000" -- 8'h03 & 24'h0BC000 default value lx16 zxdos
+		spiaddr_i   => X"03098000" -- 8'h03 & 24'h098000 default value lx16 zxdos
    );
-
 
    ------------------------------------------------------------
    -- SRAM INTERFACE ------------------------------------------
@@ -1183,6 +1201,7 @@ begin
    end process;
    
    -- Data in (R)
+   
    process (CLK_28)
    begin
       if rising_edge(CLK_28) then
@@ -1253,6 +1272,7 @@ begin
    -- Connect I/O signals
    
    -- make sure xst is pushing registers into io blocks
+   
    ram_addr_o <= sram_addr_active;
    --ram_data_io <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
    ram_oe_n_o <= sram_oe_n_active;
@@ -1289,13 +1309,13 @@ begin
    audio_L : entity work.dac
    generic map
    (
-      msbi_g   => 12
+      msbi_g   => 11
    )
    port map
    (
       clk_i    => CLK_28,
-      res_n_i  => not reset,
-      dac_i    => zxn_audio_L(12 downto 0),
+      res_i    => reset,
+      dac_i    => zxn_audio_L(11 downto 0),
       dac_o    => audioext_l
    );
    
@@ -1309,13 +1329,13 @@ begin
    audio_R : entity work.dac
    generic map
    (
-      msbi_g   => 12
+      msbi_g   => 11
    )
    port map
    (
       clk_i    => CLK_28,
-      res_n_i  => not reset,
-      dac_i    => zxn_audio_R(12 downto 0),
+      res_i    => reset,
+      dac_i    => zxn_audio_R(11 downto 0),
       dac_o    => audioext_r
    );
    
@@ -1331,38 +1351,39 @@ begin
    process (CLK_28)
    begin
       if rising_edge(CLK_28) then
-         audioint <= audioext_m and zxn_speaker;
+         audioint <= audioext_m and zxn_speaker_en;
       end if;
    end process;
    
    audioint_o <= audioint;
 
-   -- it's clear that to get louder audio out of the internal speaker, the diaphragm
-   -- needs to be biased in the middle and some automatic gain control has to be
-   -- applied to use the full range.  some signal processing is unavoidable.
+   -- VBE(on) = 0.55 V
+   -- VBE(max) = 0.8 V
+   -- 17-bit dac = 21760 offset, signal range = 0:9929
    
--- -- todo: moving average filter to bias mono audio signal at middle of output range
--- -- todo: automatic gain control to make full use of internal speaker range
-   
-   zxn_audio_M_s <= ('0' & zxn_audio_L) + ('0' & zxn_audio_R) + 2705;
+   zxn_audio_M_s <= ('0' & zxn_audio_L_pre) + ('0' & zxn_audio_R_pre);
    
    process (CLK_28)
    begin
       if rising_edge(CLK_28) then
-         zxn_audio_M <= zxn_audio_M_s;
+         if zxn_speaker_beep = '1' then
+            zxn_audio_M <= zxn_audio_ear & (not zxn_audio_ear) & '0' & zxn_audio_mic & "00000000000";
+         else
+            zxn_audio_M <= (('0' & zxn_audio_M_s(13 downto 7)) + "01010101") & zxn_audio_M_s(6 downto 0);
+         end if;
       end if;
    end process;
    
    audio_M : entity work.dac
    generic map
    (
-      msbi_g   => 13
+      msbi_g   => 16     -- only using a small range of 16.7% through 24.2%
    )
    port map
    (
       clk_i    => CLK_28,
-      res_n_i  => not reset,
-      dac_i    => zxn_audio_M,
+      res_i    => reset,
+      dac_i    => '0' & zxn_audio_M & '0',
       dac_o    => audioext_m
    );
 
@@ -1519,9 +1540,6 @@ begin
 --      vsync_end   => vsync_end_s,
 --      vcnt_end    => vcnt_end_s
 --   );
---
---   zxn_audio_L_hdmi <= zxn_audio_L when zxn_hdmi_audio = '1' else (others => '0');
---   zxn_audio_R_hdmi <= zxn_audio_R when zxn_hdmi_audio = '1' else (others => '0');
 --    
 --   hdmi: entity work.hdmi
 --   generic map
@@ -1543,9 +1561,9 @@ begin
 --      
 --      -- PCM audio
 --      
---      I_AUDIO_ENABLE => '1',
---      I_AUDIO_PCM_L  => zxn_audio_L_hdmi & "000",
---      I_AUDIO_PCM_R  => zxn_audio_R_hdmi & "000",
+--      I_AUDIO_ENABLE => zxn_hdmi_audio,
+--      I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
+--      I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
 --      
 --      -- TMDS parallel pixel synchronous outputs (serialize LSB first)
 --      
@@ -1664,8 +1682,8 @@ begin
    
    -- joysticks
    -- md controller reads all joystick types
-
---   zxdos - not used   
+   
+--   zxdos - not used 
 --   process (CLK_28)
 --   begin
 --      if rising_edge(CLK_28) then
@@ -1674,28 +1692,34 @@ begin
 --   end process;
 --   
 --   CLK_28_HSYNC_EN <= rgb_hs_n_dly(1) and not rgb_hs_n_dly(0);
-   
+--   
 --   jc_2 : entity work.md6_joystick_connector_x2
 --   port map
 --   (
---      reset_i     => reset,
+--      i_reset        => reset,
 --      
---      CLK_28_i    => CLK_28,
---      CLK_EN_i    => CLK_28_HSYNC_EN,  -- approximately 15kHz enable
+--      i_CLK_28       => CLK_28,
+--      i_CLK_EN       => CLK_28_HSYNC_EN,  -- approximately 15kHz enable
 --      
---      joy1_i      => joyp1_i_q,
---      joy2_i      => joyp2_i_q,
---      joy3_i      => joyp3_i_q,
---      joy4_i      => joyp4_i_q,
---      joy6_i      => joyp6_i_q,
---      joy9_i      => joyp9_i_q,
+--      i_joy_1_n      => joyp1_i_q,
+--      i_joy_2_n      => joyp2_i_q,
+--      i_joy_3_n      => joyp3_i_q,
+--      i_joy_4_n      => joyp4_i_q,
+--      i_joy_6_n      => joyp6_i_q,
+--      i_joy_9_n      => joyp9_i_q,
 --      
---      joy7_o      => joyp7_o,          -- joystick pin out for md protocol
---      joys_o      => joysel_o,         -- joystick selection mux (0 = left, 1 = right)
+--      i_io_mode_en      => zxn_joy_io_mode_en(0),
+--      i_io_mode_lr      => zxn_joy_io_mode_lr,
+--      i_io_mode_pin_7   => io_mode_pin_7,
 --
---      joyleft_o   => zxn_joy_left,     -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
---      joyright_o  => zxn_joy_right     -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
+--      o_joy_7        => joyp7_o,          -- md protocol
+--      o_joy_select   => joysel_o,         -- joystick selection mux (0 = left, 1 = right)
+--
+--      o_joy_left     => zxn_joy_left,     -- active high  X Z Y START A C B U D L R
+--      o_joy_right    => zxn_joy_right     -- active high  X Z Y START A C B U D L R
 --   );
+--   
+--   io_mode_pin_7 <= zxn_joy_io_mode_pin_7 when zxn_joy_io_mode_en(1) = '0' else clk_28_div(2) when zxn_joy_io_mode_pin_7 = '1' else clk_28_div(10);
    
    -- ps2 mouse
    
@@ -1738,6 +1762,8 @@ begin
       
       ps2mdat_o   => ps2_mouse_data_out,
       ps2mclk_o   => ps2_mouse_clock_out,
+      
+      control_i   => zxn_mouse_control,
       
       xcount      => zxn_mouse_x,
       ycount      => zxn_mouse_y,
@@ -1832,7 +1858,10 @@ begin
       o_cols            => membrane_col,
       
       o_membrane_rows   => membrane_rows,   -- 0 = active, 1 = Z
-      i_membrane_cols   => keyb_col_i_q
+      i_membrane_cols   => keyb_col_i_q,
+      
+      i_cancel_extended_entries => zxn_cancel_extended_entries,
+      o_extended_keys => zxn_extended_keys
    );
    
    keyb_row_o(0) <= '0' when membrane_rows(0) = '0' else 'Z';
@@ -2103,7 +2132,7 @@ begin
    -- F10 = drive button (divmmc nmi)
 
    zxn_function_keys <= (ps2_kbd_function_keys(10) or membrane_function_keys(10) or not btn_drive_divmmc_db_n) & (ps2_kbd_function_keys(9 downto 1) or membrane_function_keys(9 downto 1));
-   
+      
    zxnext : entity work.zxnext
    generic map
    (
@@ -2147,8 +2176,12 @@ begin
       
       -- MEMBRANE KEYBOARD
       
+      o_KBD_CANCEL         => zxn_cancel_extended_entries,
+      
       o_KBD_ROW            => zxn_key_row,
       i_KBD_COL            => zxn_key_col,
+      
+      i_KBD_EXTENDED_KEYS  => zxn_extended_keys,
       
       -- PS/2 KEYBOARD SETUP
       
@@ -2160,6 +2193,10 @@ begin
       
       i_JOY_LEFT           => zxn_joy_left,
       i_JOY_RIGHT          => zxn_joy_right,
+
+      o_JOY_IO_MODE        => zxn_joy_io_mode_en,
+      o_JOY_IO_MODE_LR     => zxn_joy_io_mode_lr,
+      o_JOY_IO_MODE_PIN_7  => zxn_joy_io_mode_pin_7,
       
       -- MOUSE
       
@@ -2167,7 +2204,9 @@ begin
       i_MOUSE_Y            => zxn_mouse_y,
       i_MOUSE_BUTTON       => zxn_mouse_button,
       i_MOUSE_WHEEL        => zxn_mouse_wheel(3 downto 0),
+      
       o_PS2_MODE           => zxn_ps2_mode,
+      o_MOUSE_CONTROL      => zxn_mouse_control,
       
       -- I2C
       
@@ -2215,14 +2254,19 @@ begin
       
       -- AUDIO
       
-      o_AUDIO_HDMI_EN      => zxn_hdmi_audio,
-      o_AUDIO_SPEAKER_EN   => zxn_speaker,
+      o_AUDIO_HDMI_AUDIO_EN => zxn_hdmi_audio,
+
+      o_AUDIO_SPEAKER_EN   => zxn_speaker_en,
+      o_AUDIO_SPEAKER_BEEP => zxn_speaker_beep,
       
       i_AUDIO_EAR          => ear_port_i_q,
       o_AUDIO_MIC          => zxn_tape_mic,
 
-      o_AUDIO_L            => zxn_audio_L,
-      o_AUDIO_R            => zxn_audio_R,
+      o_AUDIO_SPEAKER_EAR  => zxn_audio_ear,
+      o_AUDIO_SPEAKER_MIC  => zxn_audio_mic,
+      
+      o_AUDIO_L            => zxn_audio_L_pre,
+      o_AUDIO_R            => zxn_audio_R_pre,
 
       -- EXTERNAL SRAM (synchronized to i_CLK_28)
       -- memory transactions complete in one cycle, data read is registered but available asap
@@ -2281,6 +2325,12 @@ begin
       o_GPIO_EN            => zxn_gpio_en
    );
 
+   -- process audio signal
+   -- hdmi seems to suffer on beeper audio so may need a lp filter as well
+
+   zxn_audio_L <= (others => '1') when zxn_audio_L_pre(12) = '1' else zxn_audio_L_pre(11 downto 0);
+   zxn_audio_R <= (others => '1') when zxn_audio_R_pre(12) = '1' else zxn_audio_R_pre(11 downto 0);
+
 -- zxdos - Joysticks
 	clk01 <= clk_28_div(4);  -- 28 MHz /32 = 875 Khz  /18  =>  48 Khz read the 2 joy
 
@@ -2315,9 +2365,10 @@ begin
        end case;
 		end if;
 	end process;
-		
+--      o_joy_left     => zxn_joy_left,     -- active high  X Z Y START A C B U D L R
+--      o_joy_right    => zxn_joy_right     -- active high  X Z Y START A C B U D L R
 	 -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
-	zxn_joy_left 	<=  not (joyA(6) & "1" & joyA(5) & joyA(4) & joyA(0) & joyA(1) & joyA(2) & joyA(3));
-	zxn_joy_right	<=  not (joyB(6) & "1" & joyB(5) & joyB(4) & joyB(0) & joyB(1) & joyB(2) & joyB(3));
+	zxn_joy_left 	<=  not ("111" & joyA(6) & "1" & joyA(5) & joyA(4) & joyA(0) & joyA(1) & joyA(2) & joyA(3));
+	zxn_joy_right	<=  not ("111" & joyB(6) & "1" & joyB(5) & joyB(4) & joyB(0) & joyB(1) & joyB(2) & joyB(3));
 
 end architecture;
