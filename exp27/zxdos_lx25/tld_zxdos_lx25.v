@@ -68,11 +68,16 @@ module tld_zxdos_lx25 (
    //input wire joyright,
    //input wire joyfire,
    //input wire joybtn2
+   
+   input wire joy_data,
+   output wire joy_clk,
+   output wire joy_load_n,
 
    output wire sd_cs_n,    
    output wire sd_clk,     
    output wire sd_mosi,    
    input wire sd_miso,
+
    output wire testled   // nos servirá como testigo de uso de la SPI
    );
 
@@ -91,6 +96,32 @@ module tld_zxdos_lx25 (
    wire hsync_pal, vsync_pal, csync_pal;
    wire vga_enable, scanlines_enable;
    wire clk14en_tovga;
+
+   wire joy1up, joy1down, joy1left, joy1right, joy1fire1, joy1fire2;
+   wire joy2up, joy2down, joy2left, joy2right, joy2fire1, joy2fire2;
+
+   joydecoder decodificador_joysticks (
+    .clk(sysclk),
+    .joy_data(joy_data),
+    .joy_clk(joy_clk),
+    .joy_load_n(joy_load_n),
+    .joy1up(joy1up),
+    .joy1down(joy1down),
+    .joy1left(joy1left),
+    .joy1right(joy1right),
+    .joy1fire1(joy1fire1),
+    .joy1fire2(joy1fire2),
+    .joy1fire3(),
+    .joy1start(),
+    .joy2up(joy2up),
+    .joy2down(joy2down),
+    .joy2left(joy2left),
+    .joy2right(joy2right),
+    .joy2fire1(joy2fire1),
+    .joy2fire2(joy2fire2),
+    .joy2fire3(),
+    .joy2start()    
+   );   
 
    zxuno #(.FPGA_MODEL(3'b011), .MASTERCLK(28000000)) la_maquina (
     .sysclk(sysclk),
@@ -130,13 +161,20 @@ module tld_zxdos_lx25 (
     .sd_mosi(sd_mosi),
     .sd_miso(sd_miso),
     
-    .joyup(1),
-    .joydown(1),
-    .joyleft(1),
-    .joyright(1),
-    .joyfire(1),
-    .joybtn2(1),    
+    .joy1up(joy1up),
+    .joy1down(joy1down),
+    .joy1left(joy1left),
+    .joy1right(joy1right),
+    .joy1fire1(joy1fire1),
+    .joy1fire2(joy1fire2),    
 	 
+    .joy2up(joy2up),
+    .joy2down(joy2down),
+    .joy2left(joy2left),
+    .joy2right(joy2right),
+    .joy2fire1(joy2fire1),
+    .joy2fire2(joy2fire2),    
+
     .mouseclk(mouseclk),
     .mousedata(mousedata),
     

@@ -105,9 +105,9 @@ NET "sd_mosi"         LOC="M9"   | IOSTANDARD = LVCMOS33;
 NET "sd_miso"         LOC="T7"   | IOSTANDARD = LVCMOS33 | PULLUP;
 
 # JOYSTICK
-#NET "joy_data"        LOC="T13"  | IOSTANDARD = LVCMOS33;
-#NET "joy_load_n"      LOC="T12"  | IOSTANDARD = LVCMOS33;
-#NET "joy_clk"         LOC="R12"  | IOSTANDARD = LVCMOS33;
+NET "joy_data"        LOC="T13"  | IOSTANDARD = LVCMOS33;
+NET "joy_load_n"      LOC="T12"  | IOSTANDARD = LVCMOS33;
+NET "joy_clk"         LOC="R12"  | IOSTANDARD = LVCMOS33;
 #NET "joybtn3"         LOC="R16"  | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET "select"          LOC="F14"  | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET "coin"            LOC="R14"  | IOSTANDARD = LVCMOS33 | PULLUP;
