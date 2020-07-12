@@ -38,7 +38,8 @@ module joystick_protocols(
     input wire zxuno_regwr,
     //-- actual joystick and keyboard signals
     input wire [4:0] kbdjoy_in,
-    input wire [5:0] db9joy_in,
+    input wire [5:0] db9joy1_in,
+    input wire [5:0] db9joy2_in,
     input wire [4:0] kbdcol_in,
     output reg [4:0] kbdcol_out,
     input wire vertical_retrace_int_n // this is used as base clock for autofire
@@ -68,16 +69,17 @@ module joystick_protocols(
     reg db9joydown = 1'b0;
     reg db9joyleft = 1'b0;
     reg db9joyright = 1'b0;
-    reg db9joyfire = 1'b0;
-    reg db9joybtn2 = 1'b0;
+    reg db9joyfire1 = 1'b0;
+    reg db9joyfire2 = 1'b0;
     reg kbdjoyup = 1'b0;
     reg kbdjoydown = 1'b0;
     reg kbdjoyleft = 1'b0;
     reg kbdjoyright = 1'b0;
-    reg kbdjoyfire = 1'b0;
+    reg kbdjoyfire1 = 1'b0;
+    reg kbdjoyfire2 = 1'b0;
     always @(posedge clk) begin
-        {db9joybtn2,db9joyfire,db9joyup,db9joydown,db9joyleft,db9joyright} <= ~db9joy_in;
-        {kbdjoyfire,kbdjoyup,kbdjoydown,kbdjoyleft,kbdjoyright} <= kbdjoy_in;
+        {db9joyfire2,db9joyfire1,db9joyup,db9joydown,db9joyleft,db9joyright} <= ~db9joy1_in;
+        {kbdjoyfire2,kbdjoyfire1,kbdjoyup,kbdjoydown,kbdjoyleft,kbdjoyright} <= {1'b0, kbdjoy_in} | ~db9joy2_in;
     end
     
     // Update JOYCONF from CPU
@@ -96,8 +98,8 @@ module joystick_protocols(
         if (edge_detect == 4'b0011)
             cont_autofire <= cont_autofire + 1;  // count only on raising edge of vertical retrace int
     end    
-    wire kbdjoyfire_processed = (joyconf[3]==1'b0)? kbdjoyfire : kbdjoyfire & autofire;
-    wire db9joyfire_processed = (joyconf[7]==1'b0)? db9joyfire : db9joyfire & autofire;
+    wire kbdjoyfire_processed = (joyconf[3]==1'b0)? kbdjoyfire1 : kbdjoyfire1 & autofire;
+    wire db9joyfire_processed = (joyconf[7]==1'b0)? db9joyfire1 : db9joyfire1 & autofire;
     
     always @* begin
         oe = 1'b0;
@@ -111,17 +113,17 @@ module joystick_protocols(
             dout = 8'h00;
             oe = 1'b1;
             if (joyconf[2:0]==KEMPSTON)
-                dout = dout | {3'b000, kbdjoyfire_processed, kbdjoyup, kbdjoydown, kbdjoyleft, kbdjoyright};
+                dout = dout | {2'b00, kbdjoyfire2, kbdjoyfire_processed, kbdjoyup, kbdjoydown, kbdjoyleft, kbdjoyright};
             if (joyconf[6:4]==KEMPSTON)
-                dout = dout | {2'b00, db9joybtn2, db9joyfire_processed, db9joyup, db9joydown, db9joyleft, db9joyright};
+                dout = dout | {2'b00, db9joyfire2, db9joyfire_processed, db9joyup, db9joydown, db9joyleft, db9joyright};
         end
         else if (iorq_n == 1'b0 && a[7:0]==FULLERADDR && rd_n==1'b0) begin
             dout = 8'hFF;
             oe = 1'b1;
             if (joyconf[2:0]==FULLER)
-                dout = dout & {~kbdjoyfire_processed, 3'b111, ~kbdjoyright, ~kbdjoyleft, ~kbdjoydown, ~kbdjoyup};
+                dout = dout & {~kbdjoyfire_processed, ~kbdjoyfire2, 2'b11, ~kbdjoyright, ~kbdjoyleft, ~kbdjoydown, ~kbdjoyup};
             if (joyconf[6:4]==FULLER)
-                dout = dout & {~db9joyfire_processed, ~db9joybtn2, 2'b11, ~db9joyright, ~db9joyleft, ~db9joydown, ~db9joyup};
+                dout = dout & {~db9joyfire_processed, ~db9joyfire2, 2'b11, ~db9joyright, ~db9joyleft, ~db9joydown, ~db9joyup};
         end
 //        else 
 		  if (iorq_n==1'b0 && a[SINCLAIRP1ADDR]==1'b0 && a[0]==1'b0 && rd_n==1'b0) begin
@@ -132,7 +134,7 @@ module joystick_protocols(
             if (joyconf[2:0]==CURSOR)
                 kbdcol_out = kbdcol_out & {~kbdjoydown,~kbdjoyup,~kbdjoyright,1'b1,~kbdjoyfire_processed};
             if (joyconf[6:4]==CURSOR)
-                kbdcol_out = kbdcol_out & {~db9joydown,~db9joyup,~db9joyright,~db9joybtn2,~db9joyfire_processed};
+                kbdcol_out = kbdcol_out & {~db9joydown,~db9joyup,~db9joyright,~db9joyfire2,~db9joyfire_processed};
         end
 //        else 
 		  if (iorq_n==1'b0 && a[SINCLAIRP2ADDR]==1'b0 && a[0]==1'b0 && rd_n==1'b0) begin
@@ -148,9 +150,9 @@ module joystick_protocols(
 		  //Sinclair extendido,Z-X
 		  if (iorq_n==1'b0 && a[SINCLAIRADDRE]==1'b0 && a[0]==1'b0 && rd_n==1'b0) begin
 				if (joyconf[6:4]==SINCLAIRP1)
-                kbdcol_out = kbdcol_out & {2'b11, ~db9joybtn2, 2'b11};               
+                kbdcol_out = kbdcol_out & {2'b11, ~db9joyfire2, 2'b11};               
 				if (joyconf[6:4]==SINCLAIRP2)
-					 kbdcol_out = kbdcol_out & {3'b111, ~db9joybtn2, 1'b1};
+					 kbdcol_out = kbdcol_out & {3'b111, ~db9joyfire2, 1'b1};
 		  end
 		  //
 		  //Protocolo OPQASPACEM
@@ -168,7 +170,7 @@ module joystick_protocols(
 		  end	 
 		  if (iorq_n==1'b0 && a[KMAPSPACEM]==1'b0 && a[0]==1'b0 && rd_n==1'b0) begin
 				if (joyconf[6:4]==KMAPOPQA)    
-					 kbdcol_out = kbdcol_out & {2'b11, ~db9joybtn2,  1'b1, ~db9joyfire};
+					 kbdcol_out = kbdcol_out & {2'b11, ~db9joyfire2,  1'b1, ~db9joyfire_processed};
 		  end	  
 		  //
     end

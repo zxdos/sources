@@ -70,13 +70,20 @@ module zxuno (
   input wire sd_miso,
   
   // DB9 JOYSTICK
-  input wire joyup,
-  input wire joydown,
-  input wire joyleft,
-  input wire joyright,
-  input wire joyfire,
-  input wire joybtn2,   
+  input wire joy1up,
+  input wire joy1down,
+  input wire joy1left,
+  input wire joy1right,
+  input wire joy1fire1,
+  input wire joy1fire2,   
 	 
+  input wire joy2up,
+  input wire joy2down,
+  input wire joy2left,
+  input wire joy2right,
+  input wire joy2fire1,
+  input wire joy2fire2,   
+
   // MOUSE
   inout wire mouseclk,
   inout wire mousedata,
@@ -581,7 +588,8 @@ module zxuno (
     .zxuno_regwr(zxuno_regwr),
   //-- actual joystick and keyboard signals
     .kbdjoy_in(kbd_joy),
-    .db9joy_in({joybtn2, joyfire, joyup, joydown, joyleft, joyright}),
+    .db9joy1_in({joy1fire2, joy1fire1, joy1up, joy1down, joy1left, joy1right}),
+    .db9joy2_in({joy2fire2, joy2fire1, joy2up, joy2down, joy2left, joy2right}),
     .kbdcol_in(kbdcol),
     .kbdcol_out(kbdcol_to_ula),
     .vertical_retrace_int_n(int_n) // this is used as base clock for autofire
