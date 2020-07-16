@@ -137,7 +137,7 @@ module zxuno (
   wire oe_zxunoaddr;     // el dato en el bus de entrada del Z80 es válido
   wire zxuno_regrd;     // Acceso de lectura en el puerto de datos de ZX-Uno
   wire zxuno_regwr;     // Acceso de escritura en el puerto de datos del ZX-Uno
-  wire in_boot_mode;   // Vae 1 cuando el sistema está en modo boot (ejecutando la BIOS)
+  wire in_boot_mode;   // Vale 1 cuando el sistema está en modo boot (ejecutando la BIOS)
 
   // Señales de acceso al módulo Flash SPI
   wire [7:0] spi_dout;
@@ -290,6 +290,9 @@ module zxuno (
   wire write_data_pzx;
   wire ear = (pzx_playing == 1'b1)? pzx_output : ear_ext;
   
+  // Inyección de 0xFF directo al bus de datos cuando hay un acuse de recibo de interrupción
+  wire oe_intack = (iorq_n == 1'b0 && m1_n == 1'b0);
+  
   // Salidas de video de la ULA
   wire [2:0] rula,gula,bula;
   wire [8:0] hcnt, vcnt;
@@ -302,8 +305,7 @@ module zxuno (
   // conectados a ella.
   always @* begin
     case (1'b1)
-      oe_ay          : cpudin = ay_dout;
-      oe_joystick    : cpudin = joystick_dout;
+      oe_intack      : cpudin = 8'hFF;  // valor del bus de datos durante una interrupción enmascarable aceptada
       oe_zxunoaddr   : cpudin = zxuno_addr_to_cpu;
       oe_spi         : cpudin = spi_dout;
       oe_scancode    : cpudin = scancode_dout;
@@ -327,6 +329,8 @@ module zxuno (
       oe_pzx         : cpudin = pzx_dout;
       oe_memrep      : cpudin = memrep_dout;
       oe_uart        : cpudin = uart_dout;
+      oe_ay          : cpudin = ay_dout;
+      oe_joystick    : cpudin = joystick_dout;
       default        : cpudin = ula_dout;  // must always be the last "default" option.
     endcase
   end        

@@ -60,37 +60,38 @@ NET "mouseclk"        LOC="M10"  | IOSTANDARD = LVCMOS33 | PULLUP;
 NET "mousedata"       LOC="P11"  | IOSTANDARD = LVCMOS33 | PULLUP;
 
 # SRAM
-NET "sram_addr<0>"    LOC="H14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<1>"    LOC="J16"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<2>"    LOC="J11"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<3>"    LOC="J13"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<4>"    LOC="K16"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<5>"    LOC="K11"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<6>"    LOC="L12"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<7>"    LOC="M13"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<8>"    LOC="M15"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<9>"    LOC="N14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<10>"   LOC="L14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<11>"   LOC="M14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<12>"   LOC="K14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<13>"   LOC="L13"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<14>"   LOC="J12"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<15>"   LOC="T14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<16>"   LOC="T15"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<17>"   LOC="R14"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<18>"   LOC="R16"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<19>"   LOC="F10"  | IOSTANDARD = LVCMOS33;
-NET "sram_addr<20>"   LOC="A12"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<0>"    LOC="K15"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<1>"    LOC="N16"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<2>"    LOC="L16"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<3>"    LOC="K12"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<4>"    LOC="J14"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<5>"    LOC="P15"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<6>"    LOC="P16"  | IOSTANDARD = LVCMOS33;
-NET "sram_data<7>"    LOC="R15"  | IOSTANDARD = LVCMOS33;
-NET "sram_we_n"       LOC="M16"  | IOSTANDARD = LVCMOS33;
-NET "sram_ub"         LOC="E13"  | IOSTANDARD = LVCMOS33;
+NET "sram_*"      DRIVE = 24 | SLEW = FAST | IOSTANDARD = LVTTL;
+NET "sram_addr<0>"    LOC="H14";
+NET "sram_addr<1>"    LOC="J16";
+NET "sram_addr<2>"    LOC="J11";
+NET "sram_addr<3>"    LOC="J13";
+NET "sram_addr<4>"    LOC="K16";
+NET "sram_addr<5>"    LOC="K11";
+NET "sram_addr<6>"    LOC="L12";
+NET "sram_addr<7>"    LOC="M13";
+NET "sram_addr<8>"    LOC="M15";
+NET "sram_addr<9>"    LOC="N14";
+NET "sram_addr<10>"   LOC="L14";
+NET "sram_addr<11>"   LOC="M14";
+NET "sram_addr<12>"   LOC="K14";
+NET "sram_addr<13>"   LOC="L13";
+NET "sram_addr<14>"   LOC="J12";
+NET "sram_addr<15>"   LOC="T14";
+NET "sram_addr<16>"   LOC="T15";
+NET "sram_addr<17>"   LOC="R14";
+NET "sram_addr<18>"   LOC="R16";
+NET "sram_addr<19>"   LOC="F10";
+NET "sram_addr<20>"   LOC="A12";
+NET "sram_data<0>"    LOC="K15";
+NET "sram_data<1>"    LOC="N16";
+NET "sram_data<2>"    LOC="L16";
+NET "sram_data<3>"    LOC="K12";
+NET "sram_data<4>"    LOC="J14";
+NET "sram_data<5>"    LOC="P15";
+NET "sram_data<6>"    LOC="P16";
+NET "sram_data<7>"    LOC="R15";
+NET "sram_we_n"       LOC="M16";
+NET "sram_ub"         LOC="E13";
 
 # SPI Flash
 NET "flash_cs_n"      LOC="T3"  | IOSTANDARD = LVCMOS33;
@@ -105,13 +106,9 @@ NET "sd_mosi"         LOC="M9"   | IOSTANDARD = LVCMOS33;
 NET "sd_miso"         LOC="T7"   | IOSTANDARD = LVCMOS33 | PULLUP;
 
 # JOYSTICK
-NET "joy_data"        LOC="T13"  | IOSTANDARD = LVCMOS33;
-NET "joy_load_n"      LOC="T12"  | IOSTANDARD = LVCMOS33;
-NET "joy_clk"         LOC="R12"  | IOSTANDARD = LVCMOS33;
-#NET "joybtn3"         LOC="R16"  | IOSTANDARD = LVCMOS33 | PULLUP;
-#NET "select"          LOC="F14"  | IOSTANDARD = LVCMOS33 | PULLUP;
-#NET "coin"            LOC="R14"  | IOSTANDARD = LVCMOS33 | PULLUP;
-#NET "testserv"        LOC="G14"  | IOSTANDARD = LVCMOS33 | PULLUP;
+NET "joy_data"        LOC="T13"  | IOSTANDARD = LVTTL;
+NET "joy_load_n"      LOC="T12"  | IOSTANDARD = LVTTL;
+NET "joy_clk"         LOC="R12"  | IOSTANDARD = LVTTL;
 
 ## SDRAM
 #NET "sdram_addr<0>"   LOC="L4"  | IOSTANDARD = LVCMOS33;

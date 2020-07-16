@@ -103,6 +103,7 @@ module tld_zxdos_lx25 (
    joydecoder decodificador_joysticks (
     .clk(sysclk),
     .joy_data(joy_data),
+    .joy_latch_megadrive(hsync),
     .joy_clk(joy_clk),
     .joy_load_n(joy_load_n),
     .joy1up(joy1up),
