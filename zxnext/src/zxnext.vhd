@@ -318,6 +318,7 @@ architecture rtl of zxnext is
    signal port_propagate_dffd    : std_logic;
    signal port_propagate_1ffd    : std_logic;
    signal port_propagate_ff      : std_logic;
+   signal port_propagate_eff7    : std_logic;
    
    signal port_propagate         : std_logic;
    signal bus_iorq_n             : std_logic;
@@ -391,7 +392,7 @@ architecture rtl of zxnext is
    
    -- PORT DECODING
    
-   signal internal_port_enable   : std_logic_vector(25 downto 0);
+   signal internal_port_enable   : std_logic_vector(26 downto 0);
    
    signal port_ff_io_en          : std_logic;
    signal port_7ffd_io_en        : std_logic;
@@ -419,6 +420,7 @@ architecture rtl of zxnext is
    signal port_dac_mono_AD_df_io_en          : std_logic;
    signal port_ulap_io_en        : std_logic;
    signal port_dma_0b_io_en      : std_logic;
+   signal port_eff7_io_en        : std_logic;
    
    signal port_1f_hw_en          : std_logic;
    signal port_37_hw_en          : std_logic;
@@ -458,6 +460,7 @@ architecture rtl of zxnext is
    signal port_eb_lsb            : std_logic;
    signal port_f1_lsb            : std_logic;
    signal port_f3_lsb            : std_logic;
+   signal port_f7_lsb            : std_logic;
    signal port_f9_lsb            : std_logic;
    signal port_fb_lsb            : std_logic;
    signal port_ff_lsb            : std_logic;
@@ -466,14 +469,15 @@ architecture rtl of zxnext is
    signal port_ff                : std_logic;
    signal port_fd                : std_logic;
    signal port_p3_float          : std_logic;
-   signal port_p3_float_active   : std_logic;
+-- signal port_p3_float_active   : std_logic;
    signal port_7ffd              : std_logic;
    signal port_7ffd_active       : std_logic;
    signal port_7ffd_assert       : std_logic;
    signal port_dffd              : std_logic;
    signal port_1ffd              : std_logic;
-   signal port_1ffd_active       : std_logic;
+-- signal port_1ffd_active       : std_logic;
    signal port_1ffd_assert       : std_logic;
+   signal port_eff7              : std_logic;
    signal port_e3                : std_logic;
    signal port_mf_enable_io_a    : std_logic_vector(7 downto 0);
    signal port_mf_disable_io_a   : std_logic_vector(7 downto 0);
@@ -523,6 +527,7 @@ architecture rtl of zxnext is
    signal port_7ffd_wr           : std_logic;
    signal port_dffd_wr           : std_logic;
    signal port_1ffd_wr           : std_logic;
+   signal port_eff7_wr           : std_logic;
    signal port_e3_rd             : std_logic;
    signal port_e3_wr             : std_logic;
    signal port_mf_enable_rd      : std_logic;
@@ -796,8 +801,8 @@ architecture rtl of zxnext is
    signal port_7ffd_shadow       : std_logic;
    signal port_7ffd_locked       : std_logic;
    
-   signal port_dffd_reg          : std_logic_vector(3 downto 0);
-   signal port_dffd_pentagon_512 : std_logic := '0';
+   signal port_dffd_reg          : std_logic_vector(4 downto 0);
+   signal port_dffd_reg_6        : std_logic;
    
    signal port_1ffd_reg          : std_logic_vector(7 downto 0);
    signal port_1ffd_dat          : std_logic_vector(7 downto 0);
@@ -805,8 +810,18 @@ architecture rtl of zxnext is
    signal port_1ffd_special_old  : std_logic;
    signal port_1ffd_rom          : std_logic_vector(1 downto 0);
    
-   signal port_memory_change_dly : std_logic;
-   signal port_memory_ram_change_dly         : std_logic;
+   signal port_eff7_reg_2        : std_logic;
+   signal port_eff7_reg_3        : std_logic;
+
+   signal nr_8f_mapping_mode     : std_logic_vector(1 downto 0) := (others => '0');
+   signal nr_8f_mapping_mode_profi           : std_logic;
+   signal nr_8f_mapping_mode_pentagon        : std_logic;
+   signal nr_8f_mapping_mode_pentagon_1024   : std_logic;
+   signal nr_8f_mapping_mode_pentagon_1024_en: std_logic;
+
+   signal port_memory_change_dly : std_logic := '0';
+   signal port_memory_ram_change_dly         : std_logic := '0';
+   signal nr_8f_we_dly           : std_logic := '0';
    
    signal port_123b_dat          : std_logic_vector(7 downto 0) := (others => '0');
    signal port_123b_layer2_en    : std_logic;
@@ -966,6 +981,7 @@ architecture rtl of zxnext is
    signal nr_80_we               : std_logic;
    signal nr_8c_we               : std_logic;
    signal nr_8e_we               : std_logic;
+   signal nr_8f_we               : std_logic;
    signal nr_ff_we               : std_logic;
    
    signal nr_02_bus_reset        : std_logic;
@@ -974,7 +990,7 @@ architecture rtl of zxnext is
    signal bootrom_en             : std_logic := '1';
    signal eff_bootrom_en         : std_logic := '1';
    signal nr_03_machine_type     : std_logic_vector(2 downto 0) := "000";
-   signal nr_04_romram_bank      : std_logic_vector(4 downto 0);
+   signal nr_04_romram_bank      : std_logic_vector(6 downto 0);
    signal nr_05_joymode_0        : std_logic_vector(2 downto 0);
    signal nr_05_joymode_1        : std_logic_vector(2 downto 0);
    signal nr_05_io_mode          : std_logic;
@@ -1089,14 +1105,14 @@ architecture rtl of zxnext is
    signal nr_82_internal_port_enable         : std_logic_vector(7 downto 0);
    signal nr_83_internal_port_enable         : std_logic_vector(7 downto 0);
    signal nr_84_internal_port_enable         : std_logic_vector(7 downto 0);
-   signal nr_85_internal_port_enable         : std_logic_vector(1 downto 0);
+   signal nr_85_internal_port_enable         : std_logic_vector(2 downto 0);
    signal nr_85_internal_port_reset_type     : std_logic := '1';
    signal nr_86_bus_port_enable  : std_logic_vector(7 downto 0);
    signal nr_87_bus_port_enable  : std_logic_vector(7 downto 0);
    signal nr_88_bus_port_enable  : std_logic_vector(7 downto 0);
-   signal nr_89_bus_port_enable  : std_logic_vector(1 downto 0);
+   signal nr_89_bus_port_enable  : std_logic_vector(2 downto 0);
    signal nr_89_bus_port_reset_type          : std_logic := '1';
-   signal nr_8a_bus_port_propagate           : std_logic_vector(4 downto 0);
+   signal nr_8a_bus_port_propagate           : std_logic_vector(5 downto 0);
    signal nr_90_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
    signal nr_91_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
    signal nr_92_pi_gpio_o_en     : std_logic_vector(7 downto 0) := (others => '0');
@@ -1295,8 +1311,8 @@ architecture rtl of zxnext is
    signal nr_palette_dat         : std_logic_vector(10 downto 0);
    signal nr_palette_rd          : std_logic;
    signal nr_ulatm_we            : std_logic;
-   signal nr_ulatm_palette_dat   : std_logic_vector(8 downto 0);
-   signal ulatm_rgb_1            : std_logic_vector(8 downto 0);
+   signal nr_ulatm_palette_dat   : std_logic_vector(15 downto 0);
+   signal ulatm_rgb_1            : std_logic_vector(15 downto 0);
    signal ulalores_pixel_1       : std_logic_vector(7 downto 0);
    signal ulatm_pixel_1          : std_logic_vector(9 downto 0);
    signal ula_rgb_1              : std_logic_vector(8 downto 0);
@@ -1771,8 +1787,9 @@ begin
    port_propagate_dffd <= port_dffd and nr_8a_bus_port_propagate(2);
    port_propagate_1ffd <= port_1ffd and nr_8a_bus_port_propagate(3);
    port_propagate_ff <= port_ff and nr_8a_bus_port_propagate(4);
+   port_propagate_eff7 <= port_eff7 and nr_8a_bus_port_propagate(5);
 
-   port_propagate <= port_propagate_fe or port_propagate_7ffd or port_propagate_dffd or port_propagate_1ffd or port_propagate_ff;
+   port_propagate <= port_propagate_fe or port_propagate_7ffd or port_propagate_dffd or port_propagate_1ffd or port_propagate_ff or port_propagate_eff7;
    
    bus_iorq_n <= cpu_iorq_n or (cpu_m1_n and ((port_internal_response or expbus_eff_disable_io) and not port_propagate));
    bus_mreq_n <= cpu_mreq_n or ((expbus_eff_disable_mem or (not cpu_a(15) and (not cpu_a(14)) and not sram_romcs_en)) and cpu_rfsh_n);
@@ -1979,6 +1996,7 @@ begin
    
    port_ulap_io_en <= internal_port_enable(24);
    port_dma_0b_io_en <= internal_port_enable(25);
+   port_eff7_io_en <= internal_port_enable(26);
    
    --
    -- peripheral disable
@@ -2072,6 +2090,7 @@ begin
       port_eb_lsb <= '0';
       port_f1_lsb <= '0';
       port_f3_lsb <= '0';
+      port_f7_lsb <= '0';
       port_f9_lsb <= '0';
       port_fb_lsb <= '0';
       port_ff_lsb <= '0';
@@ -2096,6 +2115,7 @@ begin
          when X"EB"  => port_eb_lsb <= '1';
          when X"F1"  => port_f1_lsb <= '1';
          when X"F3"  => port_f3_lsb <= '1';
+         when X"F7"  => port_f7_lsb <= '1';
          when X"F9"  => port_f9_lsb <= '1';
          when X"FB"  => port_fb_lsb <= '1';
          when X"FF"  => port_ff_lsb <= '1';
@@ -2114,8 +2134,9 @@ begin
    
    -- +3 floating bus
    
-   port_p3_float_active <= '1' when cpu_a(15 downto 12) = "0000" and port_fd = '1' and p3_timing_hw_en = '1' else '0';
-   port_p3_float <= '1' when port_p3_float_active = '1' and port_p3_floating_bus_io_en = '1' else '0';
+-- port_p3_float_active <= '1' when cpu_a(15 downto 12) = "0000" and port_fd = '1' and p3_timing_hw_en = '1' else '0';
+-- port_p3_float <= '1' when port_p3_float_active = '1' and port_p3_floating_bus_io_en = '1' else '0';
+   port_p3_float <= '1' when cpu_a(15 downto 12) = "0000" and port_fd = '1' and p3_timing_hw_en = '1' and port_p3_floating_bus_io_en = '1' else '0';
    
    -- original spectrum banking
 
@@ -2126,8 +2147,10 @@ begin
    port_dffd <= '1' when cpu_a(15 downto 12) = "1101" and port_fd = '1' and port_dffd_io_en = '1' else '0';
 
    port_1ffd_assert <= '1' when cpu_a(15 downto 12) = "0001" and port_fd = '1' else '0';
-   port_1ffd_active <= '1' when port_1ffd_assert = '1' and p3_timing_hw_en = '1' else '0';
+-- port_1ffd_active <= '1' when port_1ffd_assert = '1' and p3_timing_hw_en = '1' else '0';
    port_1ffd <= '1' when port_1ffd_assert = '1' and port_1ffd_io_en = '1' else '0';
+   
+   port_eff7 <= '1' when cpu_a(15 downto 12) = "1110" and port_f7_lsb = '1' and port_eff7_io_en = '1' else '0';
    
    -- divmmc control
    
@@ -2216,8 +2239,8 @@ begin
    
    -- check if xst handles this well
    
-   port_internal_response <= port_fe or port_ff or port_p3_float or port_7ffd or port_dffd or port_1ffd or port_e3 or port_mf_enable or
-      port_mf_disable or port_e7 or port_eb or port_243b or port_253b or port_103b or port_113b or port_123b or port_133b or 
+   port_internal_response <= port_fe or port_ff or port_p3_float or port_7ffd or port_dffd or port_1ffd or port_eff7 or port_e3 or
+      port_mf_enable or port_mf_disable or port_e7 or port_eb or port_243b or port_253b or port_103b or port_113b or port_123b or port_133b or 
       port_143b or port_153b or port_dma or port_fffd or port_bffd or port_dac_A or port_dac_B or port_dac_C or port_dac_D or
       port_fadf or port_fbdf or port_ffdf or port_1f or port_37 or port_57 or port_5b or port_303b or port_bf3b or port_ff3b;
    
@@ -2241,6 +2264,7 @@ begin
    port_7ffd_wr <= iowr and port_7ffd and not port_fd_conflict_wr;
    port_dffd_wr <= iowr and port_dffd and not port_fd_conflict_wr;
    port_1ffd_wr <= iowr and port_1ffd and not port_fd_conflict_wr;
+   port_eff7_wr <= iowr and port_eff7;
    
    port_e3_rd <= iord and port_e3;
    port_e3_wr <= iowr and port_e3;
@@ -2457,7 +2481,7 @@ begin
 
             if cpu_a(15 downto 14) = "00" then
                if sram_config_active = '1' then
-                  sram_pre_A20_A13 <= "00" & nr_04_romram_bank & cpu_a(13);
+                  sram_pre_A20_A13 <= nr_04_romram_bank & cpu_a(13);
                   sram_pre_active <= not bootrom_en;
                elsif mmu_A21_A13(8) = '0' then
                   sram_pre_A20_A13 <= mmu_A21_A13(7 downto 0);
@@ -2488,7 +2512,7 @@ begin
    layer2_map_en <= (port_123b_layer2_map_wr_pre and cpu_rd_n) or (port_123b_layer2_map_rd_pre and not cpu_rd_n);
    altrom_en <= '0' when (sram_pre_alt_en = '0') or (sram_pre_rdonly = '1' and cpu_wr_n = '0') or (sram_pre_rdonly = '0' and cpu_rd_n = '0') else '1';
 
-   process (cpu_a, sram_config_active, sram_pre_A20_A13, sram_pre_active, mf_mem_en, divmmc_rom_en, divmmc_ram_en, divmmc_bank, altrom_en, sram_pre_alt_128,
+   process (cpu_a, sram_config_active, sram_pre_A20_A13, sram_pre_active, mf_mem_en, divmmc_rom_en, divmmc_ram_en, divmmc_bank, altrom_en, sram_pre_alt_128, sram_romcs,
             divmmc_rdonly, layer2_map_en, layer2_pre_A21_A13, sram_pre_bank5, sram_pre_bank7, sram_pre_rdonly, sram_pre_romcs, port_123b_layer2_map_segment_pre)
    begin
       if cpu_a(15 downto 14) = "00" then
@@ -3258,20 +3282,31 @@ begin
    begin
       if rising_edge(i_CLK_28) then
          if reset = '1' then
+         
             port_7ffd_reg <= (others => '0');
+            
          elsif port_7ffd_wr = '1' and port_7ffd_locked = '0' then
+         
             port_7ffd_reg <= cpu_do;
+            
          elsif nr_08_we = '1' and nr_wr_dat(7) = '1' then
+         
             port_7ffd_reg(5) <= '0';
+            
          elsif nr_69_we = '1' then
+         
             port_7ffd_reg(3) <= nr_wr_dat(6);
+            
          elsif nr_8e_we = '1' then
+         
             if nr_wr_dat(3) = '1' then
                port_7ffd_reg(2 downto 0) <= nr_wr_dat(6 downto 4);
             end if;
+            
             if nr_wr_dat(2) = '0' then
                port_7ffd_reg(4) <= nr_wr_dat(0);
             end if;
+            
          end if;
       end if;
    end process;
@@ -3286,25 +3321,26 @@ begin
    process (i_CLK_28)
    begin
       if rising_edge(i_CLK_28) then
-         if reset_hard = '1' then
+         if reset = '1' then
+         
             port_dffd_reg <= (others => '0');
-            port_dffd_pentagon_512 <= '0';
-         elsif reset_soft = '1' then
-            port_dffd_reg <= (others => '0');
-         elsif port_dffd_wr = '1' and port_7ffd_locked = '0' then
-            if machine_timing_pentagon = '0' or port_dffd_pentagon_512 = '0' then
-               port_dffd_reg <= cpu_do(3 downto 0);
+            port_dffd_reg_6 <= '0';
+            
+         elsif port_dffd_wr = '1' and (port_7ffd_locked = '0' or nr_8f_mapping_mode_profi = '1') then
+         
+            port_dffd_reg <= cpu_do(4 downto 0);
+            port_dffd_reg_6 <= cpu_do(6);
+            
+         elsif nr_8e_we = '1' then
+         
+            if nr_8f_mapping_mode_profi = '0' and nr_wr_dat(3) = '1' then
+               port_dffd_reg(3) <= '0';
             end if;
-            if machine_timing_pentagon = '0' then
-               port_dffd_pentagon_512 <= cpu_do(7);
+            
+            if nr_wr_dat(3) = '1' then
+               port_dffd_reg(2 downto 0) <= "00" & nr_wr_dat(7);
             end if;
-         elsif nr_8e_we = '1' and nr_wr_dat(3) = '1' then
-            if machine_timing_pentagon = '0' or port_dffd_pentagon_512 = '0' then
-               port_dffd_reg <= "000" & nr_wr_dat(7);
-            end if;
-            if machine_timing_pentagon = '0' then
-               port_dffd_pentagon_512 <= '0';
-            end if;
+        
          end if;
       end if;
    end process;
@@ -3345,13 +3381,47 @@ begin
    
    port_1ffd_dat <= port_1ffd_reg;
 
-   port_7ffd_bank <= (port_dffd_reg(3 downto 0) & port_7ffd_reg(2 downto 0)) when (port_dffd_pentagon_512 = '0' or machine_timing_pentagon = '0') else ("00" & port_7ffd_reg(7 downto 6) & port_7ffd_reg(2 downto 0));
+   port_7ffd_bank(2 downto 0) <= port_7ffd_reg(2 downto 0);
+   port_7ffd_bank(4 downto 3) <= port_7ffd_reg(7 downto 6) when nr_8f_mapping_mode_pentagon = '1' else port_dffd_reg(1 downto 0);
+   port_7ffd_bank(5) <= port_dffd_reg(2) when nr_8f_mapping_mode_pentagon = '0' else (nr_8f_mapping_mode_pentagon_1024_en and port_7ffd_reg(5));
+   port_7ffd_bank(6) <= '0' when nr_8f_mapping_mode_pentagon = '1' or nr_8f_mapping_mode_profi = '1' else port_dffd_reg(3);
+   
    port_7ffd_shadow <= port_7ffd_dat(3);
-   port_7ffd_locked <= port_7ffd_reg(5);
+   port_7ffd_locked <= '0' when (nr_8f_mapping_mode_pentagon_1024_en = '1') or (nr_8f_mapping_mode_profi = '1' and port_dffd_reg(4) = '1') else port_7ffd_reg(5);
    
    port_1ffd_special <= port_1ffd_reg(0);
    port_1ffd_rom <= port_1ffd_reg(2) & port_7ffd_reg(4);
+   
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
+         if reset = '1' then
+            port_eff7_reg_2 <= '0';
+            port_eff7_reg_3 <= '0';
+         elsif port_eff7_wr = '1' then
+            port_eff7_reg_2 <= cpu_do(2);
+            port_eff7_reg_3 <= cpu_do(3);
+         end if;
+      end if;
+   end process;
 
+   process (i_CLK_28)
+   begin
+      if rising_edge(i_CLK_28) then
+         if reset_hard = '1' then
+            nr_8f_mapping_mode <= "00";
+         elsif nr_8f_we = '1' then
+            nr_8f_mapping_mode <= nr_wr_dat(1 downto 0);
+         end if;
+      end if;
+   end process;
+   
+   nr_8f_mapping_mode_profi <= '1' when nr_8f_mapping_mode = "01" else '0';
+   nr_8f_mapping_mode_pentagon <= '1' when nr_8f_mapping_mode = "10" or nr_8f_mapping_mode_pentagon_1024_en = '1' else '0';
+   nr_8f_mapping_mode_pentagon_1024 <= '1' when nr_8f_mapping_mode = "11" else '0';
+   
+   nr_8f_mapping_mode_pentagon_1024_en <= '1' when nr_8f_mapping_mode_pentagon_1024 = '1' and port_eff7_reg_2 = '0' else '0';
+   
    -- communicate paging changes to mmu
 
    process (i_CLK_28)
@@ -3360,9 +3430,11 @@ begin
          if reset = '1' then
             port_memory_change_dly <= '0';
             port_memory_ram_change_dly <= '0';
+            nr_8f_we_dly <= '0';
          else
-            port_memory_change_dly <= ((port_7ffd_wr or port_dffd_wr or port_1ffd_wr) and not port_7ffd_locked) or nr_8e_we;
+            port_memory_change_dly <= ((port_7ffd_wr or port_1ffd_wr) and not port_7ffd_locked) or (port_dffd_wr and (nr_8f_mapping_mode_profi or not port_7ffd_locked)) or port_eff7_wr or nr_8e_we or nr_8f_we_dly;
             port_memory_ram_change_dly <= not (nr_8e_we and not nr_wr_dat(3));
+            nr_8f_we_dly <= nr_8f_we;
          end if;
       end if;
    end process;
@@ -3804,7 +3876,8 @@ begin
                   '1' when machine_timing_p3  = '1' and mem_active_page(3) = '1' else              -- banks >= 4
                   '0';
    
-   port_contend <= (not cpu_a(0)) or port_7ffd_active or port_1ffd_active or port_p3_float_active or port_bf3b or port_ff3b;
+-- port_contend <= (not cpu_a(0)) or port_7ffd_active or port_1ffd_active or port_p3_float_active or port_bf3b or port_ff3b;
+   port_contend <= (not cpu_a(0)) or port_7ffd_active or port_bf3b or port_ff3b;
 
    process (i_CLK_CPU)
    begin
@@ -3913,7 +3986,7 @@ begin
    
    port_243b_dat <= nr_register;
 
-   -- MMUs are set by nextreg and spectrum ports 1ffd, 7ffd, dffd
+   -- MMUs are set by nextreg and spectrum ports 1ffd, 7ffd, dffd, eff7
 
    process (i_CLK_28)
    begin
@@ -3929,7 +4002,7 @@ begin
             MMU7 <= X"01";
          elsif port_memory_change_dly = '1' then
          
-            -- 1ffd, 7ffd, dffd have been written to
+            -- 1ffd, 7ffd, dffd, eff7 have been written to
             
             if port_1ffd_special = '1' then
 
@@ -3944,23 +4017,52 @@ begin
 
             else
             
-               MMU0 <= X"FF";
-               MMU1 <= X"FF";
+               if port_eff7_reg_3 = '1' or (nr_8f_mapping_mode_profi = '1' and port_dffd_reg(4) = '1') then
                
-               if port_1ffd_special_old = '1' or port_memory_ram_change_dly = '1' then
+                  MMU0 <= X"00";
+                  MMU1 <= X"01";
+                  
+               else
                
-                  MMU6 <= port_7ffd_bank & '0';
-                  MMU7 <= port_7ffd_bank & '1';
-               
+                  MMU0 <= X"FF";
+                  MMU1 <= X"FF";
+                  
                end if;
                
-               if port_1ffd_special_old = '1' then
+               if nr_8f_mapping_mode_profi = '1' and port_dffd_reg(3) = '1' then
+               
+                  MMU2 <= port_7ffd_bank & '0';
+                  MMU3 <= port_7ffd_bank & '1';
+               
+               elsif nr_8f_mapping_mode_profi = '1' or port_1ffd_special_old = '1' then
                
                   MMU2 <= X"0A";
                   MMU3 <= X"0B";
+               
+               end if;
+               
+               if nr_8f_mapping_mode_profi = '1' and port_dffd_reg_6 = '1' then
+               
+                  MMU4 <= X"0C";
+                  MMU5 <= X"0D";
+               
+               elsif nr_8f_mapping_mode_profi = '1' or port_1ffd_special_old = '1' then
+
                   MMU4 <= X"04";
                   MMU5 <= X"05";
                   
+               end if;
+               
+               if nr_8f_mapping_mode_profi = '1' and port_dffd_reg(3) = '1' then
+               
+                  MMU6 <= X"0E";
+                  MMU7 <= X"0F";
+                  
+               elsif port_1ffd_special_old = '1' or port_memory_ram_change_dly = '1' then 
+
+                  MMU6 <= port_7ffd_bank & '0';
+                  MMU7 <= port_7ffd_bank & '1';
+               
                end if;
 
             end if;
@@ -4091,6 +4193,7 @@ begin
       nr_80_we <= '0';
       nr_8c_we <= '0';
       nr_8e_we <= '0';
+      nr_8f_we <= '0';
       nr_ff_we <= '0';
 
       nr_sprite_mirror_we <= '0';
@@ -4156,6 +4259,7 @@ begin
             when X"80" => nr_80_we <= '1';
             when X"8C" => nr_8c_we <= '1';
             when X"8E" => nr_8e_we <= '1';
+            when X"8F" => nr_8f_we <= '1';
             when X"FF" => nr_ff_we <= '1';
             
             when others => null;
@@ -4309,7 +4413,7 @@ begin
                nr_82_internal_port_enable <= (others => '1');
                nr_83_internal_port_enable <= (others => '1');
                nr_84_internal_port_enable <= (others => '1');
-               nr_85_internal_port_enable <= "11";
+               nr_85_internal_port_enable <= "111";
             
             end if;
 
@@ -4318,7 +4422,7 @@ begin
                nr_86_bus_port_enable <= (others => '1');
                nr_87_bus_port_enable <= (others => '1');
                nr_88_bus_port_enable <= (others => '1');
-               nr_89_bus_port_enable <= "11";
+               nr_89_bus_port_enable <= "111";
             
             end if;
 
@@ -4415,7 +4519,7 @@ begin
                   end if;
                
                when X"04" =>
-                  nr_04_romram_bank <= nr_wr_dat(4 downto 0);
+                  nr_04_romram_bank <= nr_wr_dat(6 downto 0);
                
                when X"05" =>
                   io_mode_en <= nr_05_io_mode;
@@ -4753,7 +4857,7 @@ begin
                   nr_84_internal_port_enable <= nr_wr_dat;
                
                when X"85" =>
-                  nr_85_internal_port_enable <= nr_wr_dat(1 downto 0);
+                  nr_85_internal_port_enable <= nr_wr_dat(2 downto 0);
                   nr_85_internal_port_reset_type <= nr_wr_dat(7);
                
                when X"86" =>
@@ -4766,17 +4870,20 @@ begin
                   nr_88_bus_port_enable <= nr_wr_dat;
                
                when X"89" =>
-                  nr_89_bus_port_enable <= nr_wr_dat(1 downto 0);
+                  nr_89_bus_port_enable <= nr_wr_dat(2 downto 0);
                   nr_89_bus_port_reset_type <= nr_wr_dat(7);
                   
                when X"8A" =>
-                  nr_8a_bus_port_propagate <= nr_wr_dat(4 downto 0);
+                  nr_8a_bus_port_propagate <= nr_wr_dat(5 downto 0);
 
 --             when X"8C" =>
 --                nr_8c_we <= '1';
 
 --             when X"8E" =>
 --                nr_8e_we <= '1';
+
+--             when X"8F" =>
+--                nr_8f_we <= '1';
 
                when X"90" =>
                   nr_90_pi_gpio_o_en <= nr_wr_dat(7 downto 2) & "00";   -- not enabling output on GPIO 1:0
@@ -5214,7 +5321,7 @@ begin
                port_253b_dat <= nr_84_internal_port_enable;
             
             when X"85" =>
-               port_253b_dat <= nr_85_internal_port_reset_type & "00000" & nr_85_internal_port_enable;
+               port_253b_dat <= nr_85_internal_port_reset_type & "0000" & nr_85_internal_port_enable;
             
             when X"86" =>
                port_253b_dat <= nr_86_bus_port_enable;
@@ -5226,16 +5333,19 @@ begin
                port_253b_dat <= nr_88_bus_port_enable;
 
             when X"89" =>
-               port_253b_dat <= nr_89_bus_port_reset_type & "00000" & nr_89_bus_port_enable;
+               port_253b_dat <= nr_89_bus_port_reset_type & "0000" & nr_89_bus_port_enable;
             
             when X"8A" =>
-               port_253b_dat <= "000" & nr_8a_bus_port_propagate;
+               port_253b_dat <= "00" & nr_8a_bus_port_propagate;
             
             when X"8C" =>
                port_253b_dat <= nr_8c_altrom;
             
             when X"8E" =>
                port_253b_dat <= port_dffd_reg(0) & port_7ffd_reg(2 downto 0) & '1' & port_1ffd_reg(0) & port_1ffd_reg(2) & ((port_7ffd_reg(4) and not port_1ffd_reg(0)) or (port_1ffd_reg(1) and port_1ffd_reg(0)));
+            
+            when X"8F" =>
+               port_253b_dat <= "000000" & nr_8f_mapping_mode;
             
             when X"90" =>
                port_253b_dat <= nr_90_pi_gpio_o_en;
@@ -5938,7 +6048,7 @@ begin
    -- todo: investigate giving every layer priority bits
 
    nr_palette_index <= nr_43_palette_write_select(1) & nr_43_palette_write_select(2) & nr_palette_idx;
-   nr_palette_dat <= ("00" & nr_ulatm_palette_dat) when (nr_43_palette_write_select(1) = nr_43_palette_write_select(0)) else (nr_l2s_palette_dat(15 downto 14) & nr_l2s_palette_dat(8 downto 0));
+   nr_palette_dat <= (nr_ulatm_palette_dat(15 downto 14) & nr_ulatm_palette_dat(8 downto 0)) when (nr_43_palette_write_select(1) = nr_43_palette_write_select(0)) else (nr_l2s_palette_dat(15 downto 14) & nr_l2s_palette_dat(8 downto 0));
    
    -- ULA / Tilemap palette
    
@@ -5949,7 +6059,7 @@ begin
    generic map 
    (
       addr_width_g  => 10,
-      data_width_g  => 9
+      data_width_g  => 16
    )
    port map 
    (
@@ -5957,7 +6067,7 @@ begin
       clk_a_i  => i_CLK_28,
       we_i     => nr_ulatm_we,
       addr_a_i => nr_palette_index_utm,
-      data_a_i => nr_palette_value,
+      data_a_i => nr_palette_priority & "00000" & nr_palette_value,
       data_a_o => nr_ulatm_palette_dat,
       -- ula / tm
       clk_b_i  => i_CLK_28_n,
@@ -5973,7 +6083,7 @@ begin
       if rising_edge(i_CLK_28) then
          if sc(0) = '0' then
             if lores_pixel_en_1 = '1' or ula_select_bgnd_1 = '0' then
-               ula_rgb_1 <= ulatm_rgb_1;
+               ula_rgb_1 <= ulatm_rgb_1(8 downto 0);
             else
                ula_rgb_1 <= fallback_rgb_1 & (fallback_rgb_1(1) or fallback_rgb_1(0));
             end if;
@@ -5987,7 +6097,7 @@ begin
    begin
       if rising_edge(i_CLK_14) then
          ula_rgb_2 <= ula_rgb_1;
-         tm_rgb_2 <= ulatm_rgb_1;
+         tm_rgb_2 <= ulatm_rgb_1(8 downto 0);
       end if;
    end process;
    

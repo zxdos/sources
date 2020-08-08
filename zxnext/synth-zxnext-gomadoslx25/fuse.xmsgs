@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="warning" file="HDLCompiler" num="568" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src-gomadoslx25/joydecoder_lx25.v" Line 84: Constant value is truncated to fit in &lt;<arg fmt="%d" index="1">6</arg>&gt; bits.
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 1533: Actual for formal port <arg fmt="%s" index="1">reset_n</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2827: Actual for formal port <arg fmt="%s" index="1">uart_prescaler_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2829: Actual for formal port <arg fmt="%s" index="1">tx_start_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2851: Actual for formal port <arg fmt="%s" index="1">rd_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2865: Actual for formal port <arg fmt="%s" index="1">uart_prescaler_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2867: Actual for formal port <arg fmt="%s" index="1">tx_start_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2889: Actual for formal port <arg fmt="%s" index="1">rd_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2979: Actual for formal port <arg fmt="%s" index="1">addr_a_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 2985: Actual for formal port <arg fmt="%s" index="1">addr_b_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3559: Actual for formal port <arg fmt="%s" index="1">enable_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3567: Actual for formal port <arg fmt="%s" index="1">disable_automap_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3618: Actual for formal port <arg fmt="%s" index="1">i_scroll_x</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3649: Actual for formal port <arg fmt="%s" index="1">ulap_en_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3694: Actual for formal port <arg fmt="%s" index="1">enable_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 3865: Actual for formal port <arg fmt="%s" index="1">i_contention_en</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 5521: Actual for formal port <arg fmt="%s" index="1">reset_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 5554: Actual for formal port <arg fmt="%s" index="1">i_reset</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 5598: Actual for formal port <arg fmt="%s" index="1">ear_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 5599: Actual for formal port <arg fmt="%s" index="1">mic_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 5653: Actual for formal port <arg fmt="%s" index="1">we_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 6070: Actual for formal port <arg fmt="%s" index="1">data_a_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/zxnext.vhd" Line 6123: Actual for formal port <arg fmt="%s" index="1">data_a_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src-gomadoslx25/zxnext_top_issue2_gomados_lx25.vhd" Line 1428: Actual for formal port <arg fmt="%s" index="1">dac_i</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src-gomadoslx25/zxnext_top_issue2_gomados_lx25.vhd" Line 1802: Actual for formal port <arg fmt="%s" index="1">reset</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="946" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src-gomadoslx25/zxnext_top_issue2_gomados_lx25.vhd" Line 1883: Actual for formal port <arg fmt="%s" index="1">i_cols</arg> is neither a static name nor a globally static expression
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="746" delta="unknown" >"/build/xfndry10/P.20131013/rtf/vhdl/src/ieee/numeric_std.vhd" Line 3314: Range is empty (null range)
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="220" delta="unknown" >"/build/xfndry10/P.20131013/rtf/vhdl/src/ieee/numeric_std.vhd" Line 3314: Assignment ignored
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="1242" delta="unknown" >"/build/xfndry10/P.20131013/rtf/vhdl/src/ieee/numeric_std.vhd" Line 3240: <arg fmt="%s" index="1">Warning</arg>: <arg fmt="%s" index="2">&quot;NUMERIC_STD.TO_UNSIGNED: vector truncated&quot;</arg>
+</msg>
+
+<msg type="error" file="HDLCompiler" num="874" delta="unknown" >"/home/avlixa/FPGA/ZXDOS/ZX_Spectrum_Next_FPGA/cores/zxnext/synth-zxnext-gomadoslx25/../src/serial/fifop.vhd" Line 120: Value <arg fmt="%s" index="1">-1</arg> is out of target constraint range <arg fmt="%s" index="2">0 to 2147483647</arg>
+</msg>
+
+</messages>
+

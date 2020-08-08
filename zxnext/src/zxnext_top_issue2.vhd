@@ -34,7 +34,7 @@ entity zxnext_top_issue2 is
    generic (
       g_machine_id      : unsigned(7 downto 0)  := X"0A";   -- 10 = ZX Spectrum Next
       g_version         : unsigned(7 downto 0)  := X"31";   -- 3.01
-      g_sub_version     : unsigned(7 downto 0)  := X"05"    -- .05
+      g_sub_version     : unsigned(7 downto 0)  := X"06"    -- .06
    );
    port (
       -- Clocks
@@ -1005,7 +1005,7 @@ begin
    -- Determine active port and sram signals for next memory cycle
    
    zxn_ram_b_req <= (zxn_ram_b_req_t xor sram_port_b_req) and not zxn_ram_a_req;   -- 0 = Port A (or nothing), 1 = Port B
-   sram_addr <= zxn_ram_a_addr when zxn_ram_b_req = '0' else zxn_ram_b_addr;  
+   sram_addr <= (zxn_ram_a_addr(20) & zxn_ram_a_addr(0) & zxn_ram_a_addr(19 downto 1)) when zxn_ram_b_req = '0' else (zxn_ram_b_addr(20) & zxn_ram_b_addr(0) & zxn_ram_b_addr(19 downto 1));
    
    -- Track port B request which operates on a toggled signal
    
@@ -1417,8 +1417,10 @@ begin
       -- PCM audio
       
       I_AUDIO_ENABLE => zxn_hdmi_audio,
-      I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
-      I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
+--    I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
+--    I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
+      I_AUDIO_PCM_L  => '0' & zxn_audio_L_pre & "00",
+      I_AUDIO_PCM_R  => '0' & zxn_audio_R_pre & "00",
       
       -- TMDS parallel pixel synchronous outputs (serialize LSB first)
       

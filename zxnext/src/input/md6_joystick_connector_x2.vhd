@@ -97,7 +97,7 @@ begin
 
    -- md pad state machine
    
-   state_rest <= state(5) or state(4);
+   state_rest <= state(5) or state(4) or (state(3) and state(2));
    state_next <= state + 1;
    
    process (i_CLK_28)
@@ -180,7 +180,7 @@ begin
          elsif io_mode = '1' then
             o_joy_left(5 downto 0) <= not joy_raw;
             o_joy_right(5 downto 0) <= not joy_raw;
-         elsif state_rest = '0' and state(3 downto 2) = "11" then
+         elsif state_rest = '1' then
             o_joy_left <= not joy_left_n;
             o_joy_right <= not joy_right_n;
          end if;

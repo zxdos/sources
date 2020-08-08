@@ -213,7 +213,7 @@ begin
 
    --Z80N_data_o <= Z80N_data_s;
 
-   process (IR, ISet, MCycle, F, NMICycle, IntCycle, ext_Data_i, ext_ACC_i)
+   process (IR, ISet, MCycle, F, NMICycle, IntCycle, ext_Data_i, ext_ACC_i, XY_State)
       variable DDD : std_logic_vector(2 downto 0);
       variable SSS : std_logic_vector(2 downto 0);
       variable DPair : std_logic_vector(1 downto 0);

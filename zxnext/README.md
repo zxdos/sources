@@ -8,7 +8,7 @@ Specific ZXDOS files are in zxdos directory.
 
 # Information from original core:
 
-[README-orig.md](README-orig.md)
+[README-orig.md](.\README-orig.md)
 
 # Instalation guide:
 [Core ZXNEXT en ZXDOS (spanish)](http://www.forofpga.es/viewtopic.php?f=8&t=349)

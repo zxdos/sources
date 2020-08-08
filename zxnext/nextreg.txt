@@ -16,17 +16,25 @@ Generally a set bit indicates the property is asserted
 
 0x00 (00) => Machine ID
 (R)
-  00000001 = DE1A
-  00000010 = DE2A
-  00000101 = FBLABS
-  00000110 = VTRUCCO
-  00000111 = WXEDA
-  00001000 = EMULATORS *
-  00001010 = ZX Spectrum Next *
-  11101010 = ZX Spectrum Next on ZX-DOS fpga platform *
-  00001011 = Multicore
-  11111010 = ZX Spectrum Next Anti-brick *
-  * = Relevant for ZX Next machines & software
+  0000 0001 = DE1A
+  0000 0010 = DE2A
+  0000 0101 = FBLABS
+  0000 0110 = VTRUCCO
+  0000 0111 = WXEDA
+  0000 1011 = Multicore
+  
+  Relevant for ZX Next machines & software:
+  
+  0000 1000 = EMULATORS
+  
+  0000 1010 = ZX Spectrum Next
+  1111 1010 = ZX Spectrum Next Anti-brick
+  
+  1010 1010 = ZX Spectrum Next Core on UnAmiga
+  1011 1010 = ZX Spectrum Next Core on SiDi
+  1100 1010 = ZX Spectrum Next Core on MIST
+  1101 1010 = ZX Spectrum Next Core on MiSTer
+  1110 1010 = ZX Spectrum Next Core on ZX-DOS
 
 0x01 (01) => Core Version 
 (R)
@@ -76,7 +84,8 @@ Generally a set bit indicates the property is asserted
 0x04 (04) => Config Mapping (config mode only, bootrom disabled)
 (W)
    bits 7:5 = Reserved, must be 0
-   bits 4:0 = 16K SRAM bank mapped to 0x0000-0x3FFF (first 1MB of sram) (hard reset = 0)
+   bits 6:0 = 16K SRAM bank mapped to 0x0000-0x3FFF (hard reset = 0)
+** Odd multiplies of 256K are unreliable if storing data in sram for the next core started.
 
 0x05 (05) => Peripheral 1 Setting
 (R/W)
@@ -152,6 +161,7 @@ leaving I/O Mode is at most 64 scan lines.
     11 = scanlines 12.5%
 
 0x0A (10) => Peripheral 5 Setting
+(R/W)
   bits 7:3 = Reserved, must be zero
   bit 2 = 1 to reverse left and right mouse buttons (hard reset = 0)
   bits 1:0 = mouse dpi (hard reset = 01)
@@ -729,6 +739,7 @@ bits 1-0 = max cpu speed when the expansion bus is on (currently fixed at 00 = 3
   -----
   bit 24 = port bf3b, ff3b ula+
   bit 25 = port 0b z80 dma
+  bit 26 = port eff7 pentagon 1024 memory
   ...
   bit 31 = register reset mode (soft or hard reset selection)
   -----
@@ -739,8 +750,9 @@ bits 1-0 = max cpu speed when the expansion bus is on (currently fixed at 00 = 3
 
 0x8A (138) => Expansion Bus IO Propagate
 (R/W)
-  bits 7:5 = Reserved, must be 0
-  bit 4 = Propagate port 0xff io cycles (hard reset  = 0)
+  bits 7:6 = Reserved, must be 0
+  bit 5 = Propagate port 0xeff7 io cycles (hard reset = 0)
+  bit 4 = Propagate port 0xff io cycles (hard reset = 0)
   bit 3 = Propagate port 0x1ffd io cycles (hard reset = 0)
   bit 2 = Propagate port 0xdffd io cycles (hard reset = 0)
   bit 1 = Propagate port 0x7ffd io cycles (hard reset = 0)
@@ -768,7 +780,7 @@ The locking mechanism also applies if the alt rom is not enabled. For the +3 and
 zero, then the corresponding rom page is locked in place. Other models use the bits to preferentially lock the corresponding
 48K rom or the 128K rom.
 
-0x8E (142) => Spectrum Memory Mapping
+0x8E (142) => Spectrum 128K Memory Mapping
 (R/W)
   bit 7 = port 0xdffd bit 0         \  RAM
   bits 6:4 = port 0x7ffd bits 2:0   /  bank 0-15
@@ -781,9 +793,23 @@ If bit 2 = paging mode = 0 (normal)
 If bit 2 = paging mode = 1 (special allRAM)
   bit 1 = port 0x1ffd bit 2         \  all
   bit 0 = port 0x1ffd bit 1         /  RAM
-Writes can affect all ports 0x7ffd, 0xdffd, 0x1ffd
+Writes can affect all ports 0x7ffd, 0xdffd, 0x1ffd (in Profi mapping mode, bit 3 of port 0xdffd is unaffected)
 Writes always change the ROM / allRAM mapping
 Writes immediately change the current mmu mapping as if by port write
+
+0x8F (143) => Memory Mapping Mode
+(R/W) (hard reset = 0)
+  bits 7:2 = Reserved, must be zero
+  bits 1:0 = Mapping mode applied
+    00 = Standard ZX 128k +3
+    01 = Profi 1024K (limited to 768K on 1MB machines)
+    10 = Pentagon 512K
+    11 = Pentagon 1024K (limited to 768K on 1MB machines)
+* Standard ZX 128K +3 = principally ports 0x7ffd, 0xdffd, 0x1ffd
+* Profi 1024K = principally ports 0x7ffd, 0xdffd (may become a victim of fpga space)
+* Pentagon 512K = principally port 0x7ffd
+* Pentagon 1024K = principally ports 0x7ffd, 0xeff7
+** The mapping modes affect how ports 0x7ffd, 0xdffd, 0x1ffd and 0xeff7 carry out memory paging, see ports.txt
 
 0x93,0x92,0x91,0x90 (147-144) => PI GPIO Output Enable (0x93 is MSB)
 (R/W)

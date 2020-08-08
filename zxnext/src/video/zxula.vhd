@@ -597,7 +597,7 @@ begin
    
    -- +3
 
-   o_cpu_wait_n <= '0' when ((i_cpu_mreq_n = '0' and i_contention_memory = '1') or (i_cpu_iorq_n = '0' and i_contention_port = '1')) and i_timing_p3 = '1' and wait_s = '1' else '1';
--- o_cpu_wait_n <= '1';
+-- o_cpu_wait_n <= '0' when ((i_cpu_mreq_n = '0' and i_contention_memory = '1') or (i_cpu_iorq_n = '0' and i_contention_port = '1')) and i_timing_p3 = '1' and wait_s = '1' else '1';
+   o_cpu_wait_n <= '0' when (i_cpu_mreq_n = '0' and i_contention_memory = '1') and i_timing_p3 = '1' and wait_s = '1' else '1';
 
 end architecture;

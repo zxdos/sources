@@ -1,0 +1,49 @@
+Instrucciones de instalación basadas en el documento publicado  por Phoebus R. Dokos:
+[url]https://gitlab.com/thesmog358/tbblue/-/blob/master/docs/zxdos/zxdoscoreinstall.txt</LINK_TEXT[/url]
+
+[size=150]A. Preparación[/size]
+
+[list=1]Se necesita instalar un "hat" con 512k adicionales que sutituye al "hat" superior (el que tiene las conexiones PS/2, tarjeta SD y entrada de alimentación).  Sin el hat también funciona pero solo quedan 256kb disponibles para NextZXOS por lo que no funcionarán muchos de los juegos que utilicen más memoria.[/list]
+[list=2]Formatear una tarjeta SD, en blanco[/list]
+[list=3]Copiar el esxDOS 0.8.6 estándar en la tarjeta[/list]
+[list=4]Copiar la última distribución oficial de Next en la tarjeta. Está disponible en [url]https://www.specnext.com/category/downloads/downloads_firmware[/url][/list]
+[list=5]5. Editar el fichero config.ini em la carpeta  c:/machines/next para incluir la linea ps2=0 si no existe o modificar la línea si tiene el valor ps2=1.  Esto permite cambiar la configuración dual  PS/2 a teclado, ya que el  Firmware Next (TBBLUE.FW) utiliza de forma primitiva la entrada PS/2 como ratón (para ZX Spectrum Nexts con carcasa).  También se puede editar en el menú de arranque pulsando la barra espaciadora durante la pantalla de inicio, luego opción 'E' y cambiar la opción PS2 a "Keyb."[/list]
+
+[list=6]6. Editar el fichero config.ini em la carpeta  c:/machines/next para incluir la linea intsnd=0 si no existe o modificar la línea si tiene el valor intsnd=1.  Esto permite cambiar la configuración beeper interno ya que el Spectrum Next tiene la opción de incorporar un beeper interno.  También se puede editar en el menú de arranque pulsando la barra espaciadora durante la pantalla de inicio, luego opción 'E' y cambiar la opción "Int. beep" a "NO"[/list]
+
+[list=7]7. Descargar el archivo del core de [url]https://github.com/zxdos/binaries/raw/master/zxnext_zxdos_issue2.ZX2[/url] y renombrarlo a COREN.ZX2 en la carpeta raiz de la SD, siendo N el hueco de core que deseamos usar (P.ej.: CORE10.ZX2)[/list]
+
+[size=150]B. Flashear el core[/size]
+1. Arrancar la BIOS del ZXDOS, pulsando F2 durante el arrnaque o al hacer un hardreset con (CTRL+ALT+BKSPC)
+2. Acceder al menú Update con el cursor derecha, y elegir el hueco de core que se desea actualiza (P.ej. el SLOT 10) y pulsar 	ENTER
+3. Seleccionar "SD file". Y en el popup "Are you Sure?" indicar "Yes"
+4. Esperar a que termine el flasheo, y cuando se solicite un nombre de core indicar "Next" (o cualquier nombre que se desee)<br/>
+5. Puede establecer el core Next como core por defecto en el menú "Boot" de la BIOS si lo desea
+6. Seleccionar "Exit/Save changes & Exit" para salir de la BIOS grabando los cambios
+
+[size=150]C. Inicio del Core Next[/size]
+1. Durante el arranque, pulsar "Bloq.Mayusc" o "Cursor abajo" y aparece un menú con todos los cores instalados.  Seleccionar el Core Next en la posición que lo haya flasheado.
+2. Si estableció el core Next como core por defecto en el menú "Boot" de la BIOS arrancará sin necesidad de las teclas mencionadas
+3. El core arranca primero por el firmware TBBLUE.FW y luego en NextZXOS
+4. Si aparece la pantalla en negro, reinicie el core y pulse V para arrancar en modo VGA o R para arrancar en modo RGB
+5. Dentro del core Next, la tecla CTRL+ALT+Backspace no sirve de hardreset y si se desea reinicial debe apagar el ZXDOS y reinicializarlo.
+6. Leer la documentación oficial para más información sobre el funcionamiento del NextOS [url]https://www.specnext.com/zx-spectrum-next-user-manual-first-edition[/url]
+
+[size=150]D. Notas[/size]
+1. No hay botón Reset o Drive.  Las teclas de función funciona como se indica en el manual en la página 21.
+2. NO están implementadas las siguientes caracteristicas:
+   * Raspberry Pi
+   * Módulo ESP
+   * Beeper interno
+   * Conector de expansión EDGE
+   * Memoria superior a 1Mb
+   * Módulo RTC
+   * Teclado de membrana
+   * Flasheo de cores adicionales o actualización del propio core Next desde el core Next
+   * Salida MIC
+   * Video HDMI
+
+
+
+
+
