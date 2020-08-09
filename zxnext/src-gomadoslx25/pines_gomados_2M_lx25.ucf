@@ -253,9 +253,9 @@ NET "vsync_o"         LOC="H16"  | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST 
 #Gomados: Para chip wifi: A11 es TXD, A6 es RXD y D8 es RTS
 NET 'esp_gpio0_io'      LOC='D9'   | IOSTANDARD = LVCMOS33 | DRIVE = 2 | PULLUP;
 NET 'esp_gpio2_io'        IOSTANDARD = LVCMOS33 | DRIVE = 2 | PULLUP;
-NET 'esp_rx_i'          LOC='A6'    | IOSTANDARD = LVCMOS33 | PULLUP;
-NET 'esp_tx_o'          LOC='A11'   | IOSTANDARD = LVCMOS33 | DRIVE = 4;
-NET 'esp_gpio13_io'      LOC='D8'   | IOSTANDARD = LVCMOS33 | DRIVE = 2 | PULLUP; #RTS
+NET 'esp_rx_i'          LOC='A11'    | IOSTANDARD = LVCMOS33 | PULLUP;
+NET 'esp_tx_o'          LOC='A6'   | IOSTANDARD = LVCMOS33 | DRIVE = 4;
+#NET 'esp_gpio13_io'      LOC='D8'   | IOSTANDARD = LVCMOS33 | DRIVE = 2 | PULLUP; #RTS
 
 #NET 'accel_io<0>'       LOC='H14'   | IOSTANDARD = LVCMOS33 | DRIVE = 2;
 #NET 'accel_io<1>'       LOC='G14'   | IOSTANDARD = LVCMOS33 | DRIVE = 2;
