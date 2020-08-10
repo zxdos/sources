@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbol version="7" name="buf">
+    <symboltype>BLOCK</symboltype>
+    <timestamp>2000-1-1T10:10:10</timestamp>
+    <attr value="BUF" name="VeriModel" />
+    <attr value="BUF" name="Device" />
+    <attr value="Copy Of Symbol With Level: XILINX" name="Level" />
+    <attr value="BUF" name="VhdlModel" />
+    <attr value="2.0.0" name="Libver" />
+    <pin polarity="Input" x="0" y="-32" name="I" />
+    <pin polarity="Output" x="224" y="-32" name="O" />
+    <graph>
+        <line x2="64" y1="-32" y2="-32" x1="0" />
+        <line x2="128" y1="-32" y2="-32" x1="224" />
+        <line x2="128" y1="0" y2="-32" x1="64" />
+        <line x2="64" y1="-32" y2="-64" x1="128" />
+        <line x2="64" y1="-64" y2="0" x1="64" />
+        <text style="fontsize:24;fontname:Arial" x="96" y="0">BUF</text>
+    </graph>
+</symbol>
