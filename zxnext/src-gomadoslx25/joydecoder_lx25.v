@@ -42,21 +42,6 @@ module joydecoder (
 	output wire [11:0] joy2_o  // -- MXYZ SACB RLDU  Negative Logic
   );
   
-
-     // Divisor de relojes
-  reg [7:0] delay_count;
-  reg hsyncn_aux;
-  //wire ena_x;
-  //reg ena_x;
-  
-  always @ (posedge clk or posedge reset) begin
-    if (reset) begin
-      delay_count <= 8'd0;
-    end else begin
-      delay_count <= delay_count + 1'b1;       
-    end
-  end
-	
    // ODDR2: Output Double Data Rate Output Register with Set, Reset
    //        and Clock Enable.
    //        Spartan-6
@@ -77,61 +62,63 @@ module joydecoder (
       .S(1'b0)    // 1-bit set input
    );
    // End of ODDR2_inst instantiation
-	//assign ena_x = clk;
-	
-//	always @ ( clk ) begin
-//		ena_x = clk;
-//	end    
-  //assign ena_x = delay_count[0];  // clk a 12.5 Mhz 
 
-
-	reg [7:0] hsaux;
+	reg [3:0] hsaux = 4'b0000;
 	wire hsref;
 
-	always @(posedge clk) 
-	begin
-	  if (reset)
-		 hsaux <= 8'b0;
-	  else
-		 hsaux <= {hsaux[6:0], hsync_n_s};
-	end
-	
-	//desplazamiento del hs para jugar con el retraso que llega al joystick
-	//assign hsref = hsaux[1]; //leve clic aceptable
-	//assign hsref = hsaux[2]; 
+	//hs de referencia
 	assign hsref = hsync_n_s; 
   
   //Gestion de Joystick
-// wire [11:0] j1 , j2;
    reg [5:0] joy1  = 6'b111111, joy2  = 6'h111111;   // CB RLDU
    reg joy_renew = 1'b1;
    reg [4:0]joy_count = 5'd0;
    
-   //assign joy_clk = ena_x;
    assign joy_load_n = joy_renew;
 
 	//Lectura pins de joystick - a través de un shifter
 	always @(posedge clk) 
 	begin 
-	   if (joy_count == 5'd0) 
-		  begin
-         joy_renew <= 1'b0;
-        end 
-		else 
-		  begin
-         joy_renew <= 1'b1;
-        end
-      //if (joy_count == 5'd17) 
-		if (joy_count == 5'd17 || !(hsaux[0] == hsref) ) 
-		  begin
-         joy_count <= 5'd0;
-        end
-		else 
-		  begin
-         joy_count <= joy_count + 1'd1;
-        end      
+	  if (reset) begin
+		 hsaux <= 4'b0;
+		 joy_renew <= 1'b1;
+	  end
+	  else begin
+			hsaux <= {hsaux[2:0], hsync_n_s};
+		
+		   if (joy_count == 5'd0) 
+			  begin
+				joy_renew <= 1'b0;
+			  end 
+			else 
+			  begin
+				joy_renew <= 1'b1;
+           end
+		
+			//if (hsaux[2] && !hsaux[1]) begin
+			//if (hsaux[1] && !hsaux[0]) begin
+			if (hsaux[3] && !hsaux[2]) begin
+				// reseteo al inicio del sincronismo horizontal hs, 
+				// con un pequeño desplazamiento ya que la carga debe 
+				// hacerse con el hs en valor bajo para las lecturas adicionales
+				// En el momento de la carga es cuando se recogen 
+				// los valores en el shifter aunque se lean posteriormente
+				joy_count <= 5'd0;
+		   end
+			else begin
+			  if (joy_count == 5'd18) 
+				  begin
+					joy_count <= 5'd0;
+				  end
+				else 
+				  begin
+					joy_count <= joy_count + 1'b1;
+				  end      
+			end
+		end
    end
-	
+	//assign joy_renew = (joy_count == 5'd0) ? 1'b0: 1'b1 ;
+
    always @(posedge clk) begin
          case (joy_count)
             5'd4  : joy1[5]  <= joy_data;   //  1p fire2
@@ -253,7 +240,7 @@ module sega_joystick_fsm
 
    reg [11:0]joy_s = 12'b111111111111; 	
 	reg hs_prev;
-	reg [2:0] cont;
+	reg [3:0] cont;
 	reg saltarciclo = 1'b0;
 	reg [1:0] joyl, joyr;
 	
@@ -296,16 +283,17 @@ module sega_joystick_fsm
 	
 	// Next State logic joystick 1
 	//always @(vga_hsref or udlrbtzero or lrbtzero)
-	always @(posedge clk) 
+	// el hs de referencia válido es el del hs_prev, que es cuando se hizo la carga del shifter.
+	always @(posedge joy_load) 
 	begin
 	  case (st_reg)
-	    s1: if (vga_hsref) begin //If high continue in state s1
+	    s1: if (hs_prev) begin //If high continue in state s1
 				  st_next <= s1;
 			  end
 			  else begin
 				  st_next <= s2;
 			  end
-	    s2: if (vga_hsref) begin
+	    s2: if (hs_prev) begin
 				  if (udlrbtzero) begin // Detect S6 - HS=0 - 0000AS - go to S7
 					 st_next <= s7;
 				  end
@@ -318,11 +306,11 @@ module sega_joystick_fsm
 				end
 				else 
 					st_next <= s2;
-	    s3:  if (vga_hsref)
+	    s3:  if (hs_prev)
 				  st_next <= s3;
 				else
 				  st_next <= s4;
-	    s4: if (vga_hsref)	begin
+	    s4: if (hs_prev)	begin
 				  if (udlrbtzero)
 					 st_next <= s7;
 				  else
@@ -333,23 +321,26 @@ module sega_joystick_fsm
 				end				  
 				else
 				  st_next <= s4;
-	    s5:  if (vga_hsref)
+	    s5:  if (hs_prev)
 				  st_next <= s5;
 				else
 				  st_next <= s6;
-	    s6: if (vga_hsref) begin // Detect S6 - HS=0 - 0000AS - go to S7
+	    s6: if (hs_prev) begin // Detect S6 - HS=0 - 0000AS - go to S7
 				  if (udlrbtzero)
 					 st_next <= s7;
+				  else
+				  if (lrbtzero)
+					 st_next <= s3;
 				  else
 					 st_next <= s1;
 				end				  
 				else
 				  st_next <= s6;
-	    s7: if (vga_hsref)		// S7 - HS=1 - ZXYM--
+	    s7: if (hs_prev)		// S7 - HS=1 - ZXYM--
 				  st_next <= s7;
 			  else
 				  st_next <= s8;
-	    s8: if (vga_hsref) begin
+	    s8: if (hs_prev) begin
 				  st_next <= s1;
 				end else
 				  st_next <= s8;
@@ -357,37 +348,50 @@ module sega_joystick_fsm
 	  endcase
 	end 
 
+	// hs ref value always on the previous joyload
+	always @(posedge joy_load) 
+	begin
+		if (reset) begin
+			hs_prev <= 1'bX;
+			//lrbtzero_reg <= 1'b0;
+		end
+		else begin
+		   hs_prev <= vga_hsref;
+			//lrbtzero_reg <= lrbtzero;
+		end
+	end
+	//reg lrbtzero_reg = 1'b0;
+
 	// Output logic joystick 1
-	always @(posedge joy_load)
+	always @(negedge joy_load)
 	begin
 		if (reset) begin
 			joy_s <= 12'b111111111111;
-			hs_prev <= 1'b0;
+			cont <= 4'b0;
 		end
 		else begin
-		  hs_prev <= vga_hsref;
 		  if (hs_prev == vga_hsref) begin //Omit read if hs changed
-		      cont <= {cont[1:0], 1'b1};  //counter joyload cyles for omit first-second cycle after hs change
+		      cont <= {cont[2:0], 1'b1};  //counter joyload cyles for omit first-second cycle after hs change
 				// 1,3 and 5 Cycles
-				if ((st_reg == s1 /*|| st_reg == s3 || st_reg == s5*/) && cont[1] /*&& ciclobueno1*/) begin 
+				if ((st_reg == s1 /*|| st_reg == s3 || st_reg == s5*/) && cont[2] /*&& ciclobueno1*/) begin 
 					 //joy_s[3:0] <= {joy_right_i, joy_left_i, joy_down_i, joy_up_i}; //-- R, L, D, U
 					 joy_s[3:0] <= {joyr[0] || joyr[1], joyl[0] || joyl[1], joy_down_i, joy_up_i}; //-- R, L, D, U
 					 joy_s[5:4] <= {joy_p9_i, joy_p6_i}; //-- C, B
-					 joyl <= {joyl[0], joy_left_i};  //to avoid ticks from even states
-					 joyr <= {joyr[0], joy_right_i}; //to avoid ticks from even states 
+					 joyl <= {joyl[0], joy_left_i};  //to avoid lost ticks from even states
+					 joyr <= {joyr[0], joy_right_i}; //to avoid lost ticks from even states 
 				end
 				// Cycle 2,4,6
-				else if ((st_reg == s2 || st_reg == s4 /*|| st_reg == s6 || st_reg == s8*/ ) 
-							&& cont[0] && lrbtzero /*&& !vga_hsref*/ ) begin 
+				if ((st_reg == s2 || st_reg == s4 || st_reg == s6 || st_reg == s8 ) 
+							/* cont[0] */ && lrbtzero ) begin 
 					  joy_s[7:6] <= { joy_p9_i , joy_p6_i }; //-- Start, A   
 				end				
-				if (st_reg == s7 && cont[1]) begin// Cycle 7
+				if (st_reg == s7 && cont[3] /*&& !udlrbtzero*/ ) begin// Cycle 7
 					  joy_s[11:8] <= { joy_right_i, joy_left_i, joy_down_i, joy_up_i }; //-- Mode, X, Y e Z
 				end
 			end
 			else
-				cont <= 3'b0; //counter for joyload after hs changed
-		   end
+				cont <= 4'b0; //counter for joyload after hs changed
+		end
 	end
 
 	assign lrbtzero = !joy_left_i && !joy_right_i; //LR=00 in cycle 2,4
