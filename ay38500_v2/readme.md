@@ -1,5 +1,5 @@
 The AY-3-8500-1 Pong-on-a-chip IC
-
+-------------
 Created by General Instruments in ~1975
 
 Original die images provided by Sean Riddle @(http://seanriddledecap.blogspot.com/2017/02/blog-post.html), licensed under CC BY-SA 4.0
@@ -12,6 +12,7 @@ This chip has been processed into a javascript simulation!
 Find it here: (http://nerdydelights.droppages.com/ChipSim/AY38500/AY-3-8500.html)
 Source code: (https://gitlab.com/TheProgrammerIncarnate/VisualP0NG)
 
+ZXDOS (LX16)
 -------------
 Implementación de Pong AY-3-8500 para ZXDOS, basado en la implementación por Cole Johnson del Chip AY-3-8500, Mister Core.
 
@@ -26,6 +27,8 @@ Teclas: Cursores -> jugador 1/3,
 La versión 2 incluye cambio de color por menú a varios modros preestablecidos.
 
 Issues: Por RGB no funciona.
+
+ZXDOS+ (LX25)
 -------------
 Implementación de Pong AY-3-8500 para ZXDOS+ (LX25), basado en la implementación por Cole Johnson del Chip AY-3-8500, Mister Core. 
 
@@ -45,6 +48,7 @@ Funciona por RGB y VGA.
 
 ![Pong AY-3-8500 en gomados+ (LX25)](pong_ay38500_lx25_01.jpg)
 
+ZXUNO (LX9)
 -------------
 Implementación de Pong AY-3-8500 para ZXUNO.
 
