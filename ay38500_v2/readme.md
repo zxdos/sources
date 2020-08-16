@@ -13,19 +13,37 @@ Find it here: (http://nerdydelights.droppages.com/ChipSim/AY38500/AY-3-8500.html
 Source code: (https://gitlab.com/TheProgrammerIncarnate/VisualP0NG)
 
 -------------
-Implementación de Pong AY-3-8500 para ZXDOS, basado en la implementación por Cole Johnson del Chip AY-3-8500, Mister Core. 
+Implementación de Pong AY-3-8500 para ZXDOS, basado en la implementación por Cole Johnson del Chip AY-3-8500, Mister Core.
 
-Joystick y teclado.
+Joystick y teclado. 
 Teclas: Cursores -> jugador 1/3, 
-        R / F -> jugador 2/4, 
-        Ctrl.Izdo / A -> saque manual,
-        1 a 7 -> tipo de juego, 
-        Esc -> Menu, 
-        F3 -> Reinicio juego. 
+	R / F -> jugador 2/4, 
+	Ctrl.Izdo / A -> saque manual, 
+	1 a 7 -> tipo de juego, 
+	Esc -> Menu, 
+	F3 -> Reinicio juego.
 
-La versión 2 incluye cambio de color por menú a varios modros preestablecidos. 
+La versión 2 incluye cambio de color por menú a varios modros preestablecidos.
 
 Issues: Por RGB no funciona.
+-------------
+Implementación de Pong AY-3-8500 para ZXDOS+ (LX25), basado en la implementación por Cole Johnson del Chip AY-3-8500, Mister Core. 
+
+Joystick y teclado.
+Teclas: Cursores + O/K/M + Joystick 1 -> jugador 1/3, 
+        Q / A / Z  + Joystick 2 -> jugador 2/4, 
+        Z / M / Botón 1 del joystick -> saque manual,
+        1 a 7 -> tipo de juego, 
+        Esc / CS+SPC / Botón 2 del joystick -> Menu, 
+        F3 / F12 -> Reinicio juego.
+        CTRL+ALT+BCKSPC // CS+SS+F y G -> Hardreset
+Se puede utilizar el menú con el joystick.
+
+La versión 2 incluye cambio de color por menú a varios modros preestablecidos.
+
+Funciona por RGB y VGA.
+
+![Pong AY-3-8500 en gomados+ (LX25)](pong_ay38500_lx25_01.jpg)
 
 -------------
 Implementación de Pong AY-3-8500 para ZXUNO.
