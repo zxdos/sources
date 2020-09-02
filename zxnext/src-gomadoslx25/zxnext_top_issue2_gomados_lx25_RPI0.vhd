@@ -34,15 +34,16 @@ use UNISIM.VComponents.all;
 
 
 
-entity zxnext_top_issue2_gomados_2M_lx25 is
+entity zxnext_top_issue2_gomados_2M_lx25_RPI0 is
    generic (
       --g_machine_id      : unsigned(7 downto 0)  := X"0A";   -- 10 = ZX Spectrum Next
 		g_machine_id      : unsigned(7 downto 0)  := X"EA";   -- EA = ZXDOS
       g_version         : unsigned(7 downto 0)  := X"31";   -- 3.01
       g_sub_version     : unsigned(7 downto 0)  := X"06";   -- .06
-		g_memory          : unsigned(7 downto 0)  := X"01"    -- 01 - 4Mb (2Mb 16bit) use 2M 8bit lower
-																				-- 02 - 1Mb (512k 16bit) use 1M
-																				-- 03 - 4Mb (2Mb 16bit) use 2M 8bit upper
+		g_memory          : unsigned(7 downto 0)  := X"03"    
+																-- 01 - 4Mb (2Mb 16bit) use 2M 8bit lower		
+																-- 02 - 1Mb (512k 16bit) use 1M
+																-- 03 - 4Mb (2Mb 16bit) use 2M 8bit upper
    );
    port (
       -- Clocks
@@ -137,9 +138,9 @@ entity zxnext_top_issue2_gomados_2M_lx25 is
 --      bus_iorqula_n_i   : in    std_logic;
 
       -- VGA
-      rgb_r_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
-      rgb_g_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
-      rgb_b_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
+      rgb_r_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
+      rgb_g_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
+      rgb_b_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
       hsync_o           : out   std_logic                      := '1';
       vsync_o           : out   std_logic                      := '1';
       --csync_o           : out   std_logic                      := 'Z'
@@ -157,18 +158,18 @@ entity zxnext_top_issue2_gomados_2M_lx25 is
       esp_gpio2_io      : inout std_logic                      := 'Z';
       esp_rx_i          : in    std_logic;
       esp_tx_o          : out   std_logic                      := '1';
-		esp_gpio13_io     : inout std_logic                      := 'Z'
+		esp_gpio13_io     : inout std_logic                      := 'Z';
 
 --
---      -- PI GPIO
---      accel_io          : inout std_logic_vector(27 downto 0)  := (others => 'Z')
+      -- PI GPIO
+      accel_io          : inout std_logic_vector(27 downto 0)  := (others => 'Z')
 --
 --      -- Vacant pins
 --      extras_io         : inout std_logic := 'Z'
    );
 end entity;
 
-architecture rtl of zxnext_top_issue2_gomados_2M_lx25 is
+architecture rtl of zxnext_top_issue2_gomados_2M_lx25_RPI0 is
 
    component pll_top
    port
@@ -674,7 +675,7 @@ architecture rtl of zxnext_top_issue2_gomados_2M_lx25 is
 --   signal    esp_tx_o          : std_logic                      := '1';
 
 --      --zxdos PI GPIO
-   signal    accel_io          : std_logic_vector(27 downto 0)  := (others => 'Z');
+--   signal    accel_io          : std_logic_vector(27 downto 0)  := (others => 'Z');
 
 --      --zxdos Vacant pins
 --   signal    extras_io         : std_logic := 'Z';
@@ -1321,7 +1322,7 @@ begin
 	MEMORY2MUPPER:
    if (g_memory = X"03") generate --2Mb 16 bit (use 2Mb 8bit Upper)
    begin
-		-- TEST RPI0 - USAR BUS ALTO
+		-- RPI0 - USAR BUS ALTO
 		-- zxdos2M/gomados memory
 		ram1_addr_o <= sram_addr_active_zxdos2M;
 		ram1_data_io_zxdos(7 downto 0)  <= (others => 'Z');
@@ -1499,13 +1500,9 @@ begin
       
          if zxn_video_scandouble_en = '0' then
          
---	ZXDOS
---            rgb_r_o <= rgb_15(8 downto 6);
---            rgb_g_o <= rgb_15(5 downto 3);
---            rgb_b_o <= rgb_15(2 downto 0);
-            rgb_r_o <= rgb_15(8 downto 6) & rgb_15(8 downto 6);
-            rgb_g_o <= rgb_15(5 downto 3) & rgb_15(5 downto 3);
-            rgb_b_o <= rgb_15(2 downto 0) & rgb_15(2 downto 0);
+            rgb_r_o <= rgb_15(8 downto 6);
+            rgb_g_o <= rgb_15(5 downto 3);
+            rgb_b_o <= rgb_15(2 downto 0);
             
             -- csync on hsync when the scandoubler is off
             
@@ -1514,13 +1511,9 @@ begin
             hsync_aux <= zxn_rgb_cs_n;
          else
          
---	ZXDOS
---            rgb_r_o <= rgb_31(8 downto 6);
---            rgb_g_o <= rgb_31(5 downto 3);
---            rgb_b_o <= rgb_31(2 downto 0);
-            rgb_r_o <= rgb_31(8 downto 6) & rgb_31(8 downto 6);
-            rgb_g_o <= rgb_31(5 downto 3) & rgb_31(5 downto 3);
-            rgb_b_o <= rgb_31(2 downto 0) & rgb_31(2 downto 0);
+            rgb_r_o <= rgb_31(8 downto 6);
+            rgb_g_o <= rgb_31(5 downto 3);
+            rgb_b_o <= rgb_31(2 downto 0);
             
             hsync_o <= hsync_out;
             vsync_o <= vsync_out;

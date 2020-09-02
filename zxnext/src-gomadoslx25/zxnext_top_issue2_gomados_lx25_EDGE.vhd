@@ -34,7 +34,7 @@ use UNISIM.VComponents.all;
 
 
 
-entity zxnext_top_issue2_gomados_2M_lx25 is
+entity zxnext_top_issue2_gomados_2M_lx25_EDGE is
    generic (
       --g_machine_id      : unsigned(7 downto 0)  := X"0A";   -- 10 = ZX Spectrum Next
 		g_machine_id      : unsigned(7 downto 0)  := X"EA";   -- EA = ZXDOS
@@ -115,31 +115,31 @@ entity zxnext_top_issue2_gomados_2M_lx25 is
 --      keyb_row_o        : out   std_logic_vector( 7 downto 0)  := (others => 'Z');
 --      keyb_col_i        : in    std_logic_vector( 6 downto 0);
 --
---      -- Bus
---      bus_rst_n_io      : inout std_logic                      := 'Z';
---      bus_clk35_o       : out   std_logic                      := 'Z';
---      bus_addr_o        : out   std_logic_vector(15 downto 0)  := (others => 'Z');
---      bus_data_io       : inout std_logic_vector( 7 downto 0)  := (others => 'Z');
---      bus_int_n_io      : inout std_logic                      := 'Z';
---      bus_nmi_n_i       : in    std_logic;
---      bus_ramcs_i       : in    std_logic;
---      bus_romcs_i       : in    std_logic;
---      bus_wait_n_i      : in    std_logic;
---      bus_halt_n_o      : out   std_logic                      := 'Z';
---      bus_iorq_n_o      : out   std_logic                      := 'Z';
---      bus_m1_n_o        : out   std_logic                      := 'Z';
---      bus_mreq_n_o      : out   std_logic                      := 'Z';
---      bus_rd_n_o        : out   std_logic                      := 'Z';
---      bus_wr_n_o        : out   std_logic                      := 'Z';
---      bus_rfsh_n_o      : out   std_logic                      := 'Z';
---      bus_busreq_n_i    : in    std_logic;
---      bus_busack_n_o    : out   std_logic                      := 'Z';
---      bus_iorqula_n_i   : in    std_logic;
+      -- Bus
+      bus_rst_n_io      : inout std_logic                      := 'Z';
+      bus_clk35_o       : out   std_logic                      := 'Z';
+      bus_addr_o        : out   std_logic_vector(15 downto 0)  := (others => 'Z');
+      bus_data_io       : inout std_logic_vector( 7 downto 0)  := (others => 'Z');
+      bus_int_n_io      : inout std_logic                      := 'Z';
+      bus_nmi_n_i       : in    std_logic;
+      bus_ramcs_i       : in    std_logic;
+      bus_romcs_i       : in    std_logic;
+      bus_wait_n_i      : in    std_logic;
+      bus_halt_n_o      : out   std_logic                      := 'Z';
+      bus_iorq_n_o      : out   std_logic                      := 'Z';
+      bus_m1_n_o        : out   std_logic                      := 'Z';
+      bus_mreq_n_o      : out   std_logic                      := 'Z';
+      bus_rd_n_o        : out   std_logic                      := 'Z';
+      bus_wr_n_o        : out   std_logic                      := 'Z';
+      bus_rfsh_n_o      : out   std_logic                      := 'Z';
+      bus_busreq_n_i    : in    std_logic;
+      bus_busack_n_o    : out   std_logic                      := 'Z';
+      bus_iorqula_n_i   : in    std_logic;
 
       -- VGA
-      rgb_r_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
-      rgb_g_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
-      rgb_b_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
+      rgb_r_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
+      rgb_g_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
+      rgb_b_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
       hsync_o           : out   std_logic                      := '1';
       vsync_o           : out   std_logic                      := '1';
       --csync_o           : out   std_logic                      := 'Z'
@@ -168,7 +168,7 @@ entity zxnext_top_issue2_gomados_2M_lx25 is
    );
 end entity;
 
-architecture rtl of zxnext_top_issue2_gomados_2M_lx25 is
+architecture rtl of zxnext_top_issue2_gomados_2M_lx25_EDGE is
 
    component pll_top
    port
@@ -601,26 +601,26 @@ architecture rtl of zxnext_top_issue2_gomados_2M_lx25 is
    signal bus_clk_cpu            : std_logic;
    signal bus_clk_cpu_en_n       : std_logic;
    
-   -- zxdos Bus adaptation
-   signal bus_rst_n_io      : std_logic                      := 'Z';
-   signal bus_clk35_o       : std_logic                      := 'Z';
-   signal bus_addr_o        : std_logic_vector(15 downto 0)  := (others => 'Z');
-   signal bus_data_io       : std_logic_vector( 7 downto 0)  := (others => 'Z');
-   signal bus_int_n_io      : std_logic                      := 'Z';
-   signal bus_nmi_n_i       : std_logic;
-   signal bus_ramcs_i       : std_logic;
-   signal bus_romcs_i       : std_logic;
-   signal bus_wait_n_i      : std_logic;
-   signal    bus_halt_n_o      : std_logic                      := 'Z';
-   signal    bus_iorq_n_o      : std_logic                      := 'Z';
-   signal    bus_m1_n_o        : std_logic                      := 'Z';
-   signal    bus_mreq_n_o      : std_logic                      := 'Z';
-   signal    bus_rd_n_o        : std_logic                      := 'Z';
-   signal    bus_wr_n_o        : std_logic                      := 'Z';
-   signal    bus_rfsh_n_o      : std_logic                      := 'Z';
-   signal    bus_busreq_n_i    : std_logic;
-   signal    bus_busack_n_o    : std_logic                      := 'Z';
-   signal    bus_iorqula_n_i   : std_logic;
+--   -- zxdos Bus adaptation
+--   signal bus_rst_n_io      : std_logic                      := 'Z';
+--   signal bus_clk35_o       : std_logic                      := 'Z';
+--   signal bus_addr_o        : std_logic_vector(15 downto 0)  := (others => 'Z');
+--   signal bus_data_io       : std_logic_vector( 7 downto 0)  := (others => 'Z');
+--   signal bus_int_n_io      : std_logic                      := 'Z';
+--   signal bus_nmi_n_i       : std_logic;
+--   signal bus_ramcs_i       : std_logic;
+--   signal bus_romcs_i       : std_logic;
+--   signal bus_wait_n_i      : std_logic;
+--   signal    bus_halt_n_o      : std_logic                      := 'Z';
+--   signal    bus_iorq_n_o      : std_logic                      := 'Z';
+--   signal    bus_m1_n_o        : std_logic                      := 'Z';
+--   signal    bus_mreq_n_o      : std_logic                      := 'Z';
+--   signal    bus_rd_n_o        : std_logic                      := 'Z';
+--   signal    bus_wr_n_o        : std_logic                      := 'Z';
+--   signal    bus_rfsh_n_o      : std_logic                      := 'Z';
+--   signal    bus_busreq_n_i    : std_logic;
+--   signal    bus_busack_n_o    : std_logic                      := 'Z';
+--   signal    bus_iorqula_n_i   : std_logic;
 
 
    -- esp gpio
@@ -810,13 +810,13 @@ begin
       end if;
    end process;
 
-	--zxdos bus
-      bus_nmi_n_i <= '1';
-      bus_ramcs_i <= '1';
-      bus_romcs_i <= '1';
-      bus_wait_n_i <= '1';
-      bus_busreq_n_i <= '1';
-      bus_iorqula_n_i <= '1';
+--	--zxdos bus
+--      bus_nmi_n_i <= '1';
+--      bus_ramcs_i <= '1';
+--      bus_romcs_i <= '1';
+--      bus_wait_n_i <= '1';
+--      bus_busreq_n_i <= '1';
+--      bus_iorqula_n_i <= '1';
 
    -- ESP
    
@@ -1499,13 +1499,9 @@ begin
       
          if zxn_video_scandouble_en = '0' then
          
---	ZXDOS
---            rgb_r_o <= rgb_15(8 downto 6);
---            rgb_g_o <= rgb_15(5 downto 3);
---            rgb_b_o <= rgb_15(2 downto 0);
-            rgb_r_o <= rgb_15(8 downto 6) & rgb_15(8 downto 6);
-            rgb_g_o <= rgb_15(5 downto 3) & rgb_15(5 downto 3);
-            rgb_b_o <= rgb_15(2 downto 0) & rgb_15(2 downto 0);
+            rgb_r_o <= rgb_15(8 downto 6);
+            rgb_g_o <= rgb_15(5 downto 3);
+            rgb_b_o <= rgb_15(2 downto 0);
             
             -- csync on hsync when the scandoubler is off
             
@@ -1514,13 +1510,9 @@ begin
             hsync_aux <= zxn_rgb_cs_n;
          else
          
---	ZXDOS
---            rgb_r_o <= rgb_31(8 downto 6);
---            rgb_g_o <= rgb_31(5 downto 3);
---            rgb_b_o <= rgb_31(2 downto 0);
-            rgb_r_o <= rgb_31(8 downto 6) & rgb_31(8 downto 6);
-            rgb_g_o <= rgb_31(5 downto 3) & rgb_31(5 downto 3);
-            rgb_b_o <= rgb_31(2 downto 0) & rgb_31(2 downto 0);
+            rgb_r_o <= rgb_31(8 downto 6);
+            rgb_g_o <= rgb_31(5 downto 3);
+            rgb_b_o <= rgb_31(2 downto 0);
             
             hsync_o <= hsync_out;
             vsync_o <= vsync_out;
