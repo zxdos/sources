@@ -13,8 +13,8 @@ module VgaDriver(input clk,
 // Horizontal and vertical counters
 reg [9:0] h, v;
 wire hpicture = (h < 512);                    // 512 lines of picture
-wire hsync_on = (h == 512 + 23 + 35);         // HSync ON, 23+35 pixels front porch
-wire hsync_off = (h == 512 + 23 + 35 + 82);   // Hsync off, 82 pixels sync
+wire hsync_on = (h == 512 + 23 );         // HSync ON, 23 pixels front porch
+wire hsync_off = (h == 512 + 23 + 82);   // Hsync off, 82 pixels sync
 wire hend = (h == 681);                       // End of line, 682 pixels.
 
 wire vpicture = (v < 480);                    // 480 lines of picture

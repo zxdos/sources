@@ -14,8 +14,8 @@ module NES_ZXUNO(
   // Memory
   output ram_WE_n,          // Write Enable. WRITE when Low.
   output [20:0] ram_a,
-  inout  [7:0] ram_dl,
-  inout  [7:0] ram_dh,
+  inout wire [7:0] ram_dl,
+  inout wire [7:0] ram_dh,
   output wire ram_ub,
   output wire ram_lb,
   output AUDIO_R,
