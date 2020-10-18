@@ -329,10 +329,11 @@ module sega_joystick_fsm
 				  if (udlrbtzero)
 					 st_next <= s7;
 				  else
-				  if (lrbtzero)
-					 st_next <= s3;
-				  else
 					 st_next <= s1;
+//				  if (lrbtzero)
+//					 st_next <= s3;
+//				  else
+//					 st_next <= s1;
 				end				  
 				else
 				  st_next <= s6;
@@ -373,6 +374,7 @@ module sega_joystick_fsm
 		  if (hs_prev == vga_hsref) begin //Omit read if hs changed
 		      cont <= {cont[2:0], 1'b1};  //counter joyload cyles for omit first-second cycle after hs change
 				// 1,3 and 5 Cycles
+				//if ((st_reg == s1 /*|| st_reg == s3 || st_reg == s5*/) && cont[2] /*&& ciclobueno1*/) begin //Muy estable pero falla con mandos 3 botones
 				if ((st_reg == s1 /*|| st_reg == s3 || st_reg == s5*/) && cont[2] /*&& ciclobueno1*/) begin 
 					 //joy_s[3:0] <= {joy_right_i, joy_left_i, joy_down_i, joy_up_i}; //-- R, L, D, U
 					 joy_s[3:0] <= {joyr[0] || joyr[1], joyl[0] || joyl[1], joy_down_i, joy_up_i}; //-- R, L, D, U

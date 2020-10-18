@@ -4567,10 +4567,11 @@ begin
                
                when X"10" =>
                   nr_10_flashboot <= nr_wr_dat(7);
-                  if machine_type_config = '1' then
-                     nr_10_coreid <= nr_wr_dat(4 downto 0);
-                  end if;
-               
+--						ZXDOS always send coreID						
+--                  if machine_type_config = '1' then
+--                     nr_10_coreid <= nr_wr_dat(4 downto 0);
+--                  end if;
+                    nr_10_coreid <= nr_wr_dat(4 downto 0); --ZXDOS
                when X"11" =>
                   if machine_type_config = '1' then
                      nr_11_video_timing <= nr_wr_dat(2 downto 0);

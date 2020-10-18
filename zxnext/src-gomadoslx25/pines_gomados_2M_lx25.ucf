@@ -119,12 +119,12 @@ NET "sd_sclk_o"         CLOCK_DEDICATED_ROUTE = FALSE;
 #NET 'sd_cs1_n_o'        LOC=''    | IOSTANDARD = LVTTL;
 
 # SPI Flash
-#NET "flash_cs_n_o"      LOC="T3"  | IOSTANDARD = LVCMOS33;
-#NET "flash_sclk_o"      LOC="R11" | IOSTANDARD = LVCMOS33;
-#NET "flash_mosi_o"      LOC="T10" | IOSTANDARD = LVCMOS33;
-#NET "flash_miso_i"      LOC="P10" | IOSTANDARD = LVCMOS33 | PULLUP;
-#NET 'flash_wp_o'        LOC=''   | IOSTANDARD = LVCMOS33;
-#NET 'flash_hold_o'      LOC=''   | IOSTANDARD = LVCMOS33;
+NET "flash_cs_n_o"      LOC="T3"  | IOSTANDARD = LVCMOS33;
+NET "flash_sclk_o"      LOC="R11" | IOSTANDARD = LVCMOS33;
+NET "flash_mosi_o"      LOC="T10" | IOSTANDARD = LVCMOS33;
+NET "flash_miso_i"      LOC="P10" | IOSTANDARD = LVCMOS33 | PULLUP;
+NET 'flash_wp_o'        LOC=''   | IOSTANDARD = LVCMOS33;
+NET 'flash_hold_o'      LOC=''   | IOSTANDARD = LVCMOS33;
 
 # JOYSTICK
 NET "JOY_CLK"         LOC="R12"  | IOSTANDARD = LVCMOS33; 
