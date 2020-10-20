@@ -2055,7 +2055,7 @@ begin
 
    zxn_bus_di <= bus_data_i_q;
    zxn_bus_int_n <= bus_int_n_i_q;
--- zxn_bus_nmi_n <= bus_nmi_n_i_q;
+-- zxn_bus_nmi_n <= bus_nmi_n_i_q; --zxdos
    zxn_bus_romcs_n <= bus_romcs_i_q;
    zxn_bus_wait_n <= bus_wait_n_i_q;
    zxn_bus_busreq_n <= bus_busreq_n_i_q;

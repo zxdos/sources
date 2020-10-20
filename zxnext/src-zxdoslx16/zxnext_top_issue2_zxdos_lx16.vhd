@@ -32,25 +32,32 @@ use ieee.std_logic_unsigned.all;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-entity zxnext_top_issue2 is
+entity zxnext_top_issue2_zxdos_1M_lx16 is
    generic (
       --g_machine_id      : unsigned(7 downto 0)  := X"0A";   -- 10 = ZX Spectrum Next
 		g_machine_id      : unsigned(7 downto 0)  := X"EA";   -- EA = ZXDOS
       g_version         : unsigned(7 downto 0)  := X"31";   -- 3.01
-      g_sub_version     : unsigned(7 downto 0)  := X"05"    -- .05
+      g_sub_version     : unsigned(7 downto 0)  := X"06";   -- .06
+		g_memory          : unsigned(7 downto 0)  := X"04"    -- 01 - 4Mb (2Mb 16bit) use 2M 8bit lower
+																				-- 02 - 1Mb (512k 16bit) use 1M
+																				-- 03 - 4Mb (2Mb 16bit) use 2M 8bit upper
+																				-- 04 - 1Mb (512kb+512kb 8bit) use 1M
    );
    port (
       -- Clocks
       clock_50_i        : in    std_logic;
 
       -- SRAM (AS7C34096)
-      ram_addr_o        : out   std_logic_vector(18 downto 0)  := (others => '0');
+      --ram_addr_o        : out   std_logic_vector(18 downto 0)  := (others => '0');
       --ram_data_io       : inout std_logic_vector(15 downto 0)  := (others => 'Z');
-		ram_data_io_zxdos : inout std_logic_vector(7 downto 0)  := (others => 'Z');
-      ram1_we_n_o        : out   std_logic                      := '1';
-		--ram_we_n_o        : out   std_logic                      := '1';
       --ram_oe_n_o        : out   std_logic                      := '1';
+      --ram_we_n_o        : out   std_logic                      := '1';
       --ram_ce_n_o        : out   std_logic_vector( 3 downto 0)  := (others => '1');
+
+      ram_addr_o        : out   std_logic_vector(18 downto 0)  := (others => '0');
+      ram_data_io_zxdos : inout std_logic_vector(7 downto 0)  := (others => 'Z');
+      ram1_we_n_o        : out   std_logic                      := '1';
+
 
 		-- SRAM2
 		ram2_addr_o        : out   std_logic_vector(18 downto 0)  := (others => '0');
@@ -71,12 +78,12 @@ entity zxnext_top_issue2 is
       sd_miso_i         : in    std_logic;
 
       -- Flash
-      --flash_cs_n_o      : out   std_logic                      := '1';
-      --flash_sclk_o      : out   std_logic                      := '0';
-      --flash_mosi_o      : out   std_logic                      := '0';
-      --flash_miso_i      : in    std_logic;
-      --flash_wp_o        : out   std_logic                      := '0';
-      --flash_hold_o      : out   std_logic                      := '1';
+      flash_cs_n_o      : out   std_logic                      := '1';
+      flash_sclk_o      : out   std_logic                      := '0';
+      flash_mosi_o      : out   std_logic                      := '0';
+      flash_miso_i      : in    std_logic;
+--      flash_wp_o        : out   std_logic                      := '0';
+--      flash_hold_o      : out   std_logic                      := '1';
 
       -- Joystick
 --      joyp1_i           : in    std_logic;
@@ -102,8 +109,8 @@ entity zxnext_top_issue2 is
       --mic_port_o        : out   std_logic                      := '0';
 
       -- Buttons
-      btn_divmmc_n_i    : in    std_logic;
-      btn_multiface_n_i : in    std_logic;
+      --btn_divmmc_n_i    : in    std_logic;
+      --btn_multiface_n_i : in    std_logic;
       --btn_reset_n_i     : in    std_logic;
 
 --      -- Matrix keyboard
@@ -132,9 +139,9 @@ entity zxnext_top_issue2 is
 --      bus_iorqula_n_i   : in    std_logic;
 
       -- VGA
-      rgb_r_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
-      rgb_g_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
-      rgb_b_o           : out   std_logic_vector( 2 downto 0)  := (others => '0');
+      rgb_r_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
+      rgb_g_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
+      rgb_b_o           : out   std_logic_vector( 5 downto 0)  := (others => '0');
       hsync_o           : out   std_logic                      := '1';
       vsync_o           : out   std_logic                      := '1';
       csync_o           : out   std_logic                      := 'Z'
@@ -161,7 +168,7 @@ entity zxnext_top_issue2 is
    );
 end entity;
 
-architecture rtl of zxnext_top_issue2 is
+architecture rtl of zxnext_top_issue2_zxdos_1M_lx16 is
 
    component pll_top
    port
@@ -248,6 +255,7 @@ architecture rtl of zxnext_top_issue2 is
    signal bus_data_i_q           : std_logic_vector(7 downto 0);
    signal bus_int_n_i_q          : std_logic := '1';
    signal bus_nmi_n_i_q          : std_logic := '1';
+   signal bus_nmi_n_i_qq         : std_logic;
 -- signal bus_ramcs_i_q          : std_logic;
    signal bus_romcs_i_q          : std_logic;
    signal bus_wait_n_i_q         : std_logic;
@@ -359,7 +367,7 @@ architecture rtl of zxnext_top_issue2 is
    signal ram_oe_n_o             : std_logic                      := '1';
    signal ram_ce_n_o             : std_logic_vector( 3 downto 0)  := (others => '1');
    signal ram_we_n_o             : std_logic                      := '1';
-	
+   signal sram_cs_n_zxdos         : std_logic;	
    -- audio
    
    signal audioint               : std_logic;
@@ -410,6 +418,13 @@ architecture rtl of zxnext_top_issue2 is
    signal zxn_rgb_hb_n           : std_logic;
    signal zxn_machine_timing     : std_logic_vector(2 downto 0);
    signal zxn_video_scandouble_en   : std_logic;
+
+   -- aux video signal for monocrome output
+	signal rgb_r_o_prev           : std_logic_vector( 9 downto 0);
+	signal rgb_g_o_prev           : std_logic_vector( 9 downto 0);
+	signal rgb_b_o_prev           : std_logic_vector( 9 downto 0);
+	signal rgb_y_sign             : std_logic_vector( 9 downto 0);
+	signal vga_grey               : std_logic_vector( 3 downto 0) := "0001";
    
    -- video : hdmi
 
@@ -493,20 +508,22 @@ architecture rtl of zxnext_top_issue2 is
    signal zxn_extended_keys      : std_logic_vector(15 downto 0);
    
    signal membrane_col           : std_logic_vector(4 downto 0);
-   signal membrane_rows          : std_logic_vector(7 downto 0);
+--   signal membrane_rows          : std_logic_vector(7 downto 0);
 	
    --zxdos adaptation
 	signal sd_cs1_n_o        : std_logic                      := '1';
 	signal btn_reset_n_i     : std_logic;
-	
+	signal btn_divmmc_n_i    : std_logic;
+   signal btn_multiface_n_i : std_logic;
+   
 	-- zxdos spi flash adaptation
 	-- Flash disconected to avoid ZXDOS core updates from ZXNEXT
-   signal flash_cs_n_o      : std_logic                      := '1';
-   signal flash_sclk_o      : std_logic                      := '0';
-   signal flash_mosi_o      : std_logic                      := '0';
-   signal flash_miso_i      : std_logic;
-	signal flash_wp_o        : std_logic                      := '0';
-   signal flash_hold_o      : std_logic                      := '1';
+--   signal flash_cs_n_o      : std_logic                      := '1';
+--   signal flash_sclk_o      : std_logic                      := '0';
+--   signal flash_mosi_o      : std_logic                      := '0';
+--   signal flash_miso_i      : std_logic;
+--	signal flash_wp_o        : std_logic                      := '0';
+--   signal flash_hold_o      : std_logic                      := '1';
 	
    -- zxdos Joystick adaptation
    signal joyp1_i           : std_logic;
@@ -517,10 +534,15 @@ architecture rtl of zxnext_top_issue2 is
    signal joyp7_o           : std_logic                      := '1';
    signal joyp9_i           : std_logic;
    signal joysel_o          : std_logic                      := '0';
+   signal hsync_aux              : std_logic;
 
    -- zxdos Matrix keyboard adaptation
-   signal keyb_row_o        : std_logic_vector( 7 downto 0)  := (others => 'Z');
+--   signal keyb_row_o        : std_logic_vector( 7 downto 0)  := (others => 'Z');
    signal keyb_col_i        : std_logic_vector( 6 downto 0);
+	
+	-- zxdos master reset
+	signal hardreset_zxuno   : std_logic;
+	signal flashboot_zxdos   : std_logic;
 
    -- serial communication
    
@@ -579,7 +601,7 @@ architecture rtl of zxnext_top_issue2 is
    
    signal bus_clk_cpu            : std_logic;
    signal bus_clk_cpu_en_n       : std_logic;
-
+   
    -- zxdos Bus adaptation
    signal bus_rst_n_io      : std_logic                      := 'Z';
    signal bus_clk35_o       : std_logic                      := 'Z';
@@ -652,16 +674,16 @@ architecture rtl of zxnext_top_issue2 is
    signal    esp_rx_i          : std_logic;
    signal    esp_tx_o          : std_logic                      := '1';
 
-      --zxdos PI GPIO
+--      --zxdos PI GPIO
    signal    accel_io          : std_logic_vector(27 downto 0)  := (others => 'Z');
 
-      --zxdos Vacant pins
-   signal    extras_io         : std_logic := 'Z';
+--      --zxdos Vacant pins
+--   signal    extras_io         : std_logic := 'Z';
 
    
 begin
 
-   extras_io <= 'Z';
+--   extras_io <= 'Z';
 
    ------------------------------------------------------------
    -- SYNCHRONIZE ASYNCHRONOUS INPUTS
@@ -980,6 +1002,9 @@ begin
 
 	--zxdos reset
 	btn_reset_n_i <= '1';
+	btn_divmmc_n_i <= '1';
+   btn_multiface_n_i <= '1';
+
    ------------------------------------------------------------
    -- CLOCKS --------------------------------------------------
    ------------------------------------------------------------
@@ -1062,15 +1087,18 @@ begin
    
    -- cores separated by 512k in flash
    
-   fpga_config : entity work.flashboot
-   port map
-   (
-      reset_i     => reset_poweron,
-      clock_i     => CLK_14,
-      start_i     => zxn_flashboot,
-      --spiaddr_i   => "0110" & "1011" & zxn_coreid & "0000000000000000000"
-		spiaddr_i   => X"03098000" -- 8'h03 & 24'h098000 default value lx16 zxdos
-   );
+--   fpga_config : entity work.flashboot
+--   port map
+--   (
+--      reset_i     => reset_poweron,
+--      clock_i     => CLK_14,
+--      --start_i     => zxn_flashboot, -- zxdos
+--		start_i     => flashboot_zxdos, -- zxdos
+--      --spiaddr_i   => "0110" & "1011" & zxn_coreid & "0000000000000000000"
+--		--spiaddr_i   => X"03098000" -- 8'h03 & 24'h098000 default value lx16 zxdos
+--		spiaddr_i   => X"030B0000" -- 8'h03 & 24'h098000 default value lx25 zxdos
+--   );
+--	flashboot_zxdos <= hardreset_zxuno or zxn_flashboot;
 
    ------------------------------------------------------------
    -- SRAM INTERFACE ------------------------------------------
@@ -1159,8 +1187,10 @@ begin
             when "10"   =>  sram_cs_n <= "1011";
             when others =>  sram_cs_n <= "0111";
          end case;
+			sram_cs_n_zxdos <= '0';
       else
          sram_cs_n <= (others => '1');
+			sram_cs_n_zxdos <= '1';
       end if;
    end process;
    
@@ -1262,31 +1292,37 @@ begin
          end if;
       end if;
    end process;
-
-	-- zxdos write enable 2 x 512k SRAM
-	--ram1_we_n_o <= '0' when ram_ce_n_o = "1110" else '1';
-	--ram2_we_n_o <= '0' when ram_ce_n_o = "1101" else '1';
-   ram1_we_n_o <= ram_ce_n_o(0) or ram_we_n_o;
-   ram2_we_n_o <= ram_ce_n_o(1) or ram_we_n_o;
-	
+   
    -- Connect I/O signals
    
    -- make sure xst is pushing registers into io blocks
    
-   ram_addr_o <= sram_addr_active;
-   --ram_data_io <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
+--   ram_addr_o <= sram_addr_active;
+--   ram_data_io <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
    ram_oe_n_o <= sram_oe_n_active;
    ram_ce_n_o <= sram_cs_n_active;
    
    zxn_ram_a_di <= sram_port_a_do;
    zxn_ram_b_di <= sram_port_b_do;
 
-   -- zxdos memory
-   ram2_addr_o <= sram_addr_active;
-	ram2_data_io_zxdos <= sram_data_active(15 downto 8) when sram_oe_n_active = '1' else (others => 'Z');
-	ram_data_io_zxdos  <= sram_data_active(7 downto 0) when sram_oe_n_active = '1' else (others => 'Z');
-	ram_data_io(7 downto 0)  <= ram_data_io_zxdos when ram_ce_n_o = "1110" else (others => 'Z');
-	ram_data_io(15 downto 8) <= ram2_data_io_zxdos when ram_ce_n_o = "1101" else (others => 'Z');
+
+	MEMORY1M_512_512:
+   if (g_memory = X"04") generate --1Mb 8 bit (512kb + 512kb)
+   begin
+   -- zxdos 1Mb memory 512kb + 512kb
+	   ram_addr_o <= sram_addr_active;
+	   ram2_addr_o <= sram_addr_active;
+	   ram2_data_io_zxdos <= sram_data_active(15 downto 8) when sram_oe_n_active = '1' else (others => 'Z');
+	   ram_data_io_zxdos  <= sram_data_active(7 downto 0) when sram_oe_n_active = '1' else (others => 'Z');
+
+	   ram_data_io(7 downto 0)  <= ram_data_io_zxdos when ram_ce_n_o = "1110" else (others => 'Z');
+	   ram_data_io(15 downto 8) <= ram2_data_io_zxdos when ram_ce_n_o = "1101" else (others => 'Z');
+
+	   -- zxdos write enable 2 x 512k SRAM
+	   ram1_we_n_o <= ram_ce_n_o(0) or ram_we_n_o;
+	   ram2_we_n_o <= ram_ce_n_o(1) or ram_we_n_o;
+
+   end generate;	
 	
 
    ------------------------------------------------------------
@@ -1440,24 +1476,39 @@ begin
       
          if zxn_video_scandouble_en = '0' then
          
-            rgb_r_o <= rgb_15(8 downto 6);
-            rgb_g_o <= rgb_15(5 downto 3);
-            rgb_b_o <= rgb_15(2 downto 0);
+--	ZXDOS
+--            rgb_r_o <= rgb_15(8 downto 6);
+--            rgb_g_o <= rgb_15(5 downto 3);
+--            rgb_b_o <= rgb_15(2 downto 0);
+--            rgb_r_o <= rgb_15(8 downto 6) & rgb_15(8 downto 6);
+--            rgb_g_o <= rgb_15(5 downto 3) & rgb_15(5 downto 3);
+--            rgb_b_o <= rgb_15(2 downto 0) & rgb_15(2 downto 0);
+            rgb_r_o_prev <= rgb_15(8 downto 6) & rgb_15(8 downto 6) & rgb_15(8 downto 6) & rgb_15(8);
+            rgb_g_o_prev <= rgb_15(5 downto 3) & rgb_15(5 downto 3) & rgb_15(5 downto 3) & rgb_15(5);
+            rgb_b_o_prev <= rgb_15(2 downto 0) & rgb_15(2 downto 0) & rgb_15(2 downto 0) & rgb_15(2);
             
             -- csync on hsync when the scandoubler is off
             
             hsync_o <= zxn_rgb_cs_n;
             vsync_o <= '1';
-            
+            hsync_aux <= zxn_rgb_cs_n;
          else
          
-            rgb_r_o <= rgb_31(8 downto 6);
-            rgb_g_o <= rgb_31(5 downto 3);
-            rgb_b_o <= rgb_31(2 downto 0);
+--	ZXDOS
+--            rgb_r_o <= rgb_31(8 downto 6);
+--            rgb_g_o <= rgb_31(5 downto 3);
+--            rgb_b_o <= rgb_31(2 downto 0);
+--            rgb_r_o <= rgb_31(8 downto 6) & rgb_31(8 downto 6);
+--            rgb_g_o <= rgb_31(5 downto 3) & rgb_31(5 downto 3);
+--            rgb_b_o <= rgb_31(2 downto 0) & rgb_31(2 downto 0);
+            rgb_r_o_prev <= rgb_31(8 downto 6) & rgb_31(8 downto 6) & rgb_31(8 downto 6) & rgb_31(8);
+            rgb_g_o_prev <= rgb_31(5 downto 3) & rgb_31(5 downto 3) & rgb_31(5 downto 3) & rgb_31(5);
+            rgb_b_o_prev <= rgb_31(2 downto 0) & rgb_31(2 downto 0) & rgb_31(2 downto 0) & rgb_31(2);
             
             hsync_o <= hsync_out;
             vsync_o <= vsync_out;
-         
+				hsync_aux <= hsync_out;
+       
          end if;
       end if;
    end process;
@@ -1465,6 +1516,39 @@ begin
    -- csync_o is routed to the expansion bus and signals must be disabled there by default
 
    csync_o <= 'Z';
+
+   ------------------------------------------------------------
+   -- VIDEO : Monocrome signal
+   ------------------------------------------------------------
+	convert_grey: entity work.vga_to_greyscale  
+	port map(
+     r_in => rgb_r_o_prev,
+	  g_in => rgb_g_o_prev,
+	  b_in => rgb_b_o_prev,
+     y_out => rgb_y_sign
+    );
+
+	process (ps2_kbd_function_keys(11)) --F11
+	begin
+		if rising_edge(ps2_kbd_function_keys(11)) then
+			vga_grey <= vga_grey(2 downto 0) & vga_grey(3);
+		end if;
+   end process;
+	 
+   rgb_r_o <= rgb_r_o_prev(9 downto 4) when (vga_grey = "0001") 
+	           else rgb_y_sign (9 downto 4) when (vga_grey = "0010") --mono
+	           else rgb_y_sign (9 downto 4) when (vga_grey = "0100") --orange
+				  else (others=>'0'); --green
+
+   rgb_g_o <= rgb_g_o_prev(9 downto 4) when (vga_grey = "0001") 
+	           else rgb_y_sign (9 downto 4) when (vga_grey = "0010") --mono
+	           else ("00" & rgb_y_sign (9 downto 6)) when (vga_grey = "0100") --orange
+				  else rgb_y_sign (9 downto 4); --green
+
+   rgb_b_o <= rgb_b_o_prev(9 downto 4) when (vga_grey = "0001") 
+	           else rgb_y_sign (9 downto 4) when (vga_grey = "0010") --mono
+	           else ("0000" & rgb_y_sign (9 downto 8)) when (vga_grey = "0100") --orange
+				  else (others=>'0'); --green
 
    ------------------------------------------------------------
    -- VIDEO : HDMI --------------------------------------------
@@ -1562,8 +1646,10 @@ begin
 --      -- PCM audio
 --      
 --      I_AUDIO_ENABLE => zxn_hdmi_audio,
---      I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
---      I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
+----    I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
+----    I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
+--      I_AUDIO_PCM_L  => '0' & zxn_audio_L_pre & "00",
+--      I_AUDIO_PCM_R  => '0' & zxn_audio_R_pre & "00",
 --      
 --      -- TMDS parallel pixel synchronous outputs (serialize LSB first)
 --      
@@ -1808,7 +1894,9 @@ begin
       rows_i         => key_row_filtered,
       cols_o         => ps2_kbd_col,
       functionkeys_o => ps2_kbd_function_keys,  -- F12:F1
-      core_reload_o  => open,
+      --core_reload_o  => open,  --zxdos
+		core_reload_o  => hardreset_zxuno,  --zxdos
+		
       keymap_addr_i  => zxn_keymap_addr,
       keymap_data_i  => zxn_keymap_dat,
       keymap_we_i    => zxn_keymap_we
@@ -1844,34 +1932,37 @@ begin
       o_fnkeys          => membrane_function_keys   -- F10:F1 out
    );
       
-   -- membrane keyboard
-   
-   membrane_mod : entity work.membrane
-   port map
-   (
-      i_CLK             => CLK_28,
-      i_CLK_EN          => CLK_28_MEMBRANE_EN,
-      
-      i_reset           => reset_poweron,
-      
-      i_rows            => key_row_filtered,
-      o_cols            => membrane_col,
-      
-      o_membrane_rows   => membrane_rows,   -- 0 = active, 1 = Z
-      i_membrane_cols   => keyb_col_i_q,
-      
-      i_cancel_extended_entries => zxn_cancel_extended_entries,
-      o_extended_keys => zxn_extended_keys
-   );
-   
-   keyb_row_o(0) <= '0' when membrane_rows(0) = '0' else 'Z';
-   keyb_row_o(1) <= '0' when membrane_rows(1) = '0' else 'Z';
-   keyb_row_o(2) <= '0' when membrane_rows(2) = '0' else 'Z';
-   keyb_row_o(3) <= '0' when membrane_rows(3) = '0' else 'Z';
-   keyb_row_o(4) <= '0' when membrane_rows(4) = '0' else 'Z';
-   keyb_row_o(5) <= '0' when membrane_rows(5) = '0' else 'Z';
-   keyb_row_o(6) <= '0' when membrane_rows(6) = '0' else 'Z';
-   keyb_row_o(7) <= '0' when membrane_rows(7) = '0' else 'Z';
+--   -- membrane keyboard
+--   
+--   membrane_mod : entity work.membrane
+--   port map
+--   (
+--      i_CLK             => CLK_28,
+--      i_CLK_EN          => CLK_28_MEMBRANE_EN,
+--      
+--      i_reset           => reset_poweron,
+--      
+--      i_rows            => key_row_filtered,
+--      o_cols            => membrane_col,
+--      
+--      o_membrane_rows   => membrane_rows,   -- 0 = active, 1 = Z
+--      i_membrane_cols   => keyb_col_i_q,
+--      
+--      i_cancel_extended_entries => zxn_cancel_extended_entries,
+--      o_extended_keys => zxn_extended_keys
+--   );
+--   
+--   keyb_row_o(0) <= '0' when membrane_rows(0) = '0' else 'Z';
+--   keyb_row_o(1) <= '0' when membrane_rows(1) = '0' else 'Z';
+--   keyb_row_o(2) <= '0' when membrane_rows(2) = '0' else 'Z';
+--   keyb_row_o(3) <= '0' when membrane_rows(3) = '0' else 'Z';
+--   keyb_row_o(4) <= '0' when membrane_rows(4) = '0' else 'Z';
+--   keyb_row_o(5) <= '0' when membrane_rows(5) = '0' else 'Z';
+--   keyb_row_o(6) <= '0' when membrane_rows(6) = '0' else 'Z';
+--   keyb_row_o(7) <= '0' when membrane_rows(7) = '0' else 'Z';
+    --zxdos assign defaulf value to not used membrane outputs
+	 membrane_col <= (others=>'1');
+	 zxn_extended_keys <= (others=>'1');
 
    ------------------------------------------------------------
    -- SERIAL COMMUNICATION ------------------------------------
@@ -1900,8 +1991,8 @@ begin
    flash_sclk_o <= zxn_spi_sck;
    flash_mosi_o <= zxn_spi_mosi;
 
-   flash_wp_o   <= '0';
-   flash_hold_o <= '1';
+--   flash_wp_o   <= '0';
+--   flash_hold_o <= '1';
    
    -- uart (esp)
 
@@ -2205,7 +2296,9 @@ begin
       i_MOUSE_BUTTON       => zxn_mouse_button,
       i_MOUSE_WHEEL        => zxn_mouse_wheel(3 downto 0),
       
-      o_PS2_MODE           => zxn_ps2_mode,
+      --o_PS2_MODE           => zxn_ps2_mode,  --disable in gomados/zxdos
+      o_PS2_MODE           => open,  --disable in gomados/zxdos
+		
       o_MOUSE_CONTROL      => zxn_mouse_control,
       
       -- I2C
@@ -2370,5 +2463,22 @@ begin
 	 -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R
 	zxn_joy_left 	<=  not ("111" & joyA(6) & "1" & joyA(5) & joyA(4) & joyA(0) & joyA(1) & joyA(2) & joyA(3));
 	zxn_joy_right	<=  not ("111" & joyB(6) & "1" & joyB(5) & joyB(4) & joyB(0) & joyB(1) & joyB(2) & joyB(3));
+
+	-- disable ps2 mouse mode in gomados/zxdos
+   zxn_ps2_mode <= '0';  --disable in gomados/zxdos
+
+	--master reset CTRL+ALT+BACKSPACE
+   multiboot_lx16 : entity work.multiboot
+   port map
+	(
+    reset_i => reset_poweron,
+	 clk_icap => CLK_14,
+    REBOOT => hardreset_zxuno,
+	 reboot_core_x => zxn_flashboot,
+	 reboot_core_id => zxn_coreid
+   );
+--	flashboot_zxdos <= hardreset_zxuno or zxn_flashboot;
+--      --spiaddr_i   => "0110" & "1011" & zxn_coreid & "0000000000000000000"
+
 
 end architecture;

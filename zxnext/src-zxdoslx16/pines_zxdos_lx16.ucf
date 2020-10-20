@@ -173,10 +173,10 @@ NET "sd_sclk_o"         CLOCK_DEDICATED_ROUTE = FALSE;
 #NET 'sd_cs1_n_o'        LOC=''    | IOSTANDARD = LVTTL;
 
 # SPI Flash
-#NET "flash_cs_n_o"      LOC="T3"  | IOSTANDARD = LVCMOS33;
-#NET "flash_sclk_o"      LOC="R11" | IOSTANDARD = LVCMOS33;
-#NET "flash_mosi_o"      LOC="T10" | IOSTANDARD = LVCMOS33;
-#NET "flash_miso_i"      LOC="P10" | IOSTANDARD = LVCMOS33 | PULLUP;
+NET "flash_cs_n_o"      LOC="T3"  | IOSTANDARD = LVCMOS33;
+NET "flash_sclk_o"      LOC="R11" | IOSTANDARD = LVCMOS33;
+NET "flash_mosi_o"      LOC="T10" | IOSTANDARD = LVCMOS33;
+NET "flash_miso_i"      LOC="P10" | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET 'flash_wp_o'        LOC=''   | IOSTANDARD = LVCMOS33;
 #NET 'flash_hold_o'      LOC=''   | IOSTANDARD = LVCMOS33;
 
@@ -202,8 +202,8 @@ NET 'audioext_r_o'      LOC='H13'    | IOSTANDARD = LVCMOS33 | DRIVE = 16;
 #NET "mic_port_o"  		   LOC=""  | IOSTANDARD = LVCMOS33;
 NET "ear_port_i"           LOC="A14"  | IOSTANDARD = LVCMOS33;
 
-NET 'btn_divmmc_n_i'    LOC='T8'    | IOSTANDARD = LVCMOS33 | PULLUP;
-NET 'btn_multiface_n_i' LOC='R7'    | IOSTANDARD = LVCMOS33 | PULLUP;
+#NET 'btn_divmmc_n_i'    LOC='T8'    | IOSTANDARD = LVCMOS33 | PULLUP;
+#NET 'btn_multiface_n_i' LOC='R7'    | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET 'btn_reset_n_i'     LOC=''   | IOSTANDARD = LVCMOS33 | PULLUP;
 
 #NET BTN<0>            LOC="T8"  | IOSTANDARD = LVCMOS33;
@@ -269,26 +269,26 @@ NET 'btn_multiface_n_i' LOC='R7'    | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET 'bus_iorqula_n_i'   LOC='F12'   | IOSTANDARD = LVCMOS33;
 
 # Video output
- NET "rgb_r_o<2>"            LOC="G11"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_r_o<1>"            LOC="F13"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_r_o<0>"            LOC="F14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_r_o<2>"            LOC="G14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_r_o<1>"            LOC="G16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_r_o<0>"            LOC="H15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<5>"            LOC="G11"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<4>"            LOC="F13"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<3>"            LOC="F14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<2>"            LOC="G14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<1>"            LOC="G16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_r_o<0>"            LOC="H15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
 
- NET "rgb_g_o<2>"            LOC="B16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_g_o<1>"            LOC="C16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_g_o<0>"            LOC="D16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_g_o<2>"            LOC="E16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_g_o<1>"            LOC="F16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_g_o<0>"            LOC="F12"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<5>"            LOC="B16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<4>"            LOC="C16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<3>"            LOC="D16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<2>"            LOC="E16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<1>"            LOC="F16"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_g_o<0>"            LOC="F12"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
 
- NET "rgb_b_o<2>"            LOC="E12"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_b_o<1>"            LOC="B15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
- NET "rgb_b_o<0>"            LOC="C15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_b_o<2>"            LOC="D14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_b_o<1>"            LOC="E15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
-#NET "rgb_b_o<0>"            LOC="F15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<5>"            LOC="E12"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<4>"            LOC="B15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<3>"            LOC="C15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<2>"            LOC="D14"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<1>"            LOC="E15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
+ NET "rgb_b_o<0>"            LOC="F15"   | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ;
 
 NET "hsync_o"         LOC="G12"  | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ; # CSYNV en caso video compuesto
 NET "vsync_o"         LOC="H16"  | IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST ; # no usado si es solo VIDEO
