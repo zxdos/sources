@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/avlixa/FPGA/ZXDOS/ay38500/zxdos/pong_tb_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="numeric_std" />
+            <top_module name="pong_tb" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_textio" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="textio" />
+            <top_module name="vl_types" />
+            <top_module name="zpupkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="19" />
+   <wave_markers>
+      <marker time="705270000000" label="" />
+      <marker time="253270000000" label="" />
+      <marker time="189270000000" label="" />
+   </wave_markers>
+   <wvobject fp_name="/pong_tb/clock_50" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clock_50</obj_property>
+      <obj_property name="ObjectShortName">clock_50</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/clkvga" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clkvga</obj_property>
+      <obj_property name="ObjectShortName">clkvga</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/reset" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/resetChip" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">resetChip</obj_property>
+      <obj_property name="ObjectShortName">resetChip</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/sram_data" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">sram_data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_data[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/spi_miso" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">spi_miso</obj_property>
+      <obj_property name="ObjectShortName">spi_miso</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/joy_data" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">joy_data</obj_property>
+      <obj_property name="ObjectShortName">joy_data</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/ps2_data" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ps2_data</obj_property>
+      <obj_property name="ObjectShortName">ps2_data</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/ps2_clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ps2_clk</obj_property>
+      <obj_property name="ObjectShortName">ps2_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/led1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">led1</obj_property>
+      <obj_property name="ObjectShortName">led1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/led3" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">led3</obj_property>
+      <obj_property name="ObjectShortName">led3</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_hs" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_hs</obj_property>
+      <obj_property name="ObjectShortName">vga_hs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_vs" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_vs</obj_property>
+      <obj_property name="ObjectShortName">vga_vs</obj_property>
+   </wvobject>
+   <wvobject fp_name="group28" type="group">
+      <obj_property name="label">SCANDOUBLER</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/clkvga" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">clkvga</obj_property>
+         <obj_property name="ObjectShortName">clkvga</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/clkvideo" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">clkvideo</obj_property>
+         <obj_property name="ObjectShortName">clkvideo</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/ce_2pix" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ce_2pix</obj_property>
+         <obj_property name="ObjectShortName">ce_2pix</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/scanlines" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scanlines</obj_property>
+         <obj_property name="ObjectShortName">scanlines</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/csync" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">csync</obj_property>
+         <obj_property name="ObjectShortName">csync</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/wraddr" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">wraddr[8:0]</obj_property>
+         <obj_property name="ObjectShortName">wraddr[8:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/v_in" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">v_in</obj_property>
+         <obj_property name="ObjectShortName">v_in</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/hs_out" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hs_out</obj_property>
+         <obj_property name="ObjectShortName">hs_out</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/v_out" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">v_out</obj_property>
+         <obj_property name="ObjectShortName">v_out</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/pixel_y" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">pixel_y[9:0]</obj_property>
+         <obj_property name="ObjectShortName">pixel_y[9:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/in_col_next" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">in_col_next[9:0]</obj_property>
+         <obj_property name="ObjectShortName">in_col_next[9:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/h_de" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">h_de</obj_property>
+         <obj_property name="ObjectShortName">h_de</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/rdaddr" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">rdaddr[8:0]</obj_property>
+         <obj_property name="ObjectShortName">rdaddr[8:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/v_de" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">v_de</obj_property>
+         <obj_property name="ObjectShortName">v_de</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/hs" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hs</obj_property>
+         <obj_property name="ObjectShortName">hs</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/pixconv_next" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">pixconv_next[2:0]</obj_property>
+         <obj_property name="ObjectShortName">pixconv_next[2:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/vs_out" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">vs_out</obj_property>
+         <obj_property name="ObjectShortName">vs_out</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/vs_outD" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">vs_outD</obj_property>
+         <obj_property name="ObjectShortName">vs_outD</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/pixel_x" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">pixel_x[9:0]</obj_property>
+         <obj_property name="ObjectShortName">pixel_x[9:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/scanline" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">scanline</obj_property>
+         <obj_property name="ObjectShortName">scanline</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/in_col" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">in_col[9:0]</obj_property>
+         <obj_property name="ObjectShortName">in_col[9:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/sync_len" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">sync_len[7:0]</obj_property>
+         <obj_property name="ObjectShortName">sync_len[7:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/line_buffer" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">line_buffer[256:0]</obj_property>
+         <obj_property name="ObjectShortName">line_buffer[256:0]</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/q" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">q</obj_property>
+         <obj_property name="ObjectShortName">q</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/vs" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">vs</obj_property>
+         <obj_property name="ObjectShortName">vs</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/csD" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">csD</obj_property>
+         <obj_property name="ObjectShortName">csD</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/sd_col" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">sd_col[9:0]</obj_property>
+         <obj_property name="ObjectShortName">sd_col[9:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/line_cnt" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">line_cnt[9:0]</obj_property>
+         <obj_property name="ObjectShortName">line_cnt[9:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/line_cnt_vga" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">line_cnt_vga[9:0]</obj_property>
+         <obj_property name="ObjectShortName">line_cnt_vga[9:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/sd_toggle" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">sd_toggle</obj_property>
+         <obj_property name="ObjectShortName">sd_toggle</obj_property>
+      </wvobject>
+      <wvobject fp_name="/pong_tb/uut/scandoubler/pixconv" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">pixconv[2:0]</obj_property>
+         <obj_property name="ObjectShortName">pixconv[2:0]</obj_property>
+         <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_r" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_r[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_r[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_g" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_g[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_g[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_b" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_b[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_b[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/stdn" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">stdn</obj_property>
+      <obj_property name="ObjectShortName">stdn</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/stdnb" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">stdnb</obj_property>
+      <obj_property name="ObjectShortName">stdnb</obj_property>
+   </wvobject>
+</wave_config>

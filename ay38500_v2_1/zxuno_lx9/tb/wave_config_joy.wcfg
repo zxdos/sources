@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/avlixa/FPGA/ZXDOS/ay38500/zxdos/pong_tb_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="numeric_std" />
+            <top_module name="pong_tb" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_textio" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="textio" />
+            <top_module name="vl_types" />
+            <top_module name="zpupkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="26" />
+   <wvobject fp_name="/pong_tb/clock_50" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">clock_50</obj_property>
+      <obj_property name="ObjectShortName">clock_50</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/sram_data" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">sram_data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">sram_data[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/spi_miso" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">spi_miso</obj_property>
+      <obj_property name="ObjectShortName">spi_miso</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/joy_data" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">joy_data</obj_property>
+      <obj_property name="ObjectShortName">joy_data</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/ps2_data" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ps2_data</obj_property>
+      <obj_property name="ObjectShortName">ps2_data</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/ps2_clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">ps2_clk</obj_property>
+      <obj_property name="ObjectShortName">ps2_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/led1" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">led1</obj_property>
+      <obj_property name="ObjectShortName">led1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/led3" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">led3</obj_property>
+      <obj_property name="ObjectShortName">led3</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_hs" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_hs</obj_property>
+      <obj_property name="ObjectShortName">vga_hs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_vs" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_vs</obj_property>
+      <obj_property name="ObjectShortName">vga_vs</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_r" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_r[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_r[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_g" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_g[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_g[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/vga_b" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">vga_b[5:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_b[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/r_lpPos" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">r_lpPos[7:0]</obj_property>
+      <obj_property name="ObjectShortName">r_lpPos[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/l_acel" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">l_acel[3:0]</obj_property>
+      <obj_property name="ObjectShortName">l_acel[3:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/l_temp" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">l_temp[20:0]</obj_property>
+      <obj_property name="ObjectShortName">l_temp[20:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/r_rpPos" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">r_rpPos[7:0]</obj_property>
+      <obj_property name="ObjectShortName">r_rpPos[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/lpDWN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">lpDWN</obj_property>
+      <obj_property name="ObjectShortName">lpDWN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/rpDWN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rpDWN</obj_property>
+      <obj_property name="ObjectShortName">rpDWN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/lpIN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">lpIN</obj_property>
+      <obj_property name="ObjectShortName">lpIN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/rpIN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rpIN</obj_property>
+      <obj_property name="ObjectShortName">rpIN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/r_lpIN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">r_lpIN</obj_property>
+      <obj_property name="ObjectShortName">r_lpIN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/r_rpIN" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">r_rpIN</obj_property>
+      <obj_property name="ObjectShortName">r_rpIN</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/reset" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/joy1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">joy1[7:0]</obj_property>
+      <obj_property name="ObjectShortName">joy1[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/pong_tb/uut/joy2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">joy2[7:0]</obj_property>
+      <obj_property name="ObjectShortName">joy2[7:0]</obj_property>
+   </wvobject>
+</wave_config>
