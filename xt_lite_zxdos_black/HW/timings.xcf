@@ -1,0 +1,6 @@
+# Timing constraints
+#NET "sys_inst/CLK_50MHZ_buf" KEEP | S | PERIOD=20 ns;
+NET "sys_inst/clk_25" KEEP | S | PERIOD=40 ns;
+NET "sys_inst/clk_sdr" KEEP | S | PERIOD=14.28 ns;
+NET "sys_inst/clk_cpu" KEEP | S | PERIOD=40 ns;
+NET "sys_inst/clk_dac" KEEP | S | PERIOD=88.57 ns;
