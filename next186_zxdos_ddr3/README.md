@@ -7,6 +7,10 @@ Features:
 - 40 MHz DSP
 - OPL3 support
 - PS/2 mouse and keyboard support
+- BTN0 - reset button
+- BTN1 - NMI button
+- LED0 - HALT
+- LED1 - SD card access
 
 Xilinx ISE 14.7 is required to build the core.
 
