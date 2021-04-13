@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<generated_project xmlns="http://www.xilinx.com/XMLSchema" xmlns:xil_pn="http://www.xilinx.com/XMLSchema">
+
+  <!--                                                          -->
+
+  <!--             For tool use only. Do not edit.              -->
+
+  <!--                                                          -->
+
+  <!-- ProjectNavigator created generated project file.         -->
+
+  <!-- For use in tracking generated file and other information -->
+
+  <!-- allowing preservation of process status.                 -->
+
+  <!--                                                          -->
+
+  <!-- Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved. -->
+
+  <version xmlns="http://www.xilinx.com/XMLSchema">11.1</version>
+
+  <sourceproject xmlns="http://www.xilinx.com/XMLSchema" xil_pn:fileType="FILE_XISE" xil_pn:name="next186_zxdos_ddr3.xise"/>
+
+  <files xmlns="http://www.xilinx.com/XMLSchema">
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="_ngo"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/bitgen.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/map.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/ngdbuild.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/par.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/trce.xmsgs"/>
+    <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/xst.xmsgs"/>
+    <file xil_pn:fileType="FILE_LOG" xil_pn:name="ipcore_dir/coregen.log"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BITGEN_REPORT" xil_pn:name="next186_zxdos_ddr3.bgn" xil_pn:subbranch="FPGAConfiguration"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BIT" xil_pn:name="next186_zxdos_ddr3.bit" xil_pn:subbranch="FPGAConfiguration"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGDBUILD_LOG" xil_pn:name="next186_zxdos_ddr3.bld"/>
+    <file xil_pn:fileType="FILE_CMD_LOG" xil_pn:name="next186_zxdos_ddr3.cmd_log"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BITGEN_DRC" xil_pn:name="next186_zxdos_ddr3.drc" xil_pn:subbranch="FPGAConfiguration"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_LSO" xil_pn:name="next186_zxdos_ddr3.lso"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NCD" xil_pn:name="next186_zxdos_ddr3.ncd" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGC" xil_pn:name="next186_zxdos_ddr3.ngc"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGD" xil_pn:name="next186_zxdos_ddr3.ngd"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGR" xil_pn:name="next186_zxdos_ddr3.ngr"/>
+    <file xil_pn:fileType="FILE_PAD_MISC" xil_pn:name="next186_zxdos_ddr3.pad"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PAR_REPORT" xil_pn:name="next186_zxdos_ddr3.par" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PCF" xil_pn:name="next186_zxdos_ddr3.pcf" xil_pn:subbranch="Map"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="next186_zxdos_ddr3.prj"/>
+    <file xil_pn:fileType="FILE_TRCE_MISC" xil_pn:name="next186_zxdos_ddr3.ptwx"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_STX" xil_pn:name="next186_zxdos_ddr3.stx"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_REPORT" xil_pn:name="next186_zxdos_ddr3.syr"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_TIMING_TXT_REPORT" xil_pn:name="next186_zxdos_ddr3.twr" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_TIMING_XML_REPORT" xil_pn:name="next186_zxdos_ddr3.twx" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_UNROUTES" xil_pn:name="next186_zxdos_ddr3.unroutes" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_BITGEN_REPORT" xil_pn:name="next186_zxdos_ddr3.ut" xil_pn:subbranch="FPGAConfiguration"/>
+    <file xil_pn:fileType="FILE_XPI" xil_pn:name="next186_zxdos_ddr3.xpi"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST" xil_pn:name="next186_zxdos_ddr3.xst"/>
+    <file xil_pn:fileType="FILE_HTML" xil_pn:name="next186_zxdos_ddr3_envsettings.html"/>
+    <file xil_pn:fileType="FILE_NCD" xil_pn:name="next186_zxdos_ddr3_guide.ncd" xil_pn:origination="imported"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_MAP_REPORT" xil_pn:name="next186_zxdos_ddr3_map.map" xil_pn:subbranch="Map"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_MAP_REPORT" xil_pn:name="next186_zxdos_ddr3_map.mrp" xil_pn:subbranch="Map"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NCD" xil_pn:name="next186_zxdos_ddr3_map.ncd" xil_pn:subbranch="Map"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGM" xil_pn:name="next186_zxdos_ddr3_map.ngm" xil_pn:subbranch="Map"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="next186_zxdos_ddr3_map.xrpt"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="next186_zxdos_ddr3_ngdbuild.xrpt"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PAD_EXCEL_REPORT" xil_pn:name="next186_zxdos_ddr3_pad.csv" xil_pn:subbranch="Par"/>
+    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_PAD_TXT_REPORT" xil_pn:name="next186_zxdos_ddr3_pad.txt" xil_pn:subbranch="Par"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="next186_zxdos_ddr3_par.xrpt"/>
+    <file xil_pn:fileType="FILE_HTML" xil_pn:name="next186_zxdos_ddr3_summary.html"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="next186_zxdos_ddr3_summary.xml"/>
+    <file xil_pn:fileType="FILE_WEBTALK" xil_pn:name="next186_zxdos_ddr3_usage.xml"/>
+    <file xil_pn:fileType="FILE_XRPT" xil_pn:name="next186_zxdos_ddr3_xst.xrpt"/>
+    <file xil_pn:fileType="FILE_HTML" xil_pn:name="usage_statistics_webtalk.html"/>
+    <file xil_pn:fileType="FILE_LOG" xil_pn:name="webtalk.log"/>
+    <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="webtalk_pn.xml"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="xlnx_auto_0_xdb"/>
+    <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="xst"/>
+  </files>
+
+  <transforms xmlns="http://www.xilinx.com/XMLSchema">
+    <transform xil_pn:end_ts="1618318918" xil_pn:name="TRAN_copyInitialToXSTAbstractSynthesis" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:name="TRAN_schematicsToHdl" xil_pn:prop_ck="4032897817191527958" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:in_ck="-1071854848192321761" xil_pn:name="TRAN_regenerateCores" xil_pn:prop_ck="6736894348147818732" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="ipcore_dir/DAC_SRAM.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/DAC_SRAM.v"/>
+      <outfile xil_pn:name="ipcore_dir/cache.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/cache.v"/>
+      <outfile xil_pn:name="ipcore_dir/datamem16.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/datamem16.v"/>
+      <outfile xil_pn:name="ipcore_dir/dcm.v"/>
+      <outfile xil_pn:name="ipcore_dir/dcm1.v"/>
+      <outfile xil_pn:name="ipcore_dir/dcm_dsp.v"/>
+      <outfile xil_pn:name="ipcore_dir/fifo.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/fifo.v"/>
+      <outfile xil_pn:name="ipcore_dir/instrmem.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/instrmem.v"/>
+      <outfile xil_pn:name="ipcore_dir/opl3_in.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/opl3_in.v"/>
+      <outfile xil_pn:name="ipcore_dir/opl3_mem.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/opl3_mem.v"/>
+      <outfile xil_pn:name="ipcore_dir/q16.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/q16.v"/>
+      <outfile xil_pn:name="ipcore_dir/q16f.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/q16f.v"/>
+      <outfile xil_pn:name="ipcore_dir/qdsp.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/qdsp.v"/>
+      <outfile xil_pn:name="ipcore_dir/sndfifo.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/sndfifo.v"/>
+      <outfile xil_pn:name="ipcore_dir/sr_font.ngc"/>
+      <outfile xil_pn:name="ipcore_dir/sr_font.v"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:in_ck="-4706471535996584160" xil_pn:name="TRAN_SubProjectAbstractToPreProxy" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:name="TRAN_xawsTohdl" xil_pn:prop_ck="3552848562847679128" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:in_ck="-4706471535996584160" xil_pn:name="TRAN_SubProjectPreToStructuralProxy" xil_pn:prop_ck="-1970394750299821092" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618318918" xil_pn:name="TRAN_platgen" xil_pn:prop_ck="8937841119549026934" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319025" xil_pn:in_ck="7706275329512274461" xil_pn:name="TRANEXT_xstsynthesize_spartan6" xil_pn:prop_ck="-7241846419311030054" xil_pn:start_ts="1618318918">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="_xmsgs/xst.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.lso"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ngc"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ngr"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.prj"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.stx"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.syr"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.xst"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_xst.xrpt"/>
+      <outfile xil_pn:name="webtalk_pn.xml"/>
+      <outfile xil_pn:name="xst"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319025" xil_pn:in_ck="-2187735461955221004" xil_pn:name="TRAN_compileBCD2" xil_pn:prop_ck="-4162619900708450493" xil_pn:start_ts="1618319025">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319031" xil_pn:in_ck="2509639296967379126" xil_pn:name="TRANEXT_ngdbuild_FPGA" xil_pn:prop_ck="-8051044778962335027" xil_pn:start_ts="1618319025">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_ngo"/>
+      <outfile xil_pn:name="_xmsgs/ngdbuild.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.bld"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ngd"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_ngdbuild.xrpt"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319148" xil_pn:in_ck="4390180019460976440" xil_pn:name="TRANEXT_map_spartan6" xil_pn:prop_ck="325589658960453222" xil_pn:start_ts="1618319031">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForOutputs"/>
+      <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="_xmsgs/map.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.pcf"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_map.map"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_map.mrp"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_map.ncd"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_map.ngm"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_map.xrpt"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_summary.xml"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_usage.xml"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319342" xil_pn:in_ck="-8552092926311982575" xil_pn:name="TRANEXT_par_spartan6" xil_pn:prop_ck="-6937897011652631087" xil_pn:start_ts="1618319148">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_xmsgs/par.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ncd"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.pad"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.par"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ptwx"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.unroutes"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.xpi"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_pad.csv"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_pad.txt"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3_par.xrpt"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319365" xil_pn:in_ck="4130115223221288516" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="5341574683187206424" xil_pn:start_ts="1618319342">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_xmsgs/bitgen.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.bgn"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.bit"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.drc"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.ut"/>
+      <outfile xil_pn:name="usage_statistics_webtalk.html"/>
+      <outfile xil_pn:name="webtalk.log"/>
+      <outfile xil_pn:name="webtalk_pn.xml"/>
+    </transform>
+    <transform xil_pn:end_ts="1618319342" xil_pn:in_ck="940910560821155764" xil_pn:name="TRAN_postRouteTrce" xil_pn:prop_ck="445577401284416184" xil_pn:start_ts="1618319294">
+      <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="WarningsGenerated"/>
+      <status xil_pn:value="ReadyToRun"/>
+      <outfile xil_pn:name="_xmsgs/trce.xmsgs"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.twr"/>
+      <outfile xil_pn:name="next186_zxdos_ddr3.twx"/>
+    </transform>
+  </transforms>
+
+</generated_project>

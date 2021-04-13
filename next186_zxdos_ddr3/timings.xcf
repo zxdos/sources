@@ -1,0 +1,10 @@
+# Timing constraints
+#NET "sys_inst/clk_50" KEEP | S | PERIOD=20 ns;
+#NET "sys_inst/clk_250" KEEP | S | PERIOD=4 ns;
+NET "sys_inst/CLK14745600" KEEP | S | PERIOD=67.81 ns;
+NET "sys_inst/CLK_50_BUF" KEEP | S | PERIOD=20 ns;
+NET "sys_inst/clk_25" KEEP | S | PERIOD=40 ns;
+NET "sys_inst/CLK44100x256" KEEP | S | PERIOD=87.997 ns;
+NET "sys_inst/clk_cpu" KEEP | S | PERIOD=33.33 ns;
+NET "sys_inst/clk_sdr" KEEP | S | PERIOD=6 ns;
+NET "sys_inst/clk_dsp" KEEP | S | PERIOD=25 ns;
