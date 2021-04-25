@@ -1,0 +1,44 @@
+######################################################
+#         _______  _______  _______  _               #
+#        (  ___  )(  ____ \(  ___  )( (    /|        #
+#        | (   ) || (    \/| (   ) ||  \  ( |        #
+#        | (___) || (__    | |   | ||   \ | |        #
+#        |  ___  ||  __)   | |   | || (\ \) |        #
+#        | (   ) || (      | |   | || | \   |        #
+#        | )   ( || (____/\| (___) || )  \  |        #
+#        |/     \|(_______/(_______)|/    )_)        #
+#                                                    #
+######################################################
+# Clocks & debug
+NET "CLK50"    LOC = P123 | IOSTANDARD = LVTTL;
+NET "CLK50" TNM_NET = sys_clk_pin;
+TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 50000 kHz;
+
+## VGA Connector
+NET "VGA_R[0]" LOC = P80  | IOSTANDARD = LVTTL;
+NET "VGA_R[1]" LOC = P81  | IOSTANDARD = LVTTL;
+NET "VGA_R[2]" LOC = P82  | IOSTANDARD = LVTTL;
+NET "VGA_R[3]" LOC = P83  | IOSTANDARD = LVTTL;
+NET "VGA_G[0]" LOC = P74  | IOSTANDARD = LVTTL;
+NET "VGA_G[1]" LOC = P75  | IOSTANDARD = LVTTL;
+NET "VGA_G[2]" LOC = P78  | IOSTANDARD = LVTTL;
+NET "VGA_G[3]" LOC = P79  | IOSTANDARD = LVTTL;
+NET "VGA_B[0]" LOC = P62  | IOSTANDARD = LVTTL;
+NET "VGA_B[1]" LOC = P64  | IOSTANDARD = LVTTL;
+NET "VGA_B[2]" LOC = P66  | IOSTANDARD = LVTTL;
+NET "VGA_B[3]" LOC = P67  | IOSTANDARD = LVTTL;
+NET "VGA_VS"   LOC = P61  | IOSTANDARD = LVTTL;
+NET "VGA_HS"   LOC = P59  | IOSTANDARD = LVTTL;
+
+#NET "PS2CLK" CLOCK_DEDICATED_ROUTE = FALSE;
+NET "PS2CLK"   LOC = P58  | IOSTANDARD = LVTTL;
+NET "PS2DAT"   LOC = P57  | IOSTANDARD = LVTTL;
+
+# audio output (delta-sigma dac)
+NET "AUDIO_L"  LOC = P84  | IOSTANDARD = LVTTL;
+NET "AUDIO_R"  LOC = P85  | IOSTANDARD = LVTTL;
+# SD/MMC
+NET "SPI_CS"   LOC="P44"  | IOSTANDARD = LVTTL;
+NET "SPI_CLK"  LOC="P40"  | IOSTANDARD = LVTTL;
+NET "SPI_MOSI" LOC="P41"  | IOSTANDARD = LVTTL;
+NET "SPI_MISO" LOC="P38"  | IOSTANDARD = LVTTL;
