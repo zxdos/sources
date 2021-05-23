@@ -37,6 +37,7 @@ module vga_block(
    input  [15:0]   fbuf_data
 );
 
+parameter PIXELWFIELDGROUND = 512;
 
 // VGA configuration (640x480)
 
@@ -74,6 +75,7 @@ end
 
 // The actual pixel
 wire[10:0] pixel_x, pixel_y;
+reg[10:0]  pixel_x_prev, disp_pixel_x;
 
 wire display_enable;
 
@@ -104,8 +106,38 @@ vga_sync SyncGenerator(
 
 // Display generator
 
-wire[10:0] disp_pixel_x = ntsc ? pixel_x - (704 - 640) / 2 : pixel_x;
-wire disp_display_enable = display_enable & (disp_pixel_x < 640);
+//wire[10:0] disp_pixel_x = ntsc ? pixel_x - (704 - 640) / 2 : pixel_x;
+//wire disp_display_enable = display_enable & (disp_pixel_x < 640);
+
+//wire[10:0] disp_pixel_x = ntsc ? pixel_x - (704 - 512) / 2 : pixel_x - (640 - 512) / 2;
+//wire disp_display_enable = display_enable & (disp_pixel_x < PIXELWFIELDGROUND);
+
+wire[10:0] ini_pix_x = ntsc ? (704 - PIXELWFIELDGROUND) / 2 : (640 - PIXELWFIELDGROUND) / 2;
+//reg disp_hor_enable = 1'b0;
+//always @(posedge clk) begin
+//   pixel_x_prev <= pixel_x;
+//   if ( pixel_x == ini_pix_x ) begin
+//      disp_hor_enable <= 1'b1;
+//      disp_pixel_x <= 11'd0;
+//   end else if ( disp_pixel_x == (PIXELWFIELDGROUND - 1) ) begin
+//      disp_hor_enable <= 1'b0;
+//      disp_pixel_x <= 11'h8FF;   
+//   end else if ( (pixel_x != pixel_x_prev) && disp_hor_enable ) begin
+//      disp_pixel_x <= disp_pixel_x + 1'd1;
+//      //disp_hor_enable <= disp_hor_enable;
+//   end
+//   else begin
+//      disp_pixel_x <= disp_pixel_x;
+//      //disp_hor_enable <= disp_hor_enable;
+//   end
+//end
+//wire disp_display_enable = display_enable & disp_hor_enable;
+
+always @(posedge clk) begin
+   disp_pixel_x <= pixel_x - ini_pix_x;
+end
+wire disp_display_enable = display_enable & (disp_pixel_x < PIXELWFIELDGROUND) 
+                                          & (disp_pixel_x >= 0);
 
 display Display(
    .clk            (clk          ),

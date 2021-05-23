@@ -41,3 +41,39 @@ NET "SPI_CS"   LOC= N9  | IOSTANDARD = LVTTL;
 NET "SPI_CLK"  LOC= T6  | IOSTANDARD = LVTTL;
 NET "SPI_MOSI" LOC= M9  | IOSTANDARD = LVTTL;
 NET "SPI_MISO" LOC= T7  | IOSTANDARD = LVTTL;
+
+# SRAM
+NET "sram_addr<0>"    LOC="H14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<1>"    LOC="J16"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<2>"    LOC="J11"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<3>"    LOC="J13"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<4>"    LOC="K16"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<5>"    LOC="K11"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<6>"    LOC="L12"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<7>"    LOC="M13"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<8>"    LOC="M15"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<9>"    LOC="N14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<10>"   LOC="L14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<11>"   LOC="M14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<12>"   LOC="K14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<13>"   LOC="L13"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<14>"   LOC="J12"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<15>"   LOC="T14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<16>"   LOC="T15"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<17>"   LOC="R14"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<18>"   LOC="R16"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<19>"   LOC="F10"  | IOSTANDARD = LVCMOS33;
+NET "sram_addr<20>"   LOC="A12"  | IOSTANDARD = LVCMOS33;
+
+NET "sram_data<0>"    LOC="K15"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<1>"    LOC="N16"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<2>"    LOC="L16"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<3>"    LOC="K12"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<4>"    LOC="J14"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<5>"    LOC="P15"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<6>"    LOC="P16"  | IOSTANDARD = LVCMOS33;
+NET "sram_data<7>"    LOC="R15"  | IOSTANDARD = LVCMOS33;
+
+NET "sram_we_n"       LOC="M16"  | IOSTANDARD = LVCMOS33;
+NET "sram_ub_n"       LOC="E13"  | IOSTANDARD = LVCMOS33;
+NET "sram_lb_n"       LOC="C11"  | IOSTANDARD = LVCMOS33;

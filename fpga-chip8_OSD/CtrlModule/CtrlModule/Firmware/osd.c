@@ -7,6 +7,16 @@
 
 int osd_cursory, osd_cursorx;
 
+//extern char debugline[13][30];
+
+static void copyname(char *dst,const unsigned char *src,int l)
+{
+	int i;
+	for(i=0;i<l;++i)
+		*dst++=*src++;
+	*dst++=0;
+}
+
 void OSD_Clear()
 {
 	volatile unsigned char *p;
@@ -107,8 +117,7 @@ void OSD_Show(int visible)
 		hh=hf&0xff;
 		osd_syncpolarity|=2; // Flip HSync polarity
 	}
-
-
+	
 	// Extract height of frame (vh) and sync pulse (vl)
 	vh=vf>>8;
 	vl=vf&0xff;
@@ -128,29 +137,34 @@ void OSD_Show(int visible)
 //	else
 //		pixelclock=2;
 // Clock 50Mhz
-		if(hh>700) {
-			pixelclock=2;
-			hwide=80;
+		if(hh>800) {   //RGB
+			pixelclock=3;
+			hwide=160;
+			hl = 99;
 		}
-		else {
+		else {       //VGA
 			pixelclock=1; //pixelclock=1
-			hwide=60; //hwide=52;
+			hwide=80; //hwide=52;
+			hl = 261;
 		}
 
 	HW_OSD(REG_OSD_PIXELCLOCK)=(1<<pixelclock)-1;
 
 	dipsw=HW_HOST(REG_HOST_SW);
 
-//	printf("Frame width is %d, frame height is %d\n",hh,vh);
+	//printf("Frame width is %d, frame height is %d\n",hh,vh);
 
 	//hl=((hh-100)-80)>>(pixelclock-1);
 	//vl=((vh-60)-48)/2;
 	//hl=((hh-174)-80)>>(pixelclock-1);
 	//vl=((vh-80)-(48+48))/2;
-	hl=((hh-hwide)-80)>>(pixelclock-1); //hl=((hh-50)-80)>>(pixelclock-1);
+	//hl=((hh-hwide)-81)>>(pixelclock-1); //hl=((hh-50)-80)>>(pixelclock-1);
+	//hl=(hh-hwide)/(pixelclock<<1);
 	vl=((vh-60)-48)/2;
 
-//	printf("OSD Offsets: %d, %d\n",hl,vl);
+	//printf("OSD Offsets: %d, %d\n",hl,vl);
+
+	//copyname("10",&debugline[0],2);
 
 	HW_OSD(REG_OSD_ENABLE)=osd_syncpolarity|(visible ? 1 : 0);
 	HW_OSD(REG_OSD_XPOS)=-hl;

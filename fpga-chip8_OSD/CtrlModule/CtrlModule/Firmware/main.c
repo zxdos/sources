@@ -24,6 +24,10 @@ int vdcload=0; //carga de charset de VDC activada
 static struct menu_entry KeyboardHelp[]; // Forward declaration.
 static struct menu_entry CoreCredits[]; // Forward declaration.
 
+
+static char debugline[13][30];
+
+
 struct menu_entry *topmenu;
 
 
@@ -120,6 +124,10 @@ static struct menu_entry topmenu2[]=
 	{MENU_ENTRY_TOGGLE,"Sound on/off",MENU_ACTION(0)},
 	{MENU_ENTRY_CALLBACK,"Keyboard Help",MENU_ACTION(&Keyboard_Help)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
+	{MENU_ENTRY_CALLBACK,debugline[0],MENU_ACTION(0)},
+	{MENU_ENTRY_CALLBACK,debugline[1],MENU_ACTION(0)},
+	{MENU_ENTRY_CALLBACK,debugline[2],MENU_ACTION(0)},
+	{MENU_ENTRY_CALLBACK,debugline[3],MENU_ACTION(0)},
 	{MENU_ENTRY_NULL,0,0}
 };
 

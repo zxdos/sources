@@ -116,7 +116,7 @@ begin
 		if (hsync_rise and vsync_change) then -- rising edge?
 			hframe(15 downto 8)<=std_logic_vector(hcounter(13 downto 6));
       end if;
-		if (hsync_fall and vsync_change) then -- falling edge?
+		if (hsync_fall) then --(hsync_fall and vsync_change) then -- falling edge?
 			hframe(7 downto 0)<=std_logic_vector(hcounter(13 downto 6));
 		end if;
 	end if;

@@ -16,7 +16,8 @@
 */
 
 module chip8(
-   input         vga_clk,       // 13.500.000 or 25.152.000 Hz clock
+   input         vga_clk,       // 25.152.000 Hz clock
+   input         ntsc_clk,      // 13.500.000 Hz clock
    input         cpu_clk,       // clock  5kz  - 1x, 2x, 3x, 4x
    input         blit_clk,      // 8.000.000 Hz clock, or as fast as it can get.
    input         reset_i,
@@ -37,6 +38,7 @@ module chip8(
    input         ps2_data,
    input         ps2_clk,
    output        keyF11,
+   output        key_videomode,
 
    input         uploading,
    input         upload_en,
@@ -48,6 +50,7 @@ module chip8(
 
 wire vga_hires;                   // whether to use the hires display
 wire vga_beam_outside;            // the beam is outside the playfield
+wire video_clock;
 
 // Framebuffer RAM wires, used by VGA circuit
 
@@ -84,10 +87,29 @@ wire          blit_enable;
 wire          blit_ready;
 wire          blit_collision;
 
+// Select video clock
+
+   // BUFGMUX: Global Clock Mux Buffer
+   //          Spartan-6
+   // Xilinx HDL Language Template, version 14.7
+
+   BUFGMUX #(
+      .CLK_SEL_TYPE("SYNC")  // Glitchles ("SYNC") or fast ("ASYNC") clock switch-over
+   )
+   BUFGMUX_inst_video (
+      .O(video_clock),   // 1-bit output: Clock buffer output
+      .I0(vga_clk), // 1-bit input: Clock buffer input (S=0)
+      .I1(ntsc_clk), // 1-bit input: Clock buffer input (S=1)
+      .S(ntsc)    // 1-bit input: Clock buffer select
+   );
+
+   // End of BUFGMUX_inst instantiation
+   
 // VGA framebuffer
 
 framebuffer VGAFramebuffer (
-         .vga_clk       (vga_clk        ),
+         //.vga_clk       (vga_clk        ),
+         .vga_clk       (video_clock        ),
          .vga_addr      (vga_fbuf_addr  ),
          .vga_out       (vga_fbuf_data  ),
 
@@ -130,6 +152,7 @@ wire       pressed = ps2_key[9];
 wire [7:0] code    = ps2_key[7:0];
 reg        old_state, reset_b;
 reg        color_sel, keyF11;
+reg        CTRL_key, ALT_key, key_videomode;
 
 always @(posedge blit_clk) begin
    old_state <= ps2_key[10];
@@ -159,6 +182,13 @@ always @(posedge blit_clk) begin
          8'h09: color_sel             <= pressed; // F10
          8'h78: keyF11                <= pressed; // F11
          8'h07: reset_b               <= pressed; // F12 RESET
+
+         8'h14: CTRL_key              <= pressed; //CTRL
+         8'h11: ALT_key               <= pressed; //ALT
+         8'h66: if ( CTRL_key && ALT_key ) keyF11 <= pressed; //CTRL+ALT+BCKSPC (hard reset)
+         8'h71: if ( CTRL_key && ALT_key ) reset_b <= pressed; //CTRL+ALT+SUPR (soft reset)
+         8'h7e: key_videomode         <= pressed; //Scrll-lock
+         
       endcase
    end
 end
@@ -173,7 +203,7 @@ wire a_clk;
 BUFGMUX #(
    .CLK_SEL_TYPE("SYNC")  // Glitchles ("SYNC") or fast ("ASYNC") clock switch-over
 )
-BUFGMUX_inst (
+BUFGMUX_inst_memory (
    .O(a_clk),       // 1-bit output: Clock buffer output
    .I0(cpu_clk),    // 1-bit input: Clock buffer input (S=0)
    .I1(upload_clk), // 1-bit input: Clock buffer input (S=1)
@@ -196,7 +226,8 @@ cpu_memory CpuMemory (
    .b_clk         (blit_clk         ));
 
 vga_block Vga (
-   .clk           (vga_clk          ),
+   //.clk           (vga_clk          ), 
+   .clk           (video_clock          ),
 
    .ntsc          (ntsc             ),
    .hires         (vga_hires        ),

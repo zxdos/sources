@@ -42,7 +42,8 @@ module display(
 
 wire[7:0] display_pixel_width = hires ? 8'd128 : 8'd64;
 
-wire[3:0] h_pixel_mult      = hires ? 4'd5 : 4'd10;
+//wire[3:0] h_pixel_mult      = hires ? 4'd5 : 4'd10;
+wire[3:0] h_pixel_mult      = hires ? 4'd4 : 4'd8;
 wire[3:0] v_pixel_mult_VGA  = wide  ? (hires ? 4'd6 : 4'd12) : h_pixel_mult;
 wire[3:0] v_pixel_mult_NTSC = wide  ? (hires ? 4'd3 : 4'd6) : (hires ? 4'd2 : 4'd4);
 wire[3:0] v_pixel_mult      = ntsc  ? v_pixel_mult_NTSC : v_pixel_mult_VGA;
@@ -53,7 +54,8 @@ reg[8:0] fbuf_line_addr = 0;
 
 wire [8:0] fbuf_line_addr_next = fbuf_line_addr + (display_pixel_width >> 4);
 
-wire inside_playfield_VGA  = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
+//wire inside_playfield_VGA  = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 80 && v_pixel < 400);
+wire inside_playfield_VGA  = wide ? (v_pixel >= 48 && v_pixel < 432) : (v_pixel >= 112 && v_pixel < 368);
 wire inside_playfield_NTSC = wide ? (v_pixel >= 24 && v_pixel < 216) : (v_pixel >= 56 && v_pixel < 184);
 wire inside_playfield      = ntsc ? inside_playfield_NTSC : inside_playfield_VGA;
 assign outside_playfield   = !inside_playfield;
@@ -115,13 +117,14 @@ bit_shifter Shifter(
       .q       (pixel    ));
 
 wire [1:0] color =
-   (enable_pixel) && (v_pixel == 0 || v_pixel == (ntsc ? 239 : 479)) ? 2'd1 :
+   //(enable_pixel) && (v_pixel == 0 || v_pixel == (ntsc ? 239 : 479)) ? 2'd1 :
+   (enable_pixel) && (v_pixel == 0 || v_pixel == (ntsc ? 240 : 480)) ? 2'd1 :
    (inside_playfield && enable_pixel) ? {1'b1, pixel} :
    2'd0;
 
 assign {red, green, blue} =
-   color == 0 ? 12'b000000000 :
-   color == 1 ? 12'b111111111 :
+   color == 0 ? 12'b000000000 : //black
+   color == 1 ? 12'b111111111 : //white
 // color == 2 ? {3'd6, 3'd6, 2'd1} : {3'd3, 3'd3, 2'd1}; - yelloy fon
 
 // color == 2 ? {4'b0000, 4'b0000, 4'b0000} : {4'b1111, 4'b1111, 4'b1111};  // black / white

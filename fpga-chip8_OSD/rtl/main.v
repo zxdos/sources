@@ -57,6 +57,15 @@ module aeon_top (
     inout wire        PS2CLK,                               // PS/2 keyboard interface
     inout wire        PS2DAT,
 
+	// SRAM pins (just to get the current video output setting) ////////////
+	output wire [20:0] sram_addr,
+	input wire [7:0] sram_data,
+	output wire sram_we_n,
+`ifdef ZXD
+	output wire sram_ub_n,
+	output wire sram_lb_n,
+`endif
+   //SD Card
     output wire       SPI_CLK,                              // SPI
     output wire       SPI_MOSI,
     input wire        SPI_MISO,
@@ -65,20 +74,24 @@ module aeon_top (
    //assign PS2DAT = 1'bZ;
    //assign PS2CLK = 1'bZ;
 
-   wire   clk, clk_vga, clk100, clk_sys, clk50m;
+   wire   clk, clk_vga, clk_ntsc, clk100, clk_sys, clk50m;
+   wire   clkcolor4x, clk120M;
    wire   cpu_clk, clk_4khz;
    wire   clk_en, clk_32k;
    wire   audio_enable;
-   wire   error, keyF11;
+   wire   error, keyF11, key_videomode;
+   reg    key_videomode_r;
+   reg    [1:0] videomode;
    wire   [7:0] sw;
 
    relojes relojes(
          .CLK50                (CLK50          ),
          .clksel               (dswitch[1:0]   ),
-         //.clk100M              (clk            ),
+         .clk120M              (clk120M        ),
          .clk60M               (clk            ),
          .clk25M               (clk_vga        ),
          .clk8M                (clk_sys        ),
+         .clk13M5              (clk_ntsc       ),
          .clk50m               (clk50m         ),
          .cpu_clk              (cpu_clk        ),
          .cpu_clk_en           (clk_en        ));
@@ -91,6 +104,38 @@ module aeon_top (
          por_cnt = por_cnt + 8'd1;
          por_s = 1'b1;
       end else por_s = 1'b0;
+   end
+   
+   //Video mode
+  	// Initial video output settings
+	reg [7:0] scandblr_reg; // same layout as in the Spectrum core, SCANDBLR_CTRL
+	assign sram_we_n = 1'b1;
+	assign sram_addr = 21'h008FD5;  // magic place where the scandoubler settings have been stored
+`ifdef ZXD
+	assign sram_ub_n = 1'b1;
+	assign sram_lb_n = 1'b0;
+`endif
+	always @(posedge clk_vga) begin
+	  if (por_s == 8'd1)
+		  scandblr_reg <= sram_data;
+		  //scandblr_reg <= 8'd1;    
+	end
+   
+   always @ (posedge clk_vga) begin
+      key_videomode_r <= key_videomode;
+      if ( por_s ) 
+         videomode <= {1'b0, ~scandblr_reg[0] };
+      else if ( key_videomode_r == 1'b1 && key_videomode == 1'b0 ) begin
+`ifdef ZX1
+         if ( videomode == 2'b11 ) begin
+`else
+         if ( videomode == 2'b01 ) begin
+`endif
+            videomode <= 2'b00; // 00 - VGA , 01 - RGB(NTSC), 11 - Vcomp(NTSC)
+         end else begin
+            videomode <= {videomode[0], 1'b1};
+         end
+      end
    end
 
    // Host control signals, from the Control module
@@ -130,15 +175,16 @@ module aeon_top (
    end
 
    chip8 chip8machine(
-      .vga_clk              (clk_vga        ),              // 13.500.000 or 25.152.000 Hz clock
+      .vga_clk              (clk_vga        ),              // 25.152.000 Hz clock
+      .ntsc_clk             (clk_ntsc       ),              // 13.500.000 Hz clock
       .cpu_clk              (cpu_clk        ),
       .blit_clk             (clk_sys        ),              // 8 MHz
       .reset_i              (reset_chip8    ),
       .cpu_halt             (halt && 1'b0   ),
-      .ntsc                 (1'b0           ),              //
-      .vga_wide             (1'b1           ),              // wide 0 - uzkiy ekran
-      .vga_hsync            (VGA_HS         ),
-      .vga_vsync            (VGA_VS         ),
+      .ntsc                 (videomode[0]   ),              //0 - VGA // 1 - NTSC
+      .vga_wide             (1'b0           ),              // wide 0 - uzkiy ekran
+      .vga_hsync            (vga_hsync_s    ),
+      .vga_vsync            (vga_vsync_s    ),
       .vga_red              (r_out          ),
       .vga_green            (g_out          ),
       .vga_blue             (b_out          ),
@@ -149,6 +195,7 @@ module aeon_top (
       .ps2_data             (PS2DAT         ),
       .ps2_clk              (PS2CLK         ),
       .keyF11               (keyF11         ),
+      .key_videomode        (key_videomode  ),
 
       .uploading            (uploading      ),
       .upload_en            (upload_en      ),
@@ -178,8 +225,8 @@ module aeon_top (
 
 
 // VGA osd overlay signal
-   wire       vga_hsync_i;                                  // CSYNC en caso de VIDEO COMPUESTO
-   wire       vga_vsync_i;                                  // en modo VIDEO, no se usa
+   wire       vga_hsync_s;                                  
+   wire       vga_vsync_s;                                  
    wire [7:0] vga_red_i,   vga_red_o;
    wire [7:0] vga_green_i, vga_green_o;
    wire [7:0] vga_blue_i,  vga_blue_o;
@@ -187,14 +234,22 @@ module aeon_top (
    wire [8:0] joy2zpuflex;                                  // 8: 0 - ZXDOS/1 - ZXUNO, [7:0] - Joystick (SACUDLRB)
    wire       hard_reset, video_mode;
 
+   assign VGA_HS = videomode[0] ? !(vga_vsync_s ^ vga_hsync_s) : vga_hsync_s;
+`ifdef ZX1   
+   assign VGA_VS =  (videomode == 2'b00) ? vga_vsync_s :
+                    (videomode == 2'b01) ? 1'b1 :  clkcolor4x;
+`else
+   assign VGA_VS = videomode[0] ? 1'b1 : vga_vsync_s;
+`endif   
+
 // Modul control ZPUFlex
    CtrlModule #(.sysclk_frequency(600))
    MyCtrlModule (
       .clk                  (clk            ),
       .reset_n              (~por_s         ),
 
-      .vga_hsync            (VGA_HS         ),              // Video signals for OSD
-      .vga_vsync            (VGA_VS         ),
+      .vga_hsync            (vga_hsync_s    ),              // Video signals for OSD
+      .vga_vsync            (vga_vsync_s    ),
       .osd_window           (osd_window     ),
       .osd_pixel            (osd_pixel      ),
       .osd_bkgr             (osd_bkgr       ),
@@ -273,6 +328,15 @@ module aeon_top (
 	// Salida video ZXUNO, en caso de no usar VGA
 	assign PAL = 1'b1;
 	assign NTSC = 1'b0;
+   
+   //Portadora para Video compuesto NTSC/PAL
+   gencolorclk gencolorclk  (
+      .clk ( clk120M ),       // reloj lo mas rpido posible (ahora mismo, 120 MHz o 170 Mhz segun valor de altern)
+      .mode( 1'b1      ),       // 0=PAL, 1=NTSC
+      .altern( 1'b0),           // 0=120 MHz, 1=170 MHz
+      .clkcolor4x( clkcolor4x ) //(17.734475 MHz PAL  14.31818 MHz NTSC)
+   );
+   
 `else
    assign VGA_R  = vga_red_o  [7:4];
    assign VGA_G  = vga_green_o[7:4];
@@ -310,8 +374,16 @@ module aeon_top (
    //-------------------------------------------------------------------------------------------------
 
    //BUFG Bufg(.I(videoclk), .O(clockmb));
-
-   multiboot Multiboot (
+`ifdef ZXD
+   multiboot #( .MODEL(24'h0B0000) ) // lx25
+`elsif ZX2
+   multiboot #( .MODEL(24'h098000) ) // lx16
+`elsif ZX1
+   multiboot #( .MODEL(24'h058000) ) // lx9
+`else
+   multiboot
+`endif
+       Multiboot (
        .clock                  (clk_vga        ),
        .reboot                 (keyF11         ));
 

@@ -21,10 +21,11 @@
 module relojes(
     input CLK50,
     input [1:0] clksel, // 0 - 1x, 1 - 2x, 2 - 4x, 3 - 8x
-    //output clk100M,
+    output clk120M,
     output clk60M,
     output clk25M,
     output clk8M,
+    output clk13M5,
     output clk50m,
     output cpu_clk,
     output cpu_clk_en 
@@ -47,167 +48,153 @@ module relojes(
       (.O (clkin),
        .I (CLK50));
 
-//  DCM_SP
-//  #(.CLKDV_DIVIDE          (2.000),
-//    .CLKFX_DIVIDE          (25),
-//    .CLKFX_MULTIPLY        (4),
-//    .CLKIN_DIVIDE_BY_2     ("FALSE"),
-//    .CLKIN_PERIOD          (20.0),
-//    .CLKOUT_PHASE_SHIFT    ("NONE"),
-//    .CLK_FEEDBACK          ("2X"),
-//    .DESKEW_ADJUST         ("SYSTEM_SYNCHRONOUS"),
-//    .PHASE_SHIFT           (0),
-//    .STARTUP_WAIT          ("FALSE"))
-//  dcm_sp_inst
-//    // Input clock
-//   (.CLKIN                 (clkin),
-//    .CLKFB                 (clkfb),
-//    // Output clocks
-//    .CLK0                  (),
-//    .CLK90                 (),
-//    .CLK180                (),
-//    .CLK270                (),
-//    .CLK2X                 (clk2x),
-//    .CLK2X180              (),
-//    .CLKFX                 (clkfx),
-//    .CLKFX180              (),
-//    .CLKDV                 (clkdv),
-//    // Ports for dynamic phase shift
-//    .PSCLK                 (1'b0),
-//    .PSEN                  (1'b0),
-//    .PSINCDEC              (1'b0),
-//    .PSDONE                (),
-//    // Other control and status signals
-//    .LOCKED                (locked_int),
-//    .STATUS                (status_int),
-//    .RST                   (1'b0),
-//    // Unused pin- tie low
-//    .DSSEN                 (1'b0));
 
-  DCM_SP
-  #(.CLKDV_DIVIDE          (2.000),
-    .CLKFX_DIVIDE          (25),
-    .CLKFX_MULTIPLY        (4),
-    .CLKIN_DIVIDE_BY_2     ("FALSE"),
-    .CLKIN_PERIOD          (20.0),
-    .CLKOUT_PHASE_SHIFT    ("NONE"),
-    .CLK_FEEDBACK          ("1X"),
-    .DESKEW_ADJUST         ("SYSTEM_SYNCHRONOUS"),
-    .PHASE_SHIFT           (0),
-    .STARTUP_WAIT          ("FALSE"))
-  dcm_sp_inst
-    // Input clock
-   (.CLKIN                 (clkin),
-    .CLKFB                 (clkfb),
+
+//----------------------------------------------------------------------------
+// "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
+// "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
+//----------------------------------------------------------------------------
+// CLK_OUT1____60.000______0.000______50.0______259.778____213.839
+// CLK_OUT2_____8.000______0.000______50.0______389.784____213.839
+// CLK_OUT3____25.000______0.000______50.0______311.133____213.839
+// CLK_OUT4____13.636______0.000______50.0______351.207____213.839
+//
+//----------------------------------------------------------------------------
+// "Input Clock   Freq (MHz)    Input Jitter (UI)"
+//----------------------------------------------------------------------------
+// __primary__________50.000____________0.010
+
+
+  // Clocking primitive
+  //------------------------------------
+  // Instantiation of the PLL primitive
+  //    * Unused inputs are tied off
+  //    * Unused outputs are labeled unused
+  wire [15:0] do_unused;
+  wire        drdy_unused;
+  wire        locked_unused;
+  wire        clkfbout;
+  wire        clkfbout_buf;
+  wire        clkout4_unused;
+  wire        clkout5_unused;
+
+  PLL_BASE
+  #(.BANDWIDTH              ("OPTIMIZED"),
+    .CLK_FEEDBACK           ("CLKFBOUT"),
+    .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
+    .DIVCLK_DIVIDE          (1),
+    .CLKFBOUT_MULT          (12),
+    .CLKFBOUT_PHASE         (0.000),
+    .CLKOUT0_DIVIDE         (5),  //antes 10
+    .CLKOUT0_PHASE          (0.000),
+    .CLKOUT0_DUTY_CYCLE     (0.500),
+    .CLKOUT1_DIVIDE         (75),
+    .CLKOUT1_PHASE          (0.000),
+    .CLKOUT1_DUTY_CYCLE     (0.500),
+    .CLKOUT2_DIVIDE         (24),
+    .CLKOUT2_PHASE          (0.000),
+    .CLKOUT2_DUTY_CYCLE     (0.500),
+    .CLKOUT3_DIVIDE         (44),
+    .CLKOUT3_PHASE          (0.000),
+    .CLKOUT3_DUTY_CYCLE     (0.500),
+    .CLKIN_PERIOD           (20.000),
+    .REF_JITTER             (0.010))
+  pll_base_inst
     // Output clocks
-    .CLK0                  (clk0),
-    .CLK90                 (),
-    .CLK180                (),
-    .CLK270                (),
-    .CLK2X                 (),
-    .CLK2X180              (),
-    .CLKFX                 (clkfx),
-    .CLKFX180              (),
-    .CLKDV                 (clkdv),
-    // Ports for dynamic phase shift
-    .PSCLK                 (1'b0),
-    .PSEN                  (1'b0),
-    .PSINCDEC              (1'b0),
-    .PSDONE                (),
-    // Other control and status signals
-    .LOCKED                (locked_int),
-    .STATUS                (status_int),
+   (.CLKFBOUT              (clkfbout),
+    .CLKOUT0               (clkout0),
+    .CLKOUT1               (clkout1),
+    .CLKOUT2               (clkout2),
+    .CLKOUT3               (clkout3),
+    .CLKOUT4               (clkout4_unused),
+    .CLKOUT5               (clkout5_unused),
+    .LOCKED                (locked_unused),
     .RST                   (1'b0),
-    // Unused pin- tie low
-    .DSSEN                 (1'b0));
+     // Input clock control
+    .CLKFBIN               (clkfbout_buf),
+    .CLKIN                 (clkin));
 
   // Output buffering
   //-----------------------------------
-  //assign clkfb = clk100M;
-  assign clkfb = clk0;
-
-//  BUFG clkout1_buf
-//   (.O   (clk100M),
-//    .I   (clk2x));  
+  BUFG clkf_buf
+   (.O (clkfbout_buf),
+    .I (clkfbout));
 
   BUFG clkout1_buf
-   (.O   (clk60M),
-    .I   (clk0));  
+   //(.O   (clk60M),
+   (.O   (clk120M),
+    .I   (clkout0));  
 
   BUFG clkout2_buf
    (.O   (clk25M),
-    .I   (clkdv));
+    .I   (clkout2));
 
   BUFG clkout3_buf
    (.O   (clk8M),
-    .I   (clkfx));
+    .I   (clkout1));
+
+  BUFG clkout4_buf
+   (.O   (clk13M5),
+    .I   (clkout3));
     
-  
-  //BUFG bufgO50(.I(clkin), .O(clk50m));
-  //assign clk = clk100M;
-//wire   clk_en, ce_32k;
-//reg    ce_4k, ce_8k, ce_16k, clk_32k, ce_50m;
-//reg  [11:0]  ce32k_cnt = 12'b0;
-//
-//// Clock enable generation
-//always @ (posedge clk) begin
-//   if (ce32k_cnt == 12'd3124) begin
-//      ce32k_cnt = 12'b0;
-//      clk_32k = 1'b1;
-//   end else begin
-//      ce32k_cnt = ce32k_cnt + 12'd1;
-//
-//      clk_32k = 1'b0;
-//   end 
-//   
-//   if (ce32k_cnt[0] == 1'b1) ce_50m = 1'b1;
-//   else ce_50m = 1'b0;
-//   
-//end
-//
-//assign clk32k = clk_32k;
-//assign ce_32k = clk_32k;
-  assign clk = clk60M;
+  assign clk = clk120M;
   
   wire   clk_en ;
   reg    ce_5k, ce_10k, ce_15k, ce_20k, ce_50m;
   reg  [11:0]  ce_cnt = 12'b0, ce_cnt15 = 12'b0;
+  reg   ce_cnt60M = 1'b0, ce_60M;
 
   // Clock enable generation
   always @ (posedge clk) begin
-    if (ce_cnt == 12'd2999) begin
-        ce_cnt = 12'b0;
-        ce_20k = 1'b1;
-     end else begin
-        ce_cnt = ce_cnt + 12'd1;
-        ce_20k = 1'b0;
-     end 
+    ce_cnt60M = ~ce_cnt60M;
+    if (ce_cnt60M == 1'b1) ce_60M = 1'b1; else ce_60M = 1'b0;
     
-     if (ce_cnt[0] == 1'b1) ce_50m = 1'b1;
-     else ce_50m = 1'b0;
+    if ( ce_60M == 1'b1) begin
+       if (ce_cnt == 12'd2999 && ce_60M == 1'b1) begin
+           ce_cnt = 12'b0;
+           ce_20k = 1'b1;
+       end else begin
+           ce_cnt = ce_cnt + 12'd1;
+           ce_20k = 1'b0;
+       end
 
-    if (ce_cnt15 == 12'd3999) begin
-        ce_cnt15 = 12'b0;
-        ce_15k = 1'b1;
-     end else begin
-        ce_cnt15 = ce_cnt15 + 12'd1;
-        ce_15k = 1'b0;
-     end 
+       if (ce_cnt15 == 12'd3999) begin
+              ce_cnt15 = 12'b0;
+              ce_15k = 1'b1;
+       end else begin
+              ce_cnt15 = ce_cnt15 + 12'd1;
+              ce_15k = 1'b0;
+       end
+
+    end else begin
+       ce_20k = 1'b0;
+       ce_15k = 1'b0;    
+    end
+       
+    if (ce_cnt[0] == 1'b1 && ce_60M == 1'b1) ce_50m = 1'b1;
+    else ce_50m = 1'b0;
    
   end
 
 // BUFGCE_1: Global Clock Buffer with Clock Enable and Output State 1
 //           Spartan-6
 // Xilinx HDL Language Template, version 14.7
-
 BUFGCE_1 BUFGCE_1_inst50m (
    .O(clk50m), // 1-bit output: Clock buffer output
    .CE(ce_50m), // 1-bit input: Clock buffer select
    .I(clk)      // 1-bit input: Clock buffer input (S=0)
 );
-
 // End of BUFGCE_1_inst instantiation
 
+// BUFGCE_1: Global Clock Buffer with Clock Enable and Output State 1
+//           Spartan-6
+// Xilinx HDL Language Template, version 14.7
+BUFGCE_1 BUFGCE_1_inst60M (
+   .O(clk60M), // 1-bit output: Clock buffer output
+   .CE(ce_60M), // 1-bit input: Clock buffer select
+   .I(clk)      // 1-bit input: Clock buffer input (S=0)
+);
+// End of BUFGCE_1_inst instantiation
 
 
 //// CPU clock 
